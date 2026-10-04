@@ -7,4 +7,8 @@
     <RootNamespace>HnPaper.Web</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.4.0" />
+  </ItemGroup>
+
 </Project>

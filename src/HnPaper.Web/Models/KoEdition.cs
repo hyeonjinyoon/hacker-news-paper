@@ -1,37 +1,13 @@
 namespace HnPaper.Web.Models;
 
-/// <summary>hn-paper-update 스킬 출력(data/ko/{date}.json). 번역·요약·지면 배치만 담는다.</summary>
-/// <param name="Lead">1면 톱 기사의 리드 문단.</param>
+/// <summary>
+/// hn-paper-update 스킬 출력(data/ko/{date}.json). 제목 번역만 담는다.
+/// 1면의 요약·리드는 기사별 본문(data/ko/{date}/{id}.json)의 첫 문단을 쓴다.
+/// </summary>
+/// <param name="Lead">예전 호에서 따로 쓰던 1면 리드. 본문이 없을 때만 대신 쓴다.</param>
 public sealed record KoEdition(string Date, IReadOnlyList<string>? Lead, IReadOnlyList<KoStory>? Stories);
 
 /// <param name="Id">HN 아이템 id. RawStory.Id와 맞춘다.</param>
-/// <param name="Title">원제의 직역.</param>
-/// <param name="Section">지면. <see cref="Sections"/> 참고.</param>
-public sealed record KoStory(long Id, string Title, string Summary, string Kicker, string Section);
-
-public static class Sections
-{
-    public const string Hero = "hero";
-    public const string Sub = "sub";
-    public const string Side = "side";
-    public const string Photo = "photo";
-    public const string Headline = "headline";
-    public const string Opinion = "opinion";
-    public const string Tech = "tech";
-    public const string Life = "life";
-    public const string Jobs = "jobs";
-
-    /// <summary>지면별 최대 기사 수. null이면 제한 없음.</summary>
-    public static readonly IReadOnlyDictionary<string, int?> Capacity = new Dictionary<string, int?>
-    {
-        [Hero] = 1,
-        [Sub] = 2,
-        [Side] = 2,
-        [Photo] = 1,
-        [Headline] = 6,
-        [Opinion] = 5,
-        [Tech] = null,
-        [Life] = null,
-        [Jobs] = null,
-    };
-}
+/// <param name="Title">원제를 자연스러운 한국어(합니다체)로 옮긴 제목.</param>
+/// <param name="Summary">예전 호에서 따로 쓰던 1면 요약. 본문이 없을 때만 대신 쓴다.</param>
+public sealed record KoStory(long Id, string Title, string? Summary = null);

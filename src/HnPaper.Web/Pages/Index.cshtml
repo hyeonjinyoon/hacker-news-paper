@@ -2,9 +2,10 @@
 @model IndexModel
 @{
     var e = Model.Edition;
-    ViewData["Title"] = e is null ? "해커뉴스 페이퍼" : $"해커뉴스 페이퍼 · {e.Date}";
+    ViewData["Title"] = e is null ? "Hacker News paper" : $"Hacker News paper · {e.Date}";
     ViewData["DateLabel"] = e?.DateLabel;
 }
+@* 기사는 분류하지 않고 HN 순위대로 고정된 자리에 놓는다(EditionBuilder.Plan). *@
 
 @if (e is null)
 {
@@ -21,19 +22,22 @@ else
   <p class="notice">이 호는 아직 번역 전입니다. 원문 제목으로 표시합니다.</p>
 }
 
+@* 1위 톱 · 2–3위 보조 · 4–5위 오른쪽 사진 *@
 <section class="top" id="top">
   <div class="lead">
     @if (e.Hero is { } hero)
     {
     <article class="hero">
-      <h1><a href="@hero.Href" target="_blank" rel="noopener">@hero.Title</a></h1>
+      <h1><a href="@hero.Href">@hero.Title</a></h1>
       <div class="hero-body">
         <partial name="_HeroVisual" model="hero" />
         <div class="lede">
-          @foreach (var paragraph in e.Lead)
-          {
-            <p>@paragraph</p>
-          }
+          <div class="lede-text">
+            @foreach (var paragraph in e.Lead)
+            {
+              <p>@paragraph</p>
+            }
+          </div>
           <partial name="_Meta" model="new Meta(hero, true)" />
         </div>
       </div>
@@ -59,7 +63,7 @@ else
     </div>
     }
   </div>
-  <aside class="side" aria-label="주요 기사">
+  <aside class="side">
     @foreach (var s in e.Side)
     {
     <article class="card">
@@ -71,6 +75,9 @@ else
   </aside>
 </section>
 
+@* 6위 사진 · 7–12위 헤드라인 · 13–18위 목록 *@
+@if (e.Photo is not null || e.Headlines.Count > 0)
+{
 <section class="band band-3">
   <div class="col-a photo-lead">
     @if (e.Photo is { } photo)
@@ -88,34 +95,37 @@ else
     <ul class="headlines">
       @foreach (var s in e.Headlines)
       {
-        <li><h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3><partial name="_Meta" model="new Meta(s)" /></li>
+        <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
       }
     </ul>
   </div>
-  <div class="col-c" id="opinion">
-    <div class="sec-head"><h2>오피니언</h2></div>
-    <ul class="opinion">
-      @foreach (var s in e.Opinion)
+  <div class="col-c">
+    <ul class="briefs">
+      @foreach (var s in e.Briefs)
       {
         <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
       }
     </ul>
   </div>
 </section>
+}
 
-<section class="band split" id="tech">
+@* 19–22위 사진 칸 · 23–26위 글 목록 · 27–30위 사진 칸 | 많이 본 뉴스 · 댓글 많은 뉴스 *@
+<section class="band split">
   <div class="main">
-    <div class="sec-head"><h2>테크</h2><a class="more" href="https://news.ycombinator.com/" target="_blank" rel="noopener">원문 1면</a></div>
+    @if (e.GridA.Count > 0)
+    {
     <div class="grid4">
-      @foreach (var s in e.TechGrid)
+      @foreach (var s in e.GridA)
       {
         <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
       }
     </div>
-    @if (e.TechList.Count > 0)
+    }
+    @if (e.ListA.Count > 0)
     {
     <ul class="textlist">
-      @foreach (var s in e.TechList)
+      @foreach (var s in e.ListA)
       {
         <li>
           <partial name="_Story" model="s" />
@@ -127,77 +137,36 @@ else
         </li>
       }
     </ul>
+    }
+    @if (e.GridB.Count > 0)
+    {
+    <div class="grid4 grid-next">
+      @foreach (var s in e.GridB)
+      {
+        <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
+      }
+    </div>
     }
   </div>
   <aside class="aside">
     <div class="box" id="popular">
-      <div class="sec-head"><h2>많이 본 뉴스</h2><span class="meta">포인트순</span></div>
+      <div class="sec-head"><h2>많이 본 뉴스</h2></div>
       <ol class="ranking">
-        @foreach (var (s, i) in e.ByPoints.Select((s, i) => (s, i + 1)))
+        @* 1면에서는 왼쪽 기사 칸과 높이를 맞추려고 상위 5개만 보인다. 기사 페이지 오른쪽 칸은 10개. *@
+        @foreach (var (s, i) in e.ByPoints.Take(5).Select((s, i) => (s, i + 1)))
         {
-          <li><span class="n">@i</span><div><h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3><partial name="_Meta" model="new Meta(s)" /></div></li>
+          <li><span class="n">@i</span><div><h3><a href="@s.Href">@s.Title</a></h3><p class="pts">▲ @s.Raw.Points · 댓글 @s.Raw.Comments</p></div></li>
         }
       </ol>
     </div>
-  </aside>
-</section>
-
-<section class="band split" id="life">
-  <div class="main">
-    <div class="sec-head"><h2>라이프·과학</h2></div>
-    @if (e.LifeGrid.Count > 0)
-    {
-    <div class="grid4">
-      @foreach (var s in e.LifeGrid)
-      {
-        <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
-      }
-    </div>
-    }
-    @if (e.LifeList.Count > 0)
-    {
-    <ul class="textlist">
-      @foreach (var s in e.LifeList)
-      {
-        <li>
-          <partial name="_Story" model="s" />
-          @if (s.Summary is not null)
-          {
-            <p class="desc">@s.Summary</p>
-          }
-          <partial name="_Meta" model="new Meta(s)" />
-        </li>
-      }
-    </ul>
-    }
-  </div>
-  <aside class="aside">
-    <div class="box">
+    <div class="box" id="comments">
       <div class="sec-head"><h2>댓글 많은 뉴스</h2></div>
       <ol class="ranking">
         @foreach (var (s, i) in e.ByComments.Select((s, i) => (s, i + 1)))
         {
-          <li><span class="n">@i</span><div><h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3><partial name="_Meta" model="new Meta(s)" /></div></li>
+          <li><span class="n">@i</span><div><h3><a href="@s.Href">@s.Title</a></h3><p class="pts">댓글 @s.Raw.Comments · ▲ @s.Raw.Points</p></div></li>
         }
       </ol>
-    </div>
-    <div class="box" id="jobs">
-      <div class="sec-head"><h2>채용</h2><a class="more" href="https://news.ycombinator.com/jobs" target="_blank" rel="noopener">전체보기</a></div>
-      @if (e.Jobs.Count == 0)
-      {
-        <p class="meta">오늘 1면에는 채용 글이 없습니다.</p>
-      }
-      @foreach (var s in e.Jobs)
-      {
-        <div class="jobs">
-          <partial name="_Story" model="s" />
-          @if (s.Summary is not null)
-          {
-            <p class="desc">@s.Summary</p>
-          }
-          <partial name="_Meta" model="new Meta(s)" />
-        </div>
-      }
     </div>
   </aside>
 </section>
@@ -223,7 +192,7 @@ else
       <li>
         <span class="n">@s.Raw.Rank</span>
         <div>
-          <h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3>
+          <h3><a href="@s.Href">@s.Title</a></h3>
           @if (e.Translated)
           {
             <p class="en">@s.Raw.Title</p>

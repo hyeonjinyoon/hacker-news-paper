@@ -1,0 +1,114 @@
+@page "/{date}/{id:long}"
+@model StoryModel
+@using HnPaper.Web.Services
+@{
+    var e = Model.Edition;
+    var s = Model.Story;
+    var item = Model.Item;
+    ViewData["Title"] = $"{s.Title} · Hacker News paper";
+    ViewData["DateLabel"] = e.DateLabel;
+    ViewData["NavBase"] = $"/{e.Date}";
+}
+@* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 많이 본 뉴스 300px. 제목을 누르면 원문이 열린다. *@
+<div class="story-page">
+  <header class="article-head">
+    <nav class="crumbs" aria-label="위치"><a href="/@e.Date">@e.Date 호</a><span>@(s.Raw.Rank)위</span></nav>
+    <h1><a href="@s.SourceUrl" target="_blank" rel="noopener" title="@(s.IsSelfPost ? "Hacker News 원문 보기" : "원문 보기")">@s.Title</a></h1>
+    @if (s.Title != s.Raw.Title)
+    {
+      <p class="en">@s.Raw.Title</p>
+    }
+    <partial name="_Meta" model="new Meta(s, true)" />
+  </header>
+
+  <main class="article">
+    <div class="article-body">
+      <partial name="_Visual" model="s" />
+      <section class="article-text">
+        <h2>@(s.IsSelfPost ? "본문" : "요약")</h2>
+        @if (!item.Translated)
+        {
+          <p class="notice">아직 번역 전입니다. 원문 소개를 그대로 보여 드립니다.</p>
+        }
+        @if (item.Body is null)
+        {
+          <p class="meta">원문 사이트에서 내용을 확인해 주세요.</p>
+        }
+        else
+        {
+          <div class="md">@MarkdownRenderer.Render(item.Body)</div>
+        }
+        @if (!s.IsSelfPost)
+        {
+          <p class="source-note">이 글은 원문을 한국어로 요약한 것입니다. 전체 내용은 <a href="@s.SourceUrl" target="_blank" rel="noopener">@s.Raw.Site</a>에서 읽을 수 있습니다.</p>
+        }
+      </section>
+    </div>
+
+    <section class="comments" id="comments">
+      <div class="sec-head"><h2>댓글</h2><span class="meta">@(item.Comments.Count)개 표시 · 전체 @(item.TotalComments)개</span></div>
+      @if (item.Comments.Count == 0)
+      {
+        <p class="meta">@(item.Collected ? "아직 댓글이 없습니다." : "댓글을 아직 수집하지 않았습니다.")</p>
+      }
+      else if (!item.CommentsTranslated)
+      {
+        <p class="notice">댓글은 아직 번역 전이라 원문으로 보여 드립니다.</p>
+      }
+      <ol class="comment-list">
+        @foreach (var c in item.Comments)
+        {
+          <li class="comment@(c.Depth == 0 ? " root" : "")" style="--depth:@c.Depth">
+            <div class="comment-meta"><span class="by">@c.By</span><span>@c.Age</span><a href="@c.HnUrl" target="_blank" rel="noopener">HN</a></div>
+            @if (c.Deleted)
+            {
+              <p class="deleted">삭제된 댓글입니다.</p>
+            }
+            else
+            {
+              <div class="md">@MarkdownRenderer.Render(c.Text)</div>
+            }
+          </li>
+        }
+      </ol>
+      <p class="more-comments"><a href="@s.HnUrl" target="_blank" rel="noopener">Hacker News에서 보기 ↗</a></p>
+    </section>
+
+    <nav class="story-nav" aria-label="기사 이동">
+      @if (Model.Prev is { } prev)
+      {
+        <a class="prev" href="@prev.Href"><span>← 이전 기사 · @(prev.Raw.Rank)위</span><strong>@prev.Title</strong></a>
+      }
+      else
+      {
+        <span></span>
+      }
+      <a class="home" href="/@e.Date">1면으로</a>
+      @if (Model.Next is { } next)
+      {
+        <a class="next" href="@next.Href"><span>다음 기사 · @(next.Raw.Rank)위 →</span><strong>@next.Title</strong></a>
+      }
+    </nav>
+  </main>
+
+  <aside class="story-right" aria-label="이 호의 다른 기사">
+    <div class="box">
+      <div class="sec-head"><h2>많이 본 뉴스</h2></div>
+      <ol class="ranking">
+        @foreach (var (r, i) in e.ByPoints.Select((r, i) => (r, i + 1)))
+        {
+          <li class="@(r.Raw.Id == s.Raw.Id ? "current" : null)"><span class="n">@i</span><div><h3><a href="@r.Href">@r.Title</a></h3><p class="pts">▲ @r.Raw.Points</p></div></li>
+        }
+      </ol>
+    </div>
+    <div class="box">
+      <div class="sec-head"><h2>댓글 많은 뉴스</h2></div>
+      <ol class="ranking">
+        @foreach (var (r, i) in e.ByComments.Select((r, i) => (r, i + 1)))
+        {
+          <li class="@(r.Raw.Id == s.Raw.Id ? "current" : null)"><span class="n">@i</span><div><h3><a href="@r.Href">@r.Title</a></h3><p class="pts">댓글 @r.Raw.Comments</p></div></li>
+        }
+      </ol>
+    </div>
+  </aside>
+</div>

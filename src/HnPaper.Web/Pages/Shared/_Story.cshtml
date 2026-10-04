@@ -1,7 +1,3 @@
 @model StoryView
-@* 키커 + 제목 링크. 카드·목록 어디서나 같은 모양으로 쓴다. *@
-@if (!string.IsNullOrEmpty(Model.Kicker))
-{
-  <span class="kicker">@Model.Kicker</span>
-}
-<h3><a href="@Model.Href" target="_blank" rel="noopener">@Model.Title</a></h3>
+@* 제목 링크. 카드·목록 어디서나 같은 모양으로 쓴다. *@
+<h3><a href="@Model.Href">@Model.Title</a></h3>

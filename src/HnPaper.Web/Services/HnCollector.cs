@@ -83,6 +83,90 @@ public sealed partial class HnCollector(HttpClient http)
             Text: item.Text is null ? null : Truncate(PlainText(item.Text), MaxText));
     }
 
+    /// <summary>
+    /// 기사마다 HN 본문 글과 댓글을 모아 기사별 수집본을 쓴다. 댓글은 HN 댓글란과 같은 순서
+    /// (kids가 표시 순서이므로 깊이 우선 전위 순회)로 앞에서부터 최대 maxComments개를 담는다.
+    /// </summary>
+    public async Task<int> CollectItemsAsync(RawEdition edition, int maxComments, Func<long, string> pathFor, CancellationToken ct)
+    {
+        using var gate = new SemaphoreSlim(16);
+        var written = 0;
+        await Parallel.ForEachAsync(edition.Stories, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct }, async (story, token) =>
+        {
+            var item = await FetchItemAsync(story.Id, gate, token);
+            if (item is null)
+                return;
+            var comments = await FetchCommentsAsync(item, maxComments, gate, token);
+            var text = item.Text is null ? null : HnHtmlToMarkdown(item.Text);
+            PaperJson.Write(pathFor(story.Id), new RawItem(story.Id, item.Descendants ?? comments.Count, text, comments));
+            Interlocked.Increment(ref written);
+        });
+        return written;
+    }
+
+    private async Task<List<RawComment>> FetchCommentsAsync(HnItem story, int max, SemaphoreSlim gate, CancellationToken ct)
+    {
+        var comments = new List<RawComment>();
+
+        async Task WalkAsync(long[]? kids, long parent, int depth)
+        {
+            if (kids is not { Length: > 0 } || comments.Count >= max)
+                return;
+            var children = await Task.WhenAll(kids.Select(id => FetchItemAsync(id, gate, ct)));
+            foreach (var child in children)
+            {
+                if (comments.Count >= max)
+                    return;
+                if (child is null || child.Dead == true)
+                    continue;
+                // 지워진 댓글은 답글이 있을 때만 자리를 남긴다(HN과 같다).
+                var deleted = child.Deleted == true || child.Text is null;
+                if (deleted && child.Kids is not { Length: > 0 })
+                    continue;
+                comments.Add(new RawComment(child.Id, parent, depth, child.By ?? "", child.Time,
+                    deleted ? null : HnHtmlToMarkdown(child.Text!), deleted));
+                await WalkAsync(child.Kids, child.Id, depth + 1);
+            }
+        }
+
+        await WalkAsync(story.Kids, story.Id, 0);
+        return comments;
+    }
+
+    private async Task<HnItem?> FetchItemAsync(long id, SemaphoreSlim gate, CancellationToken ct)
+    {
+        await gate.WaitAsync(ct);
+        try
+        {
+            return await http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct);
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return null;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    /// <summary>HN 댓글·본문 HTML(p, i, a, pre/code)을 마크다운으로 바꾼다.</summary>
+    internal static string HnHtmlToMarkdown(string html)
+    {
+        var codes = new List<string>();
+        var text = CodeBlock().Replace(html, m =>
+        {
+            codes.Add(WebUtility.HtmlDecode(Tags().Replace(m.Groups[1].Value, "")).TrimEnd());
+            return $"\u0000{codes.Count - 1}\u0000";
+        });
+        text = text.Replace("<p>", "\n\n");
+        text = Italic().Replace(text, m => $"*{m.Groups[1].Value.Trim()}*");
+        text = Anchor().Replace(text, m => " " + WebUtility.HtmlDecode(m.Groups[1].Value) + " ");
+        text = WebUtility.HtmlDecode(Tags().Replace(text, ""));
+        text = CodePlaceholder().Replace(text, m => $"\n\n```\n{codes[int.Parse(m.Groups[1].Value)]}\n```\n\n");
+        return BlankLines().Replace(text, "\n\n").Trim();
+    }
+
     private async Task<(string? Image, string? Description)> FetchPreviewAsync(Uri uri, CancellationToken ct)
     {
         var html = await FetchHtmlAsync(uri, ct);
@@ -199,6 +283,22 @@ public sealed partial class HnCollector(HttpClient http)
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
 
+    [GeneratedRegex(@"<pre><code>(.*?)</code></pre>", RegexOptions.Singleline)]
+    private static partial Regex CodeBlock();
+
+    [GeneratedRegex(@"<i>(.*?)</i>", RegexOptions.Singleline)]
+    private static partial Regex Italic();
+
+    [GeneratedRegex(@"<a\s[^>]*href=""([^""]*)""[^>]*>.*?</a>", RegexOptions.Singleline)]
+    private static partial Regex Anchor();
+
+    [GeneratedRegex("\u0000(\\d+)\u0000")]
+    private static partial Regex CodePlaceholder();
+
+    [GeneratedRegex(@"[ \t]*\n[ \t]*\n\s*")]
+    private static partial Regex BlankLines();
+
+    /// <param name="Kids">하위 댓글 id. HN 댓글란에 보이는 순서와 같다.</param>
     private sealed record HnItem(
         long Id,
         string? Type,
@@ -210,5 +310,6 @@ public sealed partial class HnCollector(HttpClient http)
         int? Descendants,
         string? Text,
         bool? Dead,
-        bool? Deleted);
+        bool? Deleted,
+        long[]? Kids);
 }

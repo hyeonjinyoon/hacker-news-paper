@@ -7,9 +7,50 @@ namespace HnPaper.Web.Services;
 /// <summary>data/ 폴더의 호를 읽어 화면용으로 합친다. 파일이 바뀌면 다음 요청에서 다시 읽는다.</summary>
 public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> logger)
 {
-    private sealed record CacheEntry(DateTime RawStamp, DateTime KoStamp, EditionView View);
+    private sealed record CacheEntry(DateTime RawStamp, DateTime KoStamp, (DateTime Stamp, int Count) Bodies, EditionView View);
+    private sealed record ItemCacheEntry(DateTime RawStamp, DateTime KoStamp, DateTime CommentsStamp, ItemView View);
 
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
+    private readonly ConcurrentDictionary<(string Date, long Id), ItemCacheEntry> _items = new();
+
+    /// <summary>중간 페이지용 기사 본문과 댓글. 수집본·번역본이 없으면 있는 것만으로 채운다.</summary>
+    public ItemView LoadItem(EditionView edition, StoryView story)
+    {
+        var rawPath = options.RawItemPath(edition.Date, story.Raw.Id);
+        var koPath = options.KoItemPath(edition.Date, story.Raw.Id);
+        var commentsPath = options.KoCommentsPath(edition.Date, story.Raw.Id);
+        var rawStamp = Stamp(rawPath);
+        var koStamp = Stamp(koPath);
+        var commentsStamp = Stamp(commentsPath);
+
+        var key = (edition.Date, story.Raw.Id);
+        if (_items.TryGetValue(key, out var hit)
+            && hit.RawStamp == rawStamp && hit.KoStamp == koStamp && hit.CommentsStamp == commentsStamp)
+            return hit.View;
+
+        var raw = rawStamp == DateTime.MinValue ? null : TryRead<RawItem>(rawPath);
+        var ko = koStamp == DateTime.MinValue ? null : TryRead<KoItem>(koPath);
+        var comments = commentsStamp == DateTime.MinValue ? null : TryRead<KoComments>(commentsPath);
+        var view = EditionBuilder.BuildItem(edition.CollectedAt, story, raw, ko, comments);
+        _items[key] = new ItemCacheEntry(rawStamp, koStamp, commentsStamp, view);
+        return view;
+    }
+
+    private static DateTime Stamp(string path) =>
+        File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+
+    private T? TryRead<T>(string path) where T : class
+    {
+        try
+        {
+            return PaperJson.Read<T>(path);
+        }
+        catch (JsonException e)
+        {
+            logger.LogWarning(e, "파일을 읽지 못해 건너뜁니다: {Path}", path);
+            return null;
+        }
+    }
 
     public IReadOnlyList<EditionInfo> List()
     {
@@ -45,7 +86,11 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
         var rawStamp = File.GetLastWriteTimeUtc(rawPath);
         var koStamp = File.Exists(koPath) ? File.GetLastWriteTimeUtc(koPath) : DateTime.MinValue;
 
-        if (_cache.TryGetValue(date, out var hit) && hit.RawStamp == rawStamp && hit.KoStamp == koStamp)
+        // 1면 요약·리드는 기사별 본문 번역본에서 가져오므로 그 파일들이 바뀌어도 다시 읽는다.
+        var bodyFiles = BodyFiles(date);
+        var bodies = (bodyFiles.Count == 0 ? DateTime.MinValue : bodyFiles.Max(File.GetLastWriteTimeUtc), bodyFiles.Count);
+
+        if (_cache.TryGetValue(date, out var hit) && hit.RawStamp == rawStamp && hit.KoStamp == koStamp && hit.Bodies == bodies)
             return hit.View;
 
         var raw = PaperJson.Read<RawEdition>(rawPath);
@@ -65,8 +110,24 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
             }
         }
 
-        var view = EditionBuilder.Build(raw, ko);
-        _cache[date] = new CacheEntry(rawStamp, koStamp, view);
+        var bodyById = new Dictionary<long, string>();
+        foreach (var file in bodyFiles)
+        {
+            if (TryRead<KoItem>(file) is { Body: { } body } item)
+                bodyById.TryAdd(item.Id, body);
+        }
+
+        var view = EditionBuilder.Build(raw, ko, bodyById);
+        _cache[date] = new CacheEntry(rawStamp, koStamp, bodies, view);
         return view;
+    }
+
+    /// <summary>data/ko/{date}/의 기사별 본문 번역본({id}.json). 댓글 번역본(*.comments.json)은 뺀다.</summary>
+    private List<string> BodyFiles(string date)
+    {
+        var dir = Path.Combine(options.KoDirectory, date);
+        return Directory.Exists(dir)
+            ? Directory.EnumerateFiles(dir, "*.json").Where(f => !f.EndsWith(".comments.json", StringComparison.Ordinal)).ToList()
+            : [];
     }
 }

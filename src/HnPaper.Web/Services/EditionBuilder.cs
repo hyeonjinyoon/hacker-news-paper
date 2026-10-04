@@ -5,9 +5,8 @@ namespace HnPaper.Web.Services;
 /// <summary>수집본과 번역본을 합치고 지면에 배치한다.</summary>
 public static class EditionBuilder
 {
-    private const int GridSize = 4;
-
-    public static EditionView Build(RawEdition raw, KoEdition? ko)
+    /// <param name="bodies">기사별 본문 번역본(마크다운). 1면 요약과 리드는 이 본문의 첫 문단들을 쓴다.</param>
+    public static EditionView Build(RawEdition raw, KoEdition? ko, IReadOnlyDictionary<long, string>? bodies = null)
     {
         var koById = new Dictionary<long, KoStory>();
         foreach (var story in ko?.Stories ?? [])
@@ -18,13 +17,17 @@ public static class EditionBuilder
             .Select(r =>
             {
                 koById.TryGetValue(r.Id, out var k);
+                var intro = bodies is not null && bodies.TryGetValue(r.Id, out var body)
+                    ? MarkdownRenderer.IntroParagraphs(body, 2)
+                    : [];
                 return new StoryView
                 {
+                    Date = raw.Date,
                     Raw = r,
                     Title = Nonblank(k?.Title) ?? r.Title,
-                    Summary = Nonblank(k?.Summary) ?? (ko is null ? Nonblank(r.Description) : null),
-                    Kicker = Nonblank(k?.Kicker) ?? DefaultKicker(r),
-                    Section = Nonblank(k?.Section),
+                    Intro = intro,
+                    // 본문 요약의 첫 문단 → 예전 호의 1면 요약 → (번역 전 호면) 원문 설명
+                    Summary = intro.FirstOrDefault() ?? Nonblank(k?.Summary) ?? (ko is null ? Nonblank(r.Description) : null),
                     Age = RelativeAge(raw.CollectedAt, r.Time),
                 };
             })
@@ -39,100 +42,88 @@ public static class EditionBuilder
         };
         Plan(view);
 
+        // 1면 리드: 톱기사 본문 요약의 첫 문단들 → 예전 호의 리드 → 요약 한 줄
         var lead = ko?.Lead?.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
-        view.Lead = lead is { Count: > 0 } ? lead
+        view.Lead = view.Hero?.Intro is { Count: > 0 } intro ? intro
+            : lead is { Count: > 0 } ? lead
             : view.Hero?.Summary is { } summary ? [summary]
             : [];
         return view;
     }
 
     /// <summary>
-    /// 번역본이 정한 지면을 먼저 따르고, 정원을 넘친 기사는 More로 보낸다.
-    /// 지면이 없는 기사(번역 전 호 포함)는 순위·포인트·이미지를 기준으로 빈 자리를 채운다.
+    /// 기사를 분류하지 않고 HN 순위대로 고정된 자리에 차례로 채운다.
+    /// 1 톱 · 2–3 보조 · 4–5 오른쪽 사진 · 6 둘째 띠 사진 · 7–12 헤드라인 · 13–18 오른쪽 목록 ·
+    /// 19–22 사진 칸 · 23–26 글 목록 · 27–30 사진 칸 · 31~ 그 밖의 뉴스
     /// </summary>
     private static void Plan(EditionView view)
     {
-        var slots = Sections.Capacity.Keys.ToDictionary(k => k, _ => new List<StoryView>());
-        var pool = new List<StoryView>();
+        var queue = new Queue<StoryView>(view.All);
 
-        foreach (var story in view.All)
+        List<StoryView> Take(int count)
         {
-            if (story.Section is { } section && slots.TryGetValue(section, out var slot))
-            {
-                if (Sections.Capacity[section] is { } cap && slot.Count >= cap)
-                    view.More.Add(story);
-                else
-                    slot.Add(story);
-            }
-            else
-            {
-                pool.Add(story);
-            }
+            var taken = new List<StoryView>(count);
+            while (taken.Count < count && queue.Count > 0)
+                taken.Add(queue.Dequeue());
+            return taken;
         }
 
-        Take(slots[Sections.Jobs], int.MaxValue, pool, pool.Where(s => s.IsJob));
-        Take(slots[Sections.Hero], 1, pool, pool);
-        Take(slots[Sections.Sub], 2, pool, pool);
-        var withImage = pool.Where(s => s.HasImage).OrderByDescending(s => s.Raw.Points ?? 0);
-        Take(slots[Sections.Side], 2, pool, withImage);
-        Take(slots[Sections.Photo], 1, pool, withImage);
-        Take(slots[Sections.Headline], 6, pool, pool);
-        slots[Sections.Tech].AddRange(pool);
+        view.Hero = Take(1).FirstOrDefault();
+        view.Subs.AddRange(Take(2));
+        view.Side.AddRange(Take(2));
+        view.Photo = Take(1).FirstOrDefault();
+        view.Headlines.AddRange(Take(6));
+        view.Briefs.AddRange(Take(6));
+        view.GridA.AddRange(Take(4));
+        view.ListA.AddRange(Take(4));
+        view.GridB.AddRange(Take(4));
+        view.More.AddRange(queue);
+    }
 
-        // 1면 톱이 비면 나머지 지면에서 가장 순위가 높은 기사를 올린다.
-        if (slots[Sections.Hero].Count == 0)
+    /// <summary>댓글 수집본과 본문·댓글 번역본을 합친다. 번역이 없으면 원문 댓글과 원문 소개를 보여 준다.</summary>
+    public static ItemView BuildItem(DateTimeOffset collectedAt, StoryView story, RawItem? raw, KoItem? ko, KoComments? koComments)
+    {
+        var translations = new Dictionary<long, string>();
+        foreach (var comment in koComments?.Comments ?? [])
         {
-            var best = slots.Where(kv => kv.Key != Sections.Jobs)
-                .SelectMany(kv => kv.Value.Select(s => (List: kv.Value, Story: s)))
-                .OrderBy(x => x.Story.Raw.Rank)
-                .FirstOrDefault();
-            if (best.Story is not null)
+            if (!string.IsNullOrWhiteSpace(comment.Text))
+                translations.TryAdd(comment.Id, comment.Text);
+        }
+
+        var comments = new List<CommentView>();
+        foreach (var c in raw?.Comments ?? [])
+        {
+            string? translated = null;
+            if (c.Text is not null)
+                translations.TryGetValue(c.Id, out translated);
+            comments.Add(new CommentView
             {
-                best.List.Remove(best.Story);
-                slots[Sections.Hero].Add(best.Story);
-            }
+                Id = c.Id,
+                Depth = c.Depth,
+                By = c.By,
+                Age = RelativeAge(collectedAt, c.Time),
+                Deleted = c.Deleted,
+                Text = translated ?? c.Text,
+            });
         }
 
-        view.Hero = slots[Sections.Hero].FirstOrDefault();
-        view.Subs.AddRange(slots[Sections.Sub]);
-        view.Side.AddRange(slots[Sections.Side]);
-        view.Photo = slots[Sections.Photo].FirstOrDefault();
-        view.Headlines.AddRange(slots[Sections.Headline]);
-        view.Opinion.AddRange(slots[Sections.Opinion]);
-        view.Jobs.AddRange(slots[Sections.Jobs]);
-        SplitGrid(slots[Sections.Tech], view.TechGrid, view.TechList);
-        SplitGrid(slots[Sections.Life], view.LifeGrid, view.LifeList);
-    }
+        var fallback = story.IsSelfPost
+            ? Nonblank(raw?.Text) ?? Nonblank(story.Raw.Text)
+            : Nonblank(story.Raw.Description);
 
-    private static void Take(List<StoryView> slot, int cap, List<StoryView> pool, IEnumerable<StoryView> order)
-    {
-        foreach (var story in order.ToList())
+        return new ItemView
         {
-            if (slot.Count >= cap)
-                break;
-            slot.Add(story);
-            pool.Remove(story);
-        }
+            Collected = raw is not null,
+            Translated = ko is not null,
+            CommentsTranslated = koComments is not null,
+            IsSelfPost = story.IsSelfPost,
+            Body = Nonblank(ko?.Body) ?? fallback,
+            TotalComments = raw?.TotalComments ?? story.Raw.Comments ?? 0,
+            Comments = comments,
+        };
     }
 
-    /// <summary>이미지 있는 기사를 우선해 사진 칸 4개를 채우고 나머지는 글 목록으로 보낸다.</summary>
-    private static void SplitGrid(List<StoryView> items, List<StoryView> grid, List<StoryView> list)
-    {
-        var picked = items.Where(s => s.HasImage).Take(GridSize).ToList();
-        picked.AddRange(items.Where(s => !picked.Contains(s)).Take(GridSize - picked.Count));
-        grid.AddRange(items.Where(picked.Contains));
-        list.AddRange(items.Where(s => !picked.Contains(s)));
-    }
-
-    private static string DefaultKicker(RawStory story) => story switch
-    {
-        { Type: "job" } => "채용",
-        _ when story.Title.StartsWith("Show HN", StringComparison.Ordinal) => "Show HN",
-        _ when story.Title.StartsWith("Ask HN", StringComparison.Ordinal) => "Ask HN",
-        _ => "",
-    };
-
-    private static string RelativeAge(DateTimeOffset at, long unixTime)
+    internal static string RelativeAge(DateTimeOffset at, long unixTime)
     {
         var span = at - DateTimeOffset.FromUnixTimeSeconds(unixTime);
         if (span.TotalHours < 1)

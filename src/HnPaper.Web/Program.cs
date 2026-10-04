@@ -1,7 +1,7 @@
 using HnPaper.Web.Services;
 
-// CLI: `dotnet run -- collect [--out <path>]`, `dotnet run -- validate [yyyy-MM-dd]`
-if (args.Length > 0 && args[0] is "collect" or "validate")
+// CLI: `dotnet run -- collect`, `dotnet run -- collect-items <yyyy-MM-dd>`, `dotnet run -- validate [yyyy-MM-dd] [id ...]`
+if (args.Length > 0 && args[0] is "collect" or "collect-items" or "validate")
     return await Cli.RunAsync(args);
 
 var builder = WebApplication.CreateBuilder(args);

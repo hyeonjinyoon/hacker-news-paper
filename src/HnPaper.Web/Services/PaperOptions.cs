@@ -17,6 +17,11 @@ public sealed record PaperOptions(string DataDirectory)
     public string RawPath(string date) => Path.Combine(RawDirectory, date + ".json");
     public string KoPath(string date) => Path.Combine(KoDirectory, date + ".json");
 
+    // 기사별 파일: 댓글 수집본, 중간 페이지 본문 번역본, 댓글 번역본
+    public string RawItemPath(string date, long id) => Path.Combine(RawDirectory, date, id + ".json");
+    public string KoItemPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".json");
+    public string KoCommentsPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".comments.json");
+
     public static PaperOptions Resolve(string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured))

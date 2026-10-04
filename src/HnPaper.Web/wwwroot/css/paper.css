@@ -1,39 +1,41 @@
+/* 키 색상은 동아일보 색 체계를 따른다: 청록(강조), 본문 #111, 보조 #5a5a5a, 선 #e5e5e5 */
 :root{
-  --bg:#fff;--fg:#111;--sub:#3d3d3d;--muted:#767676;--line:#e3e3e3;--rule:#111;
-  --accent:#c2410c;--opinion:#c0392b;--ph:#f2f0eb;--hover:#c2410c;
+  --bg:#fff;--fg:#111;--sub:#5a5a5a;--muted:#767676;--line:#e5e5e5;--rule:#111;
+  --accent:#008689;--ph:#f2f9f9;--faint:#a3a3a3;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-    --accent:#fb923c;--opinion:#f87171;--ph:#1e1e1e;--hover:#fb923c;
+    --accent:#2bb5b8;--ph:#1a2424;--faint:#7a7a7a;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-  --accent:#fb923c;--opinion:#f87171;--ph:#1e1e1e;--hover:#fb923c;
+  --accent:#2bb5b8;--ph:#1a2424;--faint:#7a7a7a;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--bg);color:var(--fg);
-  font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,Roboto,"Helvetica Neue","Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
-a{color:inherit;text-decoration:none}
-a:hover{color:var(--hover)}
+/* 마우스를 올리면 색은 그대로 두고 흐리게(70%) 한다. 사진 링크는 흐리게 하지 않고 사진만 살짝 키운다. */
+a{color:inherit;text-decoration:none;transition:opacity .2s}
+a:hover{opacity:.7}
+a.thumb:hover{opacity:1}
 h1,h2,h3,h4,p{margin:0}
 ol,ul{margin:0;padding:0;list-style:none}
 code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 .wrap{max-width:1312px;margin:0 auto;padding:0 16px}
 
 /* 상단 유틸 바 */
-.util{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0 0;font-size:13px;color:var(--muted)}
+.util{display:flex;justify-content:flex-end;align-items:center;gap:16px;padding:16px 0 0;font-size:13px;color:var(--muted)}
 .util nav{display:flex;flex-wrap:wrap}
 .util nav a+a::before{content:"";display:inline-block;width:1px;height:10px;background:var(--line);margin:0 10px;vertical-align:middle}
 
 /* 마스트헤드 */
 .masthead{display:flex;align-items:center;gap:40px;padding:18px 0 26px;border-bottom:3px solid var(--rule)}
-.logo{display:flex;align-items:baseline;gap:8px;flex:none;font-family:"Noto Serif KR",serif;font-weight:900;font-size:42px;letter-spacing:-.02em;line-height:1}
-.logo b{display:inline-grid;place-items:center;width:38px;height:38px;background:#ff6600;color:#fff;font:700 26px/1 Verdana,sans-serif;align-self:center}
-.logo small{font:700 12px/1 "Pretendard",sans-serif;letter-spacing:.24em;color:var(--accent)}
+.logo{display:flex;align-items:baseline;gap:7px;flex:none;font-weight:800;font-size:40px;letter-spacing:-.045em;line-height:1}
+.logo small{font-size:16px;font-weight:600;letter-spacing:0;color:var(--accent)}
 .gnb{display:flex;gap:30px;flex:1;justify-content:center;font-size:16.5px;font-weight:700;white-space:nowrap}
 .tools{display:flex;gap:20px;flex:none}
 .tools svg{width:23px;height:23px;display:block}
@@ -42,38 +44,38 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 .empty{padding:96px 0;text-align:center;color:var(--muted);line-height:1.9}
 
 /* 1면 톱 */
-.top{display:grid;grid-template-columns:minmax(0,1fr) 328px;padding-bottom:36px}
+.top{display:grid;grid-template-columns:minmax(0,1fr) 328px;padding-bottom:28px}
 .lead{padding-right:30px;border-right:1px solid var(--line)}
-.side{padding-left:30px;padding-top:28px}
-.hero h1{font-size:37px;font-weight:800;letter-spacing:-.035em;line-height:1.28;margin:28px 0 22px}
+.side{padding-left:30px;padding-top:24px}
+.hero h1{font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1.35;margin:24px 0 18px}
 .hero-body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(0,1fr);gap:24px}
-.thumb.hero-graphic{aspect-ratio:16/9.2}
-.lede{font-size:14.5px;line-height:1.72;color:var(--sub)}
+.thumb.hero-graphic{aspect-ratio:16/9}
+.lede{font-size:15px;line-height:1.7;color:var(--sub)}
+.lede-text{display:-webkit-box;-webkit-line-clamp:11;-webkit-box-orient:vertical;overflow:hidden}
 .lede p+p{margin-top:10px}
+.lede-text p:first-child{font-weight:700;color:var(--fg)}
 .lede .meta{margin-top:14px}
-.subs{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:24px;padding-top:24px;border-top:1px solid var(--line)}
-.sub{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px}
-.sub h3{font-size:18.5px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
-.sub p.desc{margin-top:8px;font-size:14px;line-height:1.6;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.card+.card{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
-.card .thumb{margin-bottom:14px}
-.card h3{font-size:19px;font-weight:700;line-height:1.42;letter-spacing:-.03em;margin-top:4px}
+.subs{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.sub{display:grid;grid-template-columns:168px minmax(0,1fr);gap:16px}
+.sub h3{font-size:17px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
+.sub p.desc{margin-top:6px;font-size:14px;line-height:1.6;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card+.card{margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.card .thumb{margin-bottom:12px}
+.card h3{font-size:17px;font-weight:700;line-height:1.42;letter-spacing:-.03em;margin-top:4px}
 
 /* 썸네일 */
 /* 바탕(background-image)에는 그라데이션 패널 이미지가 깔리고(GradientLibrary),
    og 이미지가 있으면 그 위를 덮는다. og 이미지를 불러오지 못하면 패널이 드러난다. */
 .thumb{position:relative;display:block;aspect-ratio:16/9;background:var(--ph) center/cover no-repeat;overflow:hidden}
 .thumb img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;transition:transform .4s}
-a.thumb:hover img{transform:scale(1.04)}
+a.thumb:hover img{transform:scale(1.03)}
 
-.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px}
-.meta{display:flex;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
-.meta>*+*::before{content:"·";margin:0 6px;color:var(--line)}
+.meta{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:1px;font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
 .meta a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 .meta .site{font-weight:600}
 
 /* 섹션 공통 */
-.band{border-top:3px solid var(--rule);padding:32px 0 40px}
+.band{border-top:3px solid var(--rule);padding:26px 0 30px}
 .sec-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
 .sec-head h2{font-size:23px;font-weight:800;letter-spacing:-.03em}
 .sec-head .meta{margin:0}
@@ -86,39 +88,37 @@ a.thumb:hover img{transform:scale(1.04)}
 .band-3 .col-a{padding-right:30px;border-right:1px solid var(--line)}
 .band-3 .col-b{padding:0 30px;border-right:1px solid var(--line)}
 .band-3 .col-c{padding-left:30px}
-.photo-lead .thumb{margin-bottom:14px}
-.photo-lead h3{font-size:18px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
+.photo-lead .thumb{margin-bottom:12px}
+.photo-lead h3{font-size:17px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
 .photo-lead p.desc{margin-top:8px;font-size:14px;line-height:1.6;color:var(--muted)}
-.headlines li{padding:15px 0;border-bottom:1px solid var(--line)}
+.headlines li{padding:11px 0;border-bottom:1px solid var(--line)}
 .headlines li:first-child{padding-top:0}
-.headlines h3{font-size:18.5px;font-weight:500;letter-spacing:-.03em;line-height:1.45}
-.headlines .meta{margin-top:5px}
-.opinion li{padding:16px 0;border-bottom:1px solid var(--line)}
-.opinion li:first-child{padding-top:0}
-.opinion .kicker{color:var(--opinion)}
-.opinion h3{font-size:16.5px;font-weight:500;line-height:1.5;letter-spacing:-.025em}
+.headlines h3{font-size:17px;font-weight:500;letter-spacing:-.03em;line-height:1.45}
+.headlines .meta{margin-top:3px}
+.briefs li{padding:11px 0;border-bottom:1px solid var(--line)}
+.briefs li:first-child{padding-top:0}
+.briefs h3{font-size:16px;font-weight:500;line-height:1.5;letter-spacing:-.025em}
 
 /* 테크·라이프 */
 .split{display:grid;grid-template-columns:minmax(0,1fr) 328px}
 .split>.main{padding-right:30px;border-right:1px solid var(--line);min-width:0}
 .split>.aside{padding-left:30px;min-width:0}
-.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
-.grid4 .kicker{display:block;margin:12px 0 0}
-.grid4 h3{font-size:16.5px;font-weight:700;line-height:1.45;letter-spacing:-.025em;margin-top:12px}
-.grid4 .kicker+h3{margin-top:2px}
-.textlist{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;margin-top:26px;border-top:1px solid var(--line)}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.grid4 h3{font-size:15.5px;font-weight:700;line-height:1.45;letter-spacing:-.025em;margin-top:10px}
+.grid-next{margin-top:24px}
+.textlist{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;margin-top:20px;border-top:1px solid var(--line)}
 .band>.textlist{margin-top:0}
-.textlist li{padding:14px 0;border-bottom:1px solid var(--line)}
+.textlist li{padding:11px 0;border-bottom:1px solid var(--line)}
 .textlist h3{font-size:16px;font-weight:500;line-height:1.5;letter-spacing:-.02em}
-.textlist p.desc{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:4px}
+.textlist p.desc{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 /* 많이 본 / 댓글 많은 */
-.ranking li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.ranking li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
 .ranking li:first-child{padding-top:0}
-.ranking .n{font-family:"Noto Serif KR",serif;font-weight:900;font-size:19px;line-height:1.25;color:var(--accent)}
+.ranking .n{font-weight:800;font-size:17px;line-height:1.3;color:var(--accent)}
 .ranking h3{font-size:15px;font-weight:500;line-height:1.45;letter-spacing:-.02em}
 .ranking .meta{margin-top:3px;font-size:12px}
-.aside .box+.box{margin-top:34px}
+.aside .box+.box{margin-top:28px}
 .jobs{border:1px solid var(--line);padding:18px}
 .jobs+.jobs{margin-top:12px}
 .jobs h3{font-size:16px;font-weight:700;line-height:1.45}
@@ -127,7 +127,7 @@ a.thumb:hover img{transform:scale(1.04)}
 /* 전체 순위 */
 .fulllist{border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
 .fulllist li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px;padding:14px 0;border-bottom:1px solid var(--line)}
-.fulllist .n{font-family:"Noto Serif KR",serif;font-weight:900;font-size:22px;line-height:1.2;color:var(--muted)}
+.fulllist .n{font-weight:800;font-size:21px;line-height:1.2;color:var(--muted)}
 .fulllist li:nth-child(-n+3) .n{color:var(--accent)}
 .fulllist h3{font-size:16px;font-weight:600;line-height:1.45;letter-spacing:-.02em}
 .fulllist .en{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
@@ -137,13 +137,16 @@ a.thumb:hover img{transform:scale(1.04)}
 .archive{border-top:0}
 .archive ol{border-top:1px solid var(--line)}
 .archive li{display:flex;align-items:baseline;gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}
-.archive .date{flex:none;font-family:"Noto Serif KR",serif;font-weight:900;font-size:18px}
+.archive .date{flex:none;font-weight:800;font-size:18px}
 .archive .headline{flex:1;min-width:0;font-size:15.5px;color:var(--sub)}
 .archive .badge{flex:none;font-size:12px;color:var(--muted);border:1px solid var(--line);padding:2px 8px}
 
 footer{border-top:3px solid var(--rule);padding:26px 0 48px;font-size:13px;line-height:1.7;color:var(--muted)}
 footer .logo{font-size:24px;margin-bottom:10px;color:var(--fg)}
-footer .logo b{width:24px;height:24px;font-size:16px}
+footer .logo small{font-size:12px}
+.edition-date{margin-bottom:8px;font-size:13px;color:var(--sub)}
+.repo-link{margin-top:6px}
+.repo-link a{color:var(--accent);font-weight:600}
 .edition-nav{display:flex;flex-wrap:wrap;gap:8px 24px;margin-bottom:12px;font-size:14px;font-weight:600;color:var(--fg)}
 
 /* 반응형 */
@@ -152,8 +155,8 @@ footer .logo b{width:24px;height:24px;font-size:16px}
   .band-3{grid-template-columns:260px minmax(0,1fr)}
   .band-3 .col-b{border-right:0;padding-right:0}
   .band-3 .col-c{grid-column:1/-1;padding:28px 0 0;margin-top:28px;border-top:1px solid var(--line)}
-  .opinion{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
-  .opinion li:nth-child(2){padding-top:0}
+  .briefs{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+  .briefs li:nth-child(2){padding-top:0}
   .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:1000px){
@@ -168,11 +171,11 @@ footer .logo b{width:24px;height:24px;font-size:16px}
   .aside .box+.box{margin-top:0}
 }
 @media (max-width:720px){
-  .util .date{display:none}
-  .logo{font-size:32px}
-  .logo b{width:30px;height:30px;font-size:20px}
+  .logo{font-size:30px}
+  .gnb a[href="/editions"]{display:none}
+  .logo small{font-size:13px}
   .hero h1{font-size:27px;margin:22px 0 16px}
-  .hero-body,.subs,.textlist,.fulllist,.opinion{grid-template-columns:minmax(0,1fr)}
+  .hero-body,.subs,.textlist,.fulllist,.briefs{grid-template-columns:minmax(0,1fr)}
   .sub{grid-template-columns:128px minmax(0,1fr);gap:14px}
   .sub h3{font-size:16.5px}
   .sub p.desc{-webkit-line-clamp:2}
@@ -180,7 +183,7 @@ footer .logo b{width:24px;height:24px;font-size:16px}
   .band-3 .col-a{padding-right:0;border-right:0;padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--line)}
   .band-3 .col-a:empty{display:none}
   .band-3 .col-b{padding:0}
-  .opinion li:nth-child(2){padding-top:16px}
+  .briefs li:nth-child(2){padding-top:16px}
   .side,.split>.aside{grid-template-columns:minmax(0,1fr)}
   .card+.card{padding-top:22px;border-top:1px solid var(--line)}
   .aside .box+.box{margin-top:34px}
@@ -188,4 +191,79 @@ footer .logo b{width:24px;height:24px;font-size:16px}
   .grid4 h3{font-size:15px}
   .archive li{flex-wrap:wrap;gap:4px 12px}
   .archive .headline{flex-basis:100%;order:3}
+}
+
+/* 중간 페이지: 요약(또는 HN 본문 번역)과 번역 댓글.
+   폭·글자 크기는 동아일보 기사 페이지에 맞춘다: 본문 칼럼 684px, 제목 34px/1.4, 본문 18px/1.8, 자간 -0.3px */
+/* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 300px. 본문 중심이 화면 중심 근처에 온다.
+   화면이 좁아지면 비어 있는 왼쪽 칸부터 줄어든다. */
+.story-page{display:grid;grid-template-columns:minmax(0,232px) 684px 300px;grid-template-areas:". head ." ". main right";column-gap:32px;row-gap:26px;justify-content:center;padding:32px 0 56px}
+.article-head{grid-area:head;min-width:0}
+.article{grid-area:main;min-width:0}
+.story-right{grid-area:right;min-width:0}
+.story-right .box+.box{margin-top:32px}
+.ranking li.current h3{color:var(--accent);font-weight:700}
+.ranking .pts{margin-top:2px;font-size:12.5px;color:var(--faint)}
+.crumbs{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.crumbs a{color:var(--accent)}
+.crumbs span{color:var(--sub);font-weight:500}
+.crumbs span::before{content:"›";margin-right:8px;color:var(--muted);font-weight:400}
+.article-head h1{font-size:34px;font-weight:700;line-height:1.4;margin:10px 0 10px}
+.article-head .en{font-size:16px;color:var(--muted);line-height:1.5}
+.article-head .meta{margin-top:16px;font-size:13px}
+.btn{display:inline-flex;align-items:center;padding:10px 16px;border:1px solid var(--line);font-size:14px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.article-body{padding-top:26px;border-top:1px solid var(--line)}
+.thumb.article-visual{aspect-ratio:16/9;margin:0 0 32px}
+.thumb.article-visual.no-image{aspect-ratio:5/1}
+.article-text h2,.comments h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.article-text h2{margin-bottom:16px}
+.article-text .notice{margin:0 0 14px}
+.article-text .md>p:first-child{font-size:20px;line-height:1.6}
+.md{font-size:18px;line-height:1.8;letter-spacing:-.3px;overflow-wrap:anywhere}
+.md>*+*{margin-top:18px}
+.md h1,.md h2,.md h3,.md h4{font-size:19px;font-weight:700;letter-spacing:-.02em;margin-top:30px}
+.md ul,.md ol{padding-left:22px;list-style:revert}
+.md li+li{margin-top:4px}
+.md a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.md code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--ph);padding:1px 5px;border-radius:3px}
+.md pre{background:var(--ph);padding:12px 14px;overflow-x:auto;border-radius:4px;line-height:1.55}
+.md pre code{background:none;padding:0}
+.md blockquote{margin-left:0;border-left:3px solid var(--line);padding-left:12px;color:var(--sub)}
+.source-note{margin-top:24px;font-size:14px;color:var(--muted)}
+.source-note a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+
+.comments{margin-top:40px;padding-top:28px;border-top:3px solid var(--rule)}
+.comments .notice{margin:0 0 12px}
+.comment{margin-left:calc(min(var(--depth), 8) * 22px);padding:14px 0 14px 14px;border-left:2px solid var(--line);border-top:1px solid var(--line)}
+.comment.root{padding-left:0;border-left:0}
+.comment-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.comment-meta .by{font-weight:700;color:var(--sub)}
+.comment-meta a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.comment .md{font-size:16px;line-height:1.75}
+.comment .md>*+*{margin-top:12px}
+.deleted{font-size:14px;color:var(--muted);font-style:italic}
+.more-comments{margin-top:18px;font-size:14px;font-weight:600}
+.more-comments a{color:var(--accent)}
+
+.story-nav{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;margin-top:40px;padding-top:20px;border-top:1px solid var(--line)}
+.story-nav span{display:block;font-size:12.5px;color:var(--muted)}
+.story-nav strong{display:block;margin-top:4px;font-size:15px;line-height:1.45}
+.story-nav .next{text-align:right}
+.story-nav .home{align-self:center;font-size:14px;font-weight:700}
+
+@media (max-width:720px){
+  .story-page{padding-top:20px}
+  .crumbs{font-size:14px}
+  .article-head h1{font-size:26px}
+  .md{font-size:17px}
+  .comment{margin-left:calc(min(var(--depth), 6) * 12px);padding-left:10px}
+  .story-nav{grid-template-columns:1fr 1fr}
+  .story-nav .home{grid-column:1/-1;order:3;text-align:center}
+}
+
+/* 중간 페이지 반응형: 동아일보 칸 배치(232·684·300)가 들어가지 않는 1312px 아래에서는
+   본문(최대 684px)을 가운데에 두고 오른쪽 목록은 본문 아래로 내린다. */
+@media (max-width:1311px){
+  .story-page{grid-template-columns:minmax(0,684px);grid-template-areas:"head" "main" "right"}
 }

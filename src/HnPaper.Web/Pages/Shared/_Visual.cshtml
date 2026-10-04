@@ -1,0 +1,12 @@
+@model StoryView
+@inject HnPaper.Web.Services.GradientLibrary Gradients
+@{
+    var panel = Gradients.UrlFor(Model.Raw.Id);
+}
+@* 중간 페이지의 대표 이미지(링크 없음). og 이미지가 없거나 불러오지 못하면 그라데이션 패널이 보인다. *@
+<figure class="thumb article-visual@(Model.HasImage ? "" : " no-image")" style="@(panel is null ? null : $"background-image:url('{panel}')")">
+  @if (Model.HasImage)
+  {
+    <img src="@Model.Raw.Image" alt="" referrerpolicy="no-referrer" onerror="this.remove()">
+  }
+</figure>
