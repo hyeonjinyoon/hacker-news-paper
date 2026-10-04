@@ -22,9 +22,11 @@ public sealed record PaperOptions(string DataDirectory)
     public string KoItemPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".json");
     public string KoCommentsPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".comments.json");
 
-    // 줄여 저장한 대표 이미지: data/img/{date}/{id}.webp(큰 것), {id}-s.webp(작은 것). 사이트는 /thumbs/로 제공한다.
+    // 줄여 저장한 대표 이미지: data/img/{date}/{id}-{폭}-{버전}.webp. 사이트는 /thumbs/로 제공한다.
+    // 폭과 형식 버전이 파일 이름에 들어 있어, 규칙을 바꾸면 주소도 바뀌고 캐시된 옛 이미지가 쓰이지 않는다.
     public string ThumbDirectory => Path.Combine(DataDirectory, "img");
-    public string ThumbPath(string date, long id, bool small) => Path.Combine(ThumbDirectory, date, id + (small ? "-s.webp" : ".webp"));
+    public string ThumbPath(string date, long id, int width) => Path.Combine(ThumbDirectory, date, ThumbFileName(id, width));
+    public static string ThumbFileName(long id, int width) => $"{id}-{width}-{ThumbnailMaker.Version}.webp";
 
     public static PaperOptions Resolve(string? configured)
     {

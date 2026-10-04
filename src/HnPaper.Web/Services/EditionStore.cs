@@ -123,7 +123,8 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
         // 큰 것과 작은 것이 둘 다 있는 기사만 줄인 이미지를 쓴다.
         var names = thumbFiles.Select(Path.GetFileName).ToHashSet();
         var thumbIds = raw.Stories.Select(s => s.Id)
-            .Where(id => names.Contains($"{id}.webp") && names.Contains($"{id}-s.webp"))
+            .Where(id => names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.LargeWidth))
+                      && names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.SmallWidth)))
             .ToHashSet();
 
         var view = EditionBuilder.Build(raw, ko, bodyById, thumbIds);

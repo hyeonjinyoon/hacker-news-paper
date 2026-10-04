@@ -1,12 +1,16 @@
 @model StoryView
 @inject HnPaper.Web.Services.GradientLibrary Gradients
-@{
-    var panel = Gradients.UrlFor(Model.Raw.Id);
+@if (Model.HasImage)
+{
+  @* 기사 페이지 대표 이미지는 잘라 내지 않고 원래 비율로 보여 준다(동아일보 기사 페이지처럼).
+     칸보다 작은 원본은 늘리지 않는다. 불러오지 못하면 그림 칸째 지운다. *@
+  <figure class="article-visual natural">
+    <img src="@Model.ImageUrl" srcset="@Model.ImageSrcset" sizes="(max-width:720px) 100vw, 684px" alt="" fetchpriority="high" referrerpolicy="no-referrer" onerror="this.closest('figure').remove()">
+  </figure>
 }
-@* 중간 페이지의 대표 이미지(링크 없음). og 이미지가 없거나 불러오지 못하면 그라데이션 패널이 보인다. *@
-<figure class="thumb article-visual@(Model.HasImage ? "" : " no-image")" style="@(panel is null ? null : $"background-image:url('{panel}')")">
-  @if (Model.HasImage)
-  {
-    <img src="@Model.ImageUrl" srcset="@Model.ImageSrcset" sizes="(max-width:720px) 100vw, 684px" alt="" fetchpriority="high" referrerpolicy="no-referrer" onerror="this.remove()">
-  }
-</figure>
+else
+{
+  var panel = Gradients.UrlFor(Model.Raw.Id);
+  @* 대표 이미지가 없는 기사는 얇은 그라데이션 띠로 둔다. *@
+  <figure class="thumb article-visual no-image" style="@(panel is null ? null : $"background-image:url('{panel}')")"></figure>
+}

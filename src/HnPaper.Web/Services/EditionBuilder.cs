@@ -23,8 +23,8 @@ public static class EditionBuilder
                     ? MarkdownRenderer.IntroParagraphs(body, 2)
                     : [];
                 var local = thumbs?.Contains(r.Id) == true;
-                var large = local ? $"/thumbs/{raw.Date}/{r.Id}.webp" : r.Image;
-                var small = local ? $"/thumbs/{raw.Date}/{r.Id}-s.webp" : r.Image;
+                var large = local ? $"/thumbs/{raw.Date}/{PaperOptions.ThumbFileName(r.Id, ThumbnailMaker.LargeWidth)}" : r.Image;
+                var small = local ? $"/thumbs/{raw.Date}/{PaperOptions.ThumbFileName(r.Id, ThumbnailMaker.SmallWidth)}" : r.Image;
                 return new StoryView
                 {
                     Date = raw.Date,

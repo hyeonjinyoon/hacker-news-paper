@@ -13,7 +13,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 |---|---|---|
 | `data/raw/{날짜}.json` | 수집기(`collect`) | 순위, 원제, URL, 포인트, 댓글 수, 대표 이미지, 원문 설명 |
 | `data/raw/{날짜}/{id}.json` | 수집기(`collect`, `collect-items`) | 기사별 HN 본문 글과 댓글(HN 댓글란 순서, 답글 포함, 최대 30개) |
-| `data/img/{날짜}/{id}.webp`, `{id}-s.webp` | 수집기(`collect`, `collect-thumbs`) | 원문 og 이미지를 줄인 대표 이미지(폭 960px·480px). 사이트가 원문 서버 대신 직접 제공한다 |
+| `data/img/{날짜}/{id}-1600-v2.webp`, `{id}-800-v2.webp` | 수집기(`collect`, `collect-thumbs`) | 원문 og 이미지를 줄인 대표 이미지(16:9 칸 1600px·800px을 덮는 크기, 원본보다 키우지 않음). 사이트가 원문 서버 대신 직접 제공한다 |
 | `data/ko/{날짜}.json` | 이 스킬(메인) | 제목 번역 |
 | `data/ko/{날짜}/{id}.json` | `hn-paper-article` 서브에이전트 | 중간 페이지 본문(굵은 한 줄 요약 · 왜 중요한가 · 핵심 내용 · HN 반응, 합니다체) |
 | `data/ko/{날짜}/{id}.comments.json` | `hn-paper-comments` 서브에이전트(Sonnet 5.5, medium) | 중간 페이지 댓글 번역 |

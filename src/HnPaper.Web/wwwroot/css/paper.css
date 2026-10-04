@@ -214,8 +214,9 @@ footer .logo small{font-size:12px}
 .btn{display:inline-flex;align-items:center;padding:10px 16px;border:1px solid var(--line);font-size:14px;font-weight:600}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .article-body{padding-top:26px;border-top:1px solid var(--line)}
-.thumb.article-visual{aspect-ratio:16/9;margin:0 0 32px}
-.thumb.article-visual.no-image{aspect-ratio:5/1}
+.thumb.article-visual.no-image{aspect-ratio:5/1;margin:0 0 32px}
+.article-visual.natural{margin:0 0 32px;text-align:center}
+.article-visual.natural img{display:inline-block;vertical-align:top;max-width:100%;height:auto;max-height:640px;object-fit:cover}
 .article-text h2,.comments h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .article-text h2{margin-bottom:16px}
 .article-text .notice{margin:0 0 14px}
