@@ -18,7 +18,7 @@ Claude Code 스킬 /hn-paper-update
           ├─ reuse: 이미 번역한 기사의 제목·본문, 남아 있는 댓글의 번역을 이 호로 가져옴
           ├─ 메인: 1면 제목 번역(새 기사만) ──▶ data/ko/{날짜}.json
           ├─ hn-paper-article (기사마다) ─────▶ data/ko/{날짜}/{id}.json          본문 요약
-          │    원문은 WebFetch로 읽고, 실패하면 에이전트 전용 브라우저(Playwright MCP, 화면에 창을 띄움)로 다시 읽는다
+          │    원문은 WebFetch로 읽고, 실패하면 브라우저(Playwright MCP, 화면에 창을 띄움)로 다시 읽고, 읽은 글의 주소를 확인한다
           └─ hn-paper-comments (기사마다,      ▶ data/ko/{날짜}/{id}.comments.json  댓글 번역
              Sonnet 5.5 · 추론 high)
           │

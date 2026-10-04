@@ -23,10 +23,12 @@ background: false
 
 1. `data/raw/{날짜}/{id}.json`을 Read로 읽는다. `text`는 HN 본문 글이나 작성자 설명이고, `comments`는 HN 댓글(최대 30개, HN 순서)이다. 댓글은 "HN 반응"을 쓰는 데 쓴다.
 2. URL이 `https://news.ycombinator.com/item?id=`로 시작하지 않는 외부 링크면 WebFetch로 원문을 읽는다.
-   WebFetch가 실패했거나(오류, 403, 빈 응답), 받은 내용이 본문 없이 로그인·구독 안내, 봇 확인, 쿠키 동의, "자바스크립트를 켜라" 같은 안내뿐이면 브라우저(Playwright, 헤드리스가 아니라 화면에 창을 띄운다)로 **한 번 더** 읽는다. 이 에이전트 전용으로 뜬 브라우저라 다른 에이전트와 섞이지 않는다.
-   1. `mcp__hn-browser__browser_navigate`로 URL을 열고, `mcp__hn-browser__browser_wait_for`(`time: 2`)로 2초 기다린다. 바로 읽으면 페이지가 아직 넘어가는 중이라 오류가 날 수 있다.
-   2. `mcp__hn-browser__browser_evaluate`로 본문 글만 가져온다: `() => (document.querySelector('article') || document.querySelector('main') || document.body).innerText.slice(0, 30000)`
-   3. 다 읽었으면 `mcp__hn-browser__browser_close`로 닫는다.
+   WebFetch가 실패했거나(오류, 403, 빈 응답), 받은 내용이 본문 없이 로그인·구독 안내, 봇 확인, 쿠키 동의, "자바스크립트를 켜라" 같은 안내뿐이면 브라우저(Playwright, 헤드리스가 아니라 화면에 창을 띄운다)로 **한 번 더** 읽는다. 이 브라우저는 동시에 도는 다른 기사의 에이전트와 탭을 함께 쓸 수 있어서, 기다리는 사이에 탭이 다른 기사의 페이지로 바뀔 수 있다. 그래서 읽은 글의 주소를 확인한다.
+   1. `mcp__hn-browser__browser_navigate`로 URL을 열고, 결과에 나오는 `Page URL`(리다이렉트를 거친 최종 주소)을 기억해 둔다. 그다음 `mcp__hn-browser__browser_wait_for`(`time: 2`)로 2초 기다린다. 바로 읽으면 페이지가 아직 넘어가는 중이라 오류가 날 수 있다.
+   2. `mcp__hn-browser__browser_evaluate`로 지금 주소와 본문 글을 한 번에 가져온다: `() => location.href + '\n\n' + (document.querySelector('article') || document.querySelector('main') || document.body).innerText.slice(0, 30000)`
+   3. 첫 줄의 주소가 1에서 기억한 `Page URL`과 같은 페이지인지 확인한다. 호스트와 경로를 비교하고, 쿼리·`#` 뒤·끝의 `/`는 무시한다. 다르면 다른 에이전트가 같은 탭에서 다른 기사를 연 것이므로 그 본문은 버리고 1부터 다시 한다(최대 2번 더). 세 번 모두 다르면 원문을 읽지 못한 것으로 본다. 다만 세 번 모두 같은 다른 주소로 바뀌었다면 사이트가 스스로 옮겨 간 것이므로, 본문이 원제와 같은 글일 때만 쓴다.
+   4. 주소가 같아도 본문이 원제와 전혀 다른 글이면 쓰지 않는다.
+   5. 다 읽었으면 `mcp__hn-browser__browser_close`로 닫는다.
    브라우저로도 본문을 얻지 못하면(유료 구독 벽, 봇 차단, 브라우저 도구를 쓸 수 없음) 아래 "열리지 않는 원문" 틀로 쓴다. 구독 벽이나 로그인을 우회하려 하지 않는다. 영상(YouTube 등)은 브라우저로 다시 열지 않는다.
 3. 아래 틀과 규칙대로 본문을 써서 `data/ko/{날짜}/{id}.json`에 Write로 저장한다.
    ```json
