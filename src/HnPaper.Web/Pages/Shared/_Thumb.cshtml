@@ -7,6 +7,6 @@
 <a class="thumb" style="@(panel is null ? null : $"background-image:url('{panel}')")" href="@Model.Href" tabindex="-1" aria-hidden="true">
   @if (Model.HasImage)
   {
-    <img src="@Model.Raw.Image" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+    <img src="@Model.ImageSmallUrl" srcset="@Model.ImageSrcset" sizes="(max-width:720px) 100vw, 300px" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">
   }
 </a>

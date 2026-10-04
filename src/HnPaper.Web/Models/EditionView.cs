@@ -20,7 +20,13 @@ public sealed class StoryView
     public string SourceUrl => Raw.Url;
     public string HnUrl => $"https://news.ycombinator.com/item?id={Raw.Id}";
     public bool IsSelfPost => Raw.Url == HnUrl;
-    public bool HasImage => !string.IsNullOrEmpty(Raw.Image);
+    /// <summary>대표 이미지(큰 것). 줄여 둔 파일이 있으면 /thumbs/, 없으면 원본 og 이미지 주소.</summary>
+    public string? ImageUrl { get; init; }
+    /// <summary>작은 썸네일. 줄여 둔 파일이 없으면 ImageUrl과 같다.</summary>
+    public string? ImageSmallUrl { get; init; }
+    /// <summary>줄여 둔 두 크기가 있을 때만 쓰는 srcset.</summary>
+    public string? ImageSrcset { get; init; }
+    public bool HasImage => !string.IsNullOrEmpty(ImageUrl);
 }
 
 public sealed record Meta(StoryView Story, bool ShowBy = false);

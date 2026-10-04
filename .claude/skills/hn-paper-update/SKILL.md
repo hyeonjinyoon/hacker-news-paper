@@ -2,7 +2,7 @@
 name: hn-paper-update
 description: 해커뉴스 페이퍼의 오늘자 호를 만든다. HN 1면 상위 30개와 기사별 댓글(최대 30개)을 수집하고, 제목을 자연스러운 한국어로 옮기고, 기사마다 서브에이전트를 띄워 중간 페이지(원문 요약 + Sonnet으로 번역한 댓글)를 data/ko/에 저장한 뒤 검증한다. 1면의 요약과 리드는 따로 쓰지 않고 중간 페이지 요약의 첫 문단을 쓴다. Claude 데스크톱 앱 루틴에서 매일 아침 실행하며, "기사 업데이트", "오늘 호 만들어줘", "해커뉴스 페이퍼 갱신" 같은 요청에도 쓴다.
 argument-hint: "[yyyy-MM-dd] [기사 id ...]: 날짜만 주면 그 호를 다시 번역(끝난 중간 페이지는 건너뜀), id까지 주면 그 기사들의 중간 페이지만"
-allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dotnet run --project src/HnPaper.Web -- collect-items:*), Bash(dotnet run --project src/HnPaper.Web -- validate:*), Read, Glob, Edit(data/ko/**), WebFetch
+allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dotnet run --project src/HnPaper.Web -- collect-items:*), Bash(dotnet run --project src/HnPaper.Web -- collect-thumbs:*), Bash(dotnet run --project src/HnPaper.Web -- validate:*), Read, Glob, Edit(data/ko/**), WebFetch
 ---
 
 # 해커뉴스 페이퍼 업데이트
@@ -13,6 +13,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 |---|---|---|
 | `data/raw/{날짜}.json` | 수집기(`collect`) | 순위, 원제, URL, 포인트, 댓글 수, 대표 이미지, 원문 설명 |
 | `data/raw/{날짜}/{id}.json` | 수집기(`collect`, `collect-items`) | 기사별 HN 본문 글과 댓글(HN 댓글란 순서, 답글 포함, 최대 30개) |
+| `data/img/{날짜}/{id}.webp`, `{id}-s.webp` | 수집기(`collect`, `collect-thumbs`) | 원문 og 이미지를 줄인 대표 이미지(폭 960px·480px). 사이트가 원문 서버 대신 직접 제공한다 |
 | `data/ko/{날짜}.json` | 이 스킬(메인) | 제목 번역 |
 | `data/ko/{날짜}/{id}.json` | `hn-paper-article` 서브에이전트 | 중간 페이지 본문(굵은 한 줄 요약 · 왜 중요한가 · 핵심 내용 · HN 반응, 합니다체) |
 | `data/ko/{날짜}/{id}.comments.json` | `hn-paper-comments` 서브에이전트(Sonnet 5.5, medium) | 중간 페이지 댓글 번역 |
@@ -35,12 +36,13 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 | 날짜 | 수집하지 않고 그 호의 1면 번역(3단계)을 다시 쓰고, 중간 페이지(4단계)는 아직 없거나 검증을 통과하지 못한 기사만 만든다 |
 | 날짜 + 기사 id | 그 기사들의 중간 페이지(4단계)만 다시 만든다 |
 
-1. **수집**: 인자가 없을 때만 실행한다. 1면과 기사별 댓글을 함께 모은다.
+1. **수집**: 인자가 없을 때만 실행한다. 1면, 기사별 댓글, 줄인 대표 이미지를 함께 만든다.
    ```
    dotnet run --project src/HnPaper.Web -- collect
    ```
    마지막 줄에 수집본 경로(`data/raw/yyyy-MM-dd.json`)가 나온다. 그 파일 이름의 날짜가 이번 호의 날짜다.
    날짜가 인자로 왔는데 `data/raw/{날짜}/` 폴더가 없으면 댓글만 수집한다: `dotnet run --project src/HnPaper.Web -- collect-items {날짜}`
+   `data/img/{날짜}/` 폴더가 없으면 대표 이미지만 만든다: `dotnet run --project src/HnPaper.Web -- collect-thumbs {날짜}` (실패한 이미지는 사이트가 원본 주소를 쓰므로 다시 시도하지 않아도 된다)
 2. **수집본 읽기**: Read로 `data/raw/{날짜}.json` 전체를 읽는다. 기사마다 `id`, `rank`, `type`, `title`, `site`, `points`, `comments`, `image`, `description`, `text`가 있다.
 3. **1면 제목 번역**: 아래 "1면 번역본 형식"과 제목 규칙에 맞춰 `data/ko/{날짜}.json`을 Write로 만든다. 수집본의 **모든 기사**(채용 글 포함)를 빠짐없이 넣는다. 1면의 요약과 톱기사 리드는 사이트가 4단계에서 만든 본문 요약의 첫 문단(소제목 앞)을 가져다 쓰므로 여기서 쓰지 않는다. 원문도 읽지 않는다.
 4. **중간 페이지 (기사마다 서브에이전트)**: 메인은 기사별 수집본(`data/raw/{날짜}/{id}.json`)이나 원문을 직접 읽지 않는다. 기사마다 새 서브에이전트에게 맡겨, 앞 기사의 본문·댓글이 메인 대화에 쌓이지 않게 한다.

@@ -7,6 +7,6 @@
 <figure class="thumb article-visual@(Model.HasImage ? "" : " no-image")" style="@(panel is null ? null : $"background-image:url('{panel}')")">
   @if (Model.HasImage)
   {
-    <img src="@Model.Raw.Image" alt="" referrerpolicy="no-referrer" onerror="this.remove()">
+    <img src="@Model.ImageUrl" srcset="@Model.ImageSrcset" sizes="(max-width:720px) 100vw, 684px" alt="" fetchpriority="high" referrerpolicy="no-referrer" onerror="this.remove()">
   }
 </figure>

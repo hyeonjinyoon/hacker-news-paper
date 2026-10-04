@@ -7,7 +7,7 @@ namespace HnPaper.Web.Services;
 /// <summary>data/ 폴더의 호를 읽어 화면용으로 합친다. 파일이 바뀌면 다음 요청에서 다시 읽는다.</summary>
 public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> logger)
 {
-    private sealed record CacheEntry(DateTime RawStamp, DateTime KoStamp, (DateTime Stamp, int Count) Bodies, EditionView View);
+    private sealed record CacheEntry(DateTime RawStamp, DateTime KoStamp, (DateTime Stamp, int Count) Bodies, (DateTime Stamp, int Count) Thumbs, EditionView View);
     private sealed record ItemCacheEntry(DateTime RawStamp, DateTime KoStamp, DateTime CommentsStamp, ItemView View);
 
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
@@ -90,7 +90,10 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
         var bodyFiles = BodyFiles(date);
         var bodies = (bodyFiles.Count == 0 ? DateTime.MinValue : bodyFiles.Max(File.GetLastWriteTimeUtc), bodyFiles.Count);
 
-        if (_cache.TryGetValue(date, out var hit) && hit.RawStamp == rawStamp && hit.KoStamp == koStamp && hit.Bodies == bodies)
+        var thumbFiles = ThumbFiles(date);
+        var thumbs = (thumbFiles.Count == 0 ? DateTime.MinValue : thumbFiles.Max(File.GetLastWriteTimeUtc), thumbFiles.Count);
+
+        if (_cache.TryGetValue(date, out var hit) && hit.RawStamp == rawStamp && hit.KoStamp == koStamp && hit.Bodies == bodies && hit.Thumbs == thumbs)
             return hit.View;
 
         var raw = PaperJson.Read<RawEdition>(rawPath);
@@ -117,9 +120,21 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
                 bodyById.TryAdd(item.Id, body);
         }
 
-        var view = EditionBuilder.Build(raw, ko, bodyById);
-        _cache[date] = new CacheEntry(rawStamp, koStamp, bodies, view);
+        // 큰 것과 작은 것이 둘 다 있는 기사만 줄인 이미지를 쓴다.
+        var names = thumbFiles.Select(Path.GetFileName).ToHashSet();
+        var thumbIds = raw.Stories.Select(s => s.Id)
+            .Where(id => names.Contains($"{id}.webp") && names.Contains($"{id}-s.webp"))
+            .ToHashSet();
+
+        var view = EditionBuilder.Build(raw, ko, bodyById, thumbIds);
+        _cache[date] = new CacheEntry(rawStamp, koStamp, bodies, thumbs, view);
         return view;
+    }
+
+    private List<string> ThumbFiles(string date)
+    {
+        var dir = Path.Combine(options.ThumbDirectory, date);
+        return Directory.Exists(dir) ? Directory.EnumerateFiles(dir, "*.webp").ToList() : [];
     }
 
     /// <summary>data/ko/{date}/의 기사별 본문 번역본({id}.json). 댓글 번역본(*.comments.json)은 뺀다.</summary>

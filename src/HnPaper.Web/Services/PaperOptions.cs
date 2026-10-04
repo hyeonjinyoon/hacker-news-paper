@@ -22,6 +22,10 @@ public sealed record PaperOptions(string DataDirectory)
     public string KoItemPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".json");
     public string KoCommentsPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".comments.json");
 
+    // 줄여 저장한 대표 이미지: data/img/{date}/{id}.webp(큰 것), {id}-s.webp(작은 것). 사이트는 /thumbs/로 제공한다.
+    public string ThumbDirectory => Path.Combine(DataDirectory, "img");
+    public string ThumbPath(string date, long id, bool small) => Path.Combine(ThumbDirectory, date, id + (small ? "-s.webp" : ".webp"));
+
     public static PaperOptions Resolve(string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured))

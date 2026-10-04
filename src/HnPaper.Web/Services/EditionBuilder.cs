@@ -6,7 +6,9 @@ namespace HnPaper.Web.Services;
 public static class EditionBuilder
 {
     /// <param name="bodies">기사별 본문 번역본(마크다운). 1면 요약과 리드는 이 본문의 첫 문단들을 쓴다.</param>
-    public static EditionView Build(RawEdition raw, KoEdition? ko, IReadOnlyDictionary<long, string>? bodies = null)
+    /// <param name="thumbs">대표 이미지를 줄여 저장해 둔 기사 id.</param>
+    public static EditionView Build(RawEdition raw, KoEdition? ko, IReadOnlyDictionary<long, string>? bodies = null,
+        IReadOnlySet<long>? thumbs = null)
     {
         var koById = new Dictionary<long, KoStory>();
         foreach (var story in ko?.Stories ?? [])
@@ -20,10 +22,16 @@ public static class EditionBuilder
                 var intro = bodies is not null && bodies.TryGetValue(r.Id, out var body)
                     ? MarkdownRenderer.IntroParagraphs(body, 2)
                     : [];
+                var local = thumbs?.Contains(r.Id) == true;
+                var large = local ? $"/thumbs/{raw.Date}/{r.Id}.webp" : r.Image;
+                var small = local ? $"/thumbs/{raw.Date}/{r.Id}-s.webp" : r.Image;
                 return new StoryView
                 {
                     Date = raw.Date,
                     Raw = r,
+                    ImageUrl = large,
+                    ImageSmallUrl = small,
+                    ImageSrcset = local ? $"{small} {ThumbnailMaker.SmallWidth}w, {large} {ThumbnailMaker.LargeWidth}w" : null,
                     Title = Nonblank(k?.Title) ?? r.Title,
                     Intro = intro,
                     // 본문 요약의 첫 문단 → 예전 호의 1면 요약 → (번역 전 호면) 원문 설명

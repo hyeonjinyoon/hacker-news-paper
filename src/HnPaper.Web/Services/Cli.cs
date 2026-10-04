@@ -6,6 +6,7 @@ namespace HnPaper.Web.Services;
 /// hn-paper-update 스킬이 부르는 명령.
 ///   collect [--comments N] [--out path]   1면 상위 30개와 기사별 댓글 수집
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
+///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 줄여 저장
 ///   validate [yyyy-MM-dd] [id ...] [--part body|comments]
 ///                                         번역본 검사. id를 주면 그 기사의 중간 페이지만, --part를 주면 본문이나 댓글만 검사
 /// </summary>
@@ -21,6 +22,7 @@ public static class Cli
         {
             "collect" => await CollectAsync(options, args),
             "collect-items" => await CollectItemsAsync(options, args),
+            "collect-thumbs" => await CollectThumbsAsync(options, args),
             _ => Validate(options, args),
         };
     }
@@ -38,9 +40,14 @@ public static class Cli
         var items = await collector.CollectItemsAsync(edition, CommentLimit(args),
             id => Path.Combine(itemsDir, id + ".json"), CancellationToken.None);
 
+        // 시험 수집(--out)일 때는 data/img를 건드리지 않는다.
+        var thumbs = Option(args, "--out") is null
+            ? await new ThumbnailMaker(http, options).MakeAllAsync(edition, CancellationToken.None)
+            : (Made: 0, Skipped: 0);
+
         var images = edition.Stories.Count(s => s.Image is not null);
         var descriptions = edition.Stories.Count(s => s.Description is not null);
-        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 설명 {descriptions}, 기사별 댓글 파일 {items})");
+        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 줄인 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items})");
         Console.WriteLine(path);
         return 0;
     }
@@ -60,6 +67,22 @@ public static class Cli
             id => options.RawItemPath(date, id), CancellationToken.None);
         Console.WriteLine($"기사별 댓글 수집 완료: {date} · {items}/{edition.Stories.Count}개");
         return items == edition.Stories.Count ? 0 : 1;
+    }
+
+    private static async Task<int> CollectThumbsAsync(PaperOptions options, string[] args)
+    {
+        var date = args.Length > 1 ? args[1] : null;
+        if (date is null || !Kst.DatePattern.IsMatch(date) || !File.Exists(options.RawPath(date)))
+        {
+            Console.Error.WriteLine("수집본이 있는 날짜를 주세요. 예: collect-thumbs 2026-10-04");
+            return 2;
+        }
+
+        var edition = PaperJson.Read<RawEdition>(options.RawPath(date))!;
+        using var http = HnCollector.CreateHttpClient();
+        var (made, skipped) = await new ThumbnailMaker(http, options).MakeAllAsync(edition, CancellationToken.None);
+        Console.WriteLine($"대표 이미지 줄이기 완료: {date} · {made}개 저장, {skipped}개는 원본 주소 사용(내려받기·디코딩 실패)");
+        return 0;
     }
 
     private static int Validate(PaperOptions options, string[] args)
