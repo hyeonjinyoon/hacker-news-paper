@@ -14,7 +14,9 @@ public static class EditionBuilder
         foreach (var story in ko?.Stories ?? [])
             koById.TryAdd(story.Id, story);
 
+        // 채용 글은 수집 단계에서 빼지만, 그 전에 수집한 호에 남은 것도 지면에 싣지 않는다.
         var stories = raw.Stories
+            .Where(s => !s.IsJob)
             .OrderBy(s => s.Rank)
             .Select(r =>
             {

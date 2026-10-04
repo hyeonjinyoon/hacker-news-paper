@@ -24,7 +24,7 @@ public static partial class EditionValidator
 
         var rawById = raw.Stories.ToDictionary(s => s.Id);
         var koIds = stories.Select(s => s.Id).ToHashSet();
-        foreach (var missing in raw.Stories.Where(s => !koIds.Contains(s.Id)))
+        foreach (var missing in raw.Stories.Where(s => !s.IsJob && !koIds.Contains(s.Id)))
             errors.Add($"{missing.Rank}위(id {missing.Id}) 번역이 없습니다: {missing.Title}");
 
         foreach (var story in stories)

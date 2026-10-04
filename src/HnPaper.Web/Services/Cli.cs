@@ -130,7 +130,7 @@ public static class Cli
         // 서브에이전트가 자기 몫(--part)만 검사할 때는 1면 번역본 검사를 건너뛴다.
         var (errors, warnings) = part is null ? EditionValidator.Validate(raw, ko) : ([], []);
 
-        var items = raw.Stories.Where(s => onlyIds.Count == 0 || onlyIds.Contains(s.Id)).ToList();
+        var items = raw.Stories.Where(s => !s.IsJob && (onlyIds.Count == 0 || onlyIds.Contains(s.Id))).ToList();
         foreach (var story in items)
         {
             var rawItemPath = options.RawItemPath(date, story.Id);

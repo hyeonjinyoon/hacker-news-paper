@@ -27,7 +27,6 @@ public static partial class SummaryLint
     public static void Check(string label, RawStory story, RawItem? raw, string body, List<string> errors, List<string> warnings)
     {
         var isSelfPost = story.Url.StartsWith("https://news.ycombinator.com/item?id=", StringComparison.Ordinal);
-        var isJob = story.Type == "job";
         var doc = Parse(body);
 
         // 1. 굵은 한 줄 요약(1면 요약으로도 쓰인다)
@@ -37,7 +36,7 @@ public static partial class SummaryLint
             errors.Add($"{label}: 한 줄 요약이 {doc.OneLiner.Length}자입니다(15~80자).");
 
         // 2. 외부 기사 요약의 틀과 분량
-        if (!isSelfPost && !isJob && !body.Contains(UnreadableMarker, StringComparison.Ordinal))
+        if (!isSelfPost && !body.Contains(UnreadableMarker, StringComparison.Ordinal))
         {
             if (doc.IntroLength == 0)
                 errors.Add($"{label}: 한 줄 요약 다음에 도입 문단이 없습니다.");

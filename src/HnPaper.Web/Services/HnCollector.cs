@@ -13,6 +13,8 @@ public sealed partial class HnCollector(HttpClient http)
     private const int MaxHtmlBytes = 512 * 1024;
     private const int MaxDescription = 500;
     private const int MaxText = 1200;
+    // 채용 글·지운 글을 빼고도 count개를 채우려고 더 받아 두는 수
+    private const int Spare = 10;
 
     // 사용자 이름까지 붙여야 출처가 구분되는 호스트
     private static readonly HashSet<string> UserHosts = ["github.com", "gitlab.com", "codeberg.org", "medium.com", "x.com", "twitter.com"];
@@ -35,10 +37,14 @@ public sealed partial class HnCollector(HttpClient http)
     {
         var collectedAt = Kst.Now;
         var ids = await http.GetFromJsonAsync<long[]>(Api + "topstories.json", ct) ?? [];
-        var items = await Task.WhenAll(ids.Take(count).Select(id =>
+        var items = await Task.WhenAll(ids.Take(count + Spare).Select(id =>
             http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct)));
 
-        var live = items.OfType<HnItem>().Where(i => i is { Dead: not true, Deleted: not true, Title: not null }).ToList();
+        // 채용 글(type job)은 기사가 아니므로 싣지 않는다. 순위는 남은 기사끼리 다시 매긴다.
+        var live = items.OfType<HnItem>()
+            .Where(i => i is { Dead: not true, Deleted: not true, Title: not null } && i.Type != "job")
+            .Take(count)
+            .ToList();
 
         using var gate = new SemaphoreSlim(8);
         var stories = await Task.WhenAll(live.Select((item, i) => BuildStoryAsync(item, i + 1, gate, ct)));
@@ -66,7 +72,6 @@ public sealed partial class HnCollector(HttpClient http)
             image ??= YouTubeThumbnail(uri!);
         }
 
-        var isJob = item.Type == "job";
         return new RawStory(
             Rank: rank,
             Id: item.Id,
@@ -74,8 +79,8 @@ public sealed partial class HnCollector(HttpClient http)
             Title: item.Title!,
             Url: external ? uri!.ToString() : hnUrl,
             Site: external ? SiteOf(uri!) : "news.ycombinator.com",
-            Points: isJob ? null : item.Score,
-            Comments: isJob ? null : item.Descendants ?? 0,
+            Points: item.Score,
+            Comments: item.Descendants ?? 0,
             By: item.By ?? "",
             Time: item.Time,
             Image: image,
