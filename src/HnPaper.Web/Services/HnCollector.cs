@@ -7,7 +7,8 @@ using HnPaper.Web.Models;
 namespace HnPaper.Web.Services;
 
 /// <summary>HN 과거 1면(front?day=)의 상위 글과 각 원문의 대표 이미지·설명을 모은다.</summary>
-public sealed partial class HnCollector(HttpClient http)
+/// <param name="browser">봇 차단에 막힌 원문의 대표 이미지·설명을 다시 읽을 브라우저. 없으면 다시 읽지 않는다.</param>
+public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser = null)
 {
     private const string Api = "https://hacker-news.firebaseio.com/v0/";
     // 그날(UTC) 1면에 오른 글을 모은 목록. API에는 없어서 HTML에서 글 id만 읽고, 나머지는 API로 받는다.
@@ -116,15 +117,7 @@ public sealed partial class HnCollector(HttpClient http)
         string? image = null, description = null;
         if (external)
         {
-            await gate.WaitAsync(ct);
-            try
-            {
-                (image, description) = await FetchPreviewAsync(uri!, ct);
-            }
-            finally
-            {
-                gate.Release();
-            }
+            (image, description) = await FetchPreviewAsync(uri!, gate, ct);
             image ??= YouTubeThumbnail(uri!);
         }
 
@@ -228,9 +221,24 @@ public sealed partial class HnCollector(HttpClient http)
         return BlankLines().Replace(text, "\n\n").Trim();
     }
 
-    private async Task<(string? Image, string? Description)> FetchPreviewAsync(Uri uri, CancellationToken ct)
+    private async Task<(string? Image, string? Description)> FetchPreviewAsync(Uri uri, SemaphoreSlim gate, CancellationToken ct)
     {
-        var html = await FetchHtmlAsync(uri, ct);
+        await gate.WaitAsync(ct);
+        (string? Html, bool Blocked) fetched;
+        try
+        {
+            fetched = await FetchHtmlAsync(uri, ct);
+        }
+        finally
+        {
+            gate.Release();
+        }
+
+        // 봇 차단에 막혔거나 접속하지 못한 원문은 창을 띄운 브라우저로 한 번 더 연다.
+        // 브라우저는 한 번에 한 페이지씩 열므로, 기다리는 동안 다른 글의 요청을 막지 않게 gate 밖에서 연다.
+        var (html, baseUri) = (fetched.Html, uri);
+        if (fetched.Blocked && browser is not null && await browser.FetchHtmlAsync(uri, ct) is { } page)
+            (html, baseUri) = (page.Html, page.Url);
         if (html is null)
             return (null, null);
 
@@ -239,13 +247,14 @@ public sealed partial class HnCollector(HttpClient http)
         var description = First(meta, "og:description", "description", "twitter:description");
 
         string? imageUrl = null;
-        if (image is not null && Uri.TryCreate(uri, image, out var abs) && abs.Scheme is "http" or "https")
+        if (image is not null && Uri.TryCreate(baseUri, image, out var abs) && abs.Scheme is "http" or "https")
             imageUrl = abs.ToString();
 
         return (imageUrl, description is null ? null : Truncate(Collapse(description), MaxDescription));
     }
 
-    private async Task<string?> FetchHtmlAsync(Uri uri, CancellationToken ct)
+    /// <returns>HTML(받지 못하면 null)과, 봇 차단에 막혔거나 접속하지 못해 브라우저로 다시 열어 볼 만한지.</returns>
+    private async Task<(string? Html, bool Blocked)> FetchHtmlAsync(Uri uri, CancellationToken ct)
     {
         try
         {
@@ -253,20 +262,20 @@ public sealed partial class HnCollector(HttpClient http)
             timeout.CancelAfter(TimeSpan.FromSeconds(12));
             using var response = await http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
             if (!response.IsSuccessStatusCode)
-                return null;
+                return (null, response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable);
             if (response.Content.Headers.ContentType?.MediaType?.Contains("html") != true)
-                return null;
+                return (null, false);
 
             await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
             var buffer = new byte[MaxHtmlBytes];
             int total = 0, read;
             while (total < buffer.Length && (read = await stream.ReadAsync(buffer.AsMemory(total), timeout.Token)) > 0)
                 total += read;
-            return Encoding.UTF8.GetString(buffer, 0, total);
+            return (Encoding.UTF8.GetString(buffer, 0, total), false);
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {
-            return null;
+            return (null, true);
         }
     }
 

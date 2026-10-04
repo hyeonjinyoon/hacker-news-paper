@@ -36,7 +36,8 @@ public static class Cli
     private static async Task<int> CollectAsync(PaperOptions options, string[] args)
     {
         using var http = HnCollector.CreateHttpClient();
-        var collector = new HnCollector(http);
+        await using var browser = new BrowserFetcher();
+        var collector = new HnCollector(http, browser);
         var edition = await collector.CollectAsync(StoryCount, CancellationToken.None);
 
         var path = Option(args, "--out") is { } outPath ? Path.GetFullPath(outPath) : options.RawPath(edition.Date);
@@ -53,7 +54,7 @@ public static class Cli
 
         var images = edition.Stories.Count(s => s.Image is not null);
         var descriptions = edition.Stories.Count(s => s.Description is not null);
-        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 줄인 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items})");
+        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 줄인 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened})");
         Console.WriteLine(path);
         return 0;
     }
@@ -102,7 +103,8 @@ public static class Cli
 
         var edition = PaperJson.Read<RawEdition>(options.RawPath(date))!;
         using var http = HnCollector.CreateHttpClient();
-        var collector = new HnCollector(http);
+        await using var browser = new BrowserFetcher();
+        var collector = new HnCollector(http, browser);
         var (filled, added) = await collector.FillAsync(edition, StoryCount, CancellationToken.None);
         PaperJson.Write(options.RawPath(date), filled);
 

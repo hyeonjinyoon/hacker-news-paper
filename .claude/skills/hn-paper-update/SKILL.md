@@ -42,6 +42,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
    ```
    마지막 줄에 수집본 경로(`data/raw/yyyy-MM-dd.json`)가 나온다. 그 파일 이름의 날짜가 이번 호의 날짜다.
    수집기는 호 날짜(한국 시간 오늘)의 전날 HN 과거 1면(`front?day=`)을 읽는다. 그날(UTC) 1면에 오른 글을 HN이 매긴 순서대로 담은 목록이다. HN의 하루는 UTC라서 전날 목록은 한국 시간 오전 9시에 닫히고, 그 전에 수집하면 마지막 몇 시간 동안 1면에 오른 글이 빠질 수 있다.
+   원문이 봇 차단에 막히면 수집기가 Chrome 창을 잠깐 띄워 대표 이미지·설명을 다시 읽는다. 출력의 `브라우저로 다시 연 원문`이 그 수다.
    날짜가 인자로 왔는데 `data/raw/{날짜}/` 폴더가 없으면 댓글만 수집한다: `dotnet run --project src/HnPaper.Web -- collect-items {날짜}`
    `data/img/{날짜}/` 폴더가 없으면 대표 이미지만 만든다: `dotnet run --project src/HnPaper.Web -- collect-thumbs {날짜}` (실패한 이미지는 사이트가 원본 주소를 쓰므로 다시 시도하지 않아도 된다)
 2. **번역 재사용과 수집본 읽기**: 먼저 이미 번역한 것을 이 호로 가져온다.

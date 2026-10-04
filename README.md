@@ -39,6 +39,7 @@ ASP.NET Core 사이트 (src/HnPaper.Web) ◀── data/ 를 읽어 지면을 �
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/)
 - [Claude Code](https://claude.com/claude-code): 번역할 때만 필요합니다
+- [Google Chrome](https://www.google.com/chrome/): 수집할 때 봇 차단에 막힌 원문의 대표 이미지·설명을 다시 읽는 데 씁니다. 없으면 그 글은 이미지 없이 수집됩니다
 - [uv](https://docs.astral.sh/uv/): 그라데이션 패널 이미지를 새로 만들 때만 필요합니다
 
 ## 사이트 실행
@@ -103,7 +104,7 @@ dotnet run --project src/HnPaper.Web -- validate [2026-10-04] [id ...] [--part b
 
 | 명령 | 하는 일 |
 |---|---|
-| `collect` | 전날(UTC) HN 과거 1면(`front?day=`) 상위 30개(채용 글·구인 스레드·50포인트 미만 글·Show HN 글 제외), 기사별 댓글(HN 순서, 답글 포함, 기본 30개), 줄인 대표 이미지를 오늘 날짜(KST)로 저장 |
+| `collect` | 전날(UTC) HN 과거 1면(`front?day=`) 상위 30개(채용 글·구인 스레드·50포인트 미만 글·Show HN 글 제외), 기사별 댓글(HN 순서, 답글 포함, 기본 30개), 줄인 대표 이미지를 오늘 날짜(KST)로 저장. 원문이 봇 차단(403·429·503)에 막히거나 접속되지 않으면 Chrome 창을 띄워(헤드리스 아님) 다시 열고 og 이미지·설명을 읽음 |
 | `collect-items` | 이미 수집한 호의 기사별 댓글만 다시 수집 |
 | `collect-thumbs` | 이미 수집한 호의 대표 이미지만 다시 줄여 저장 |
 | `collect-fill` | 이미 수집한 호에서 싣지 않는 글(위 `collect`의 제외 기준)을 빼고 순위를 다시 매긴 뒤, 모자란 자리를 그 호의 HN 과거 1면에서 그 호에 없는 글로 채움. 새로 넣은 기사만 댓글·대표 이미지를 모으므로, 그 기사의 제목 번역과 중간 페이지는 따로 만든다 |
