@@ -1,0 +1,17 @@
+@model StoryView
+@if (Model.IsMemorial)
+{
+  <a class="memorial" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+    <span>IN MEMORIAM</span><strong>@Model.PlaceholderText</strong>
+  </a>
+}
+else
+{
+  <a class="thumb" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+    <span class="ph-label">@Model.PlaceholderText</span>
+    @if (Model.HasImage)
+    {
+      <img src="@Model.Raw.Image" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+    }
+  </a>
+}

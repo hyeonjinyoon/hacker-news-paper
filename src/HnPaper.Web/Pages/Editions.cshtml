@@ -1,0 +1,27 @@
+@page "/editions"
+@model EditionsModel
+@{
+    ViewData["Title"] = "지난 호 · 해커뉴스 페이퍼";
+    ViewData["DateLabel"] = "지난 호";
+    ViewData["NavBase"] = "/";
+}
+<main class="band archive">
+  <div class="sec-head"><h2>지난 호</h2><span class="meta">@(Model.Items.Count)개 호</span></div>
+  @if (Model.Items.Count == 0)
+  {
+    <p class="meta">아직 발행된 호가 없습니다.</p>
+  }
+  <ol>
+    @foreach (var (info, headline) in Model.Items)
+    {
+      <li>
+        <a class="date" href="/@info.Date">@info.Date</a>
+        <span class="headline">@(headline ?? "—")</span>
+        @if (!info.Translated)
+        {
+          <span class="badge">번역 전</span>
+        }
+      </li>
+    }
+  </ol>
+</main>

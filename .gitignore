@@ -1,1 +1,9 @@
 .playwright-mcp/
+
+# .NET
+bin/
+obj/
+.build/
+*.user
+.vs/
+.idea/

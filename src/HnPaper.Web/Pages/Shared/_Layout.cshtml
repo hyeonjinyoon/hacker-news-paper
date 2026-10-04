@@ -1,0 +1,60 @@
+@{
+    // 1면이 아닌 페이지에서는 섹션 앵커가 1면으로 돌아가야 한다.
+    var navBase = ViewData["NavBase"] as string ?? "";
+}
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@(ViewData["Title"] ?? "해커뉴스 페이퍼")</title>
+<meta name="description" content="Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&display=swap">
+<link rel="icon" href="~/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="~/css/paper.css" asp-append-version="true">
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="util">
+    <span class="date">@ViewData["DateLabel"]</span>
+    <nav aria-label="바로가기">
+      <a href="/editions">지난 호</a>
+      <a href="https://news.ycombinator.com/" target="_blank" rel="noopener">Hacker News 원문</a>
+      <a href="https://news.ycombinator.com/newest" target="_blank" rel="noopener">최신</a>
+      <a href="https://news.ycombinator.com/ask" target="_blank" rel="noopener">Ask</a>
+      <a href="https://news.ycombinator.com/show" target="_blank" rel="noopener">Show</a>
+    </nav>
+  </div>
+  <div class="masthead">
+    <a class="logo" href="/"><b>Y</b>해커뉴스<small>PAPER</small></a>
+    <nav class="gnb" aria-label="섹션">
+      <a href="@(navBase)#top">주요뉴스</a>
+      <a href="@(navBase)#opinion">오피니언</a>
+      <a href="@(navBase)#tech">테크</a>
+      <a href="@(navBase)#life">라이프</a>
+      <a href="@(navBase)#popular">많이 본 뉴스</a>
+      <a href="@(navBase)#jobs">채용</a>
+      <a href="@(navBase)#rank">전체 순위</a>
+    </nav>
+    <div class="tools">
+      <a href="https://hn.algolia.com/" target="_blank" rel="noopener" aria-label="Hacker News 검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg></a>
+      <a href="https://news.ycombinator.com/" target="_blank" rel="noopener" aria-label="Hacker News 원문 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+    </div>
+  </div>
+</header>
+
+@RenderBody()
+
+<footer>
+  <div class="logo"><b>Y</b>해커뉴스<small>PAPER</small></div>
+  @await RenderSectionAsync("FooterNav", required: false)
+  <p>매일 아침 Hacker News(news.ycombinator.com) 1면 상위 30개 글의 제목을 한국어로 옮기고 짧게 요약하는 비공식 페이지입니다. 포인트와 댓글 수는 수집 시점의 값입니다.</p>
+  <p>각 글의 저작권은 원 출처에 있습니다. 제목을 누르면 원문으로, ‘댓글’을 누르면 Hacker News 토론으로 이동합니다.</p>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+@model Meta
+@{
+    var s = Model.Story;
+}
+<p class="meta">
+  <span class="site">@s.Raw.Site</span>
+  @if (s.Raw.Points is { } points)
+  {
+    <span>▲ @points</span>
+    <a href="@s.HnUrl" target="_blank" rel="noopener">@(s.Raw.Comments > 0 ? $"댓글 {s.Raw.Comments}" : "토론하기")</a>
+  }
+  <span>@s.Age</span>
+  @if (Model.ShowBy && !string.IsNullOrEmpty(s.Raw.By))
+  {
+    <span>@s.Raw.By</span>
+  }
+</p>

@@ -1,0 +1,252 @@
+@page "/{date?}"
+@model IndexModel
+@{
+    var e = Model.Edition;
+    ViewData["Title"] = e is null ? "해커뉴스 페이퍼" : $"해커뉴스 페이퍼 · {e.Date}";
+    ViewData["DateLabel"] = e?.DateLabel;
+}
+
+@if (e is null)
+{
+<main class="empty">
+  <p>아직 발행된 호가 없습니다.</p>
+  <p>저장소에서 Claude Code를 열고 <code>/hn-paper-update</code>를 실행하면 오늘자 호가 만들어집니다.</p>
+</main>
+}
+else
+{
+<main>
+@if (!e.Translated)
+{
+  <p class="notice">이 호는 아직 번역 전입니다. 원문 제목으로 표시합니다.</p>
+}
+
+<section class="top" id="top">
+  <div class="lead">
+    @if (e.Hero is { } hero)
+    {
+    <article class="hero">
+      <h1><a href="@hero.Href" target="_blank" rel="noopener">@hero.Title</a></h1>
+      <div class="hero-body">
+        <partial name="_HeroVisual" model="hero" />
+        <div class="lede">
+          @foreach (var paragraph in e.Lead)
+          {
+            <p>@paragraph</p>
+          }
+          <partial name="_Meta" model="new Meta(hero, true)" />
+        </div>
+      </div>
+    </article>
+    }
+    @if (e.Subs.Count > 0)
+    {
+    <div class="subs">
+      @foreach (var s in e.Subs)
+      {
+      <article class="sub">
+        <partial name="_Thumb" model="s" />
+        <div>
+          <partial name="_Story" model="s" />
+          @if (s.Summary is not null)
+          {
+            <p class="desc">@s.Summary</p>
+          }
+          <partial name="_Meta" model="new Meta(s)" />
+        </div>
+      </article>
+      }
+    </div>
+    }
+  </div>
+  <aside class="side" aria-label="주요 기사">
+    @foreach (var s in e.Side)
+    {
+    <article class="card">
+      <partial name="_Thumb" model="s" />
+      <partial name="_Story" model="s" />
+      <partial name="_Meta" model="new Meta(s)" />
+    </article>
+    }
+  </aside>
+</section>
+
+<section class="band band-3">
+  <div class="col-a photo-lead">
+    @if (e.Photo is { } photo)
+    {
+      <partial name="_Thumb" model="photo" />
+      <partial name="_Story" model="photo" />
+      @if (photo.Summary is not null)
+      {
+        <p class="desc">@photo.Summary</p>
+      }
+      <partial name="_Meta" model="new Meta(photo)" />
+    }
+  </div>
+  <div class="col-b">
+    <ul class="headlines">
+      @foreach (var s in e.Headlines)
+      {
+        <li><h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3><partial name="_Meta" model="new Meta(s)" /></li>
+      }
+    </ul>
+  </div>
+  <div class="col-c" id="opinion">
+    <div class="sec-head"><h2>오피니언</h2></div>
+    <ul class="opinion">
+      @foreach (var s in e.Opinion)
+      {
+        <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
+      }
+    </ul>
+  </div>
+</section>
+
+<section class="band split" id="tech">
+  <div class="main">
+    <div class="sec-head"><h2>테크</h2><a class="more" href="https://news.ycombinator.com/" target="_blank" rel="noopener">원문 1면</a></div>
+    <div class="grid4">
+      @foreach (var s in e.TechGrid)
+      {
+        <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
+      }
+    </div>
+    @if (e.TechList.Count > 0)
+    {
+    <ul class="textlist">
+      @foreach (var s in e.TechList)
+      {
+        <li>
+          <partial name="_Story" model="s" />
+          @if (s.Summary is not null)
+          {
+            <p class="desc">@s.Summary</p>
+          }
+          <partial name="_Meta" model="new Meta(s)" />
+        </li>
+      }
+    </ul>
+    }
+  </div>
+  <aside class="aside">
+    <div class="box" id="popular">
+      <div class="sec-head"><h2>많이 본 뉴스</h2><span class="meta">포인트순</span></div>
+      <ol class="ranking">
+        @foreach (var (s, i) in e.ByPoints.Select((s, i) => (s, i + 1)))
+        {
+          <li><span class="n">@i</span><div><h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3><partial name="_Meta" model="new Meta(s)" /></div></li>
+        }
+      </ol>
+    </div>
+  </aside>
+</section>
+
+<section class="band split" id="life">
+  <div class="main">
+    <div class="sec-head"><h2>라이프·과학</h2></div>
+    @if (e.LifeGrid.Count > 0)
+    {
+    <div class="grid4">
+      @foreach (var s in e.LifeGrid)
+      {
+        <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
+      }
+    </div>
+    }
+    @if (e.LifeList.Count > 0)
+    {
+    <ul class="textlist">
+      @foreach (var s in e.LifeList)
+      {
+        <li>
+          <partial name="_Story" model="s" />
+          @if (s.Summary is not null)
+          {
+            <p class="desc">@s.Summary</p>
+          }
+          <partial name="_Meta" model="new Meta(s)" />
+        </li>
+      }
+    </ul>
+    }
+  </div>
+  <aside class="aside">
+    <div class="box">
+      <div class="sec-head"><h2>댓글 많은 뉴스</h2></div>
+      <ol class="ranking">
+        @foreach (var (s, i) in e.ByComments.Select((s, i) => (s, i + 1)))
+        {
+          <li><span class="n">@i</span><div><h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3><partial name="_Meta" model="new Meta(s)" /></div></li>
+        }
+      </ol>
+    </div>
+    <div class="box" id="jobs">
+      <div class="sec-head"><h2>채용</h2><a class="more" href="https://news.ycombinator.com/jobs" target="_blank" rel="noopener">전체보기</a></div>
+      @if (e.Jobs.Count == 0)
+      {
+        <p class="meta">오늘 1면에는 채용 글이 없습니다.</p>
+      }
+      @foreach (var s in e.Jobs)
+      {
+        <div class="jobs">
+          <partial name="_Story" model="s" />
+          @if (s.Summary is not null)
+          {
+            <p class="desc">@s.Summary</p>
+          }
+          <partial name="_Meta" model="new Meta(s)" />
+        </div>
+      }
+    </div>
+  </aside>
+</section>
+
+@if (e.More.Count > 0)
+{
+<section class="band">
+  <div class="sec-head"><h2>그 밖의 뉴스</h2></div>
+  <ul class="textlist">
+    @foreach (var s in e.More)
+    {
+      <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
+    }
+  </ul>
+</section>
+}
+
+<section class="band" id="rank">
+  <div class="sec-head"><h2>Hacker News 1면 전체 순위</h2><span class="meta">@(e.Translated ? "원제 병기 · " : "")@(e.All.Count)위까지</span></div>
+  <ol class="fulllist">
+    @foreach (var s in e.All)
+    {
+      <li>
+        <span class="n">@s.Raw.Rank</span>
+        <div>
+          <h3><a href="@s.Href" target="_blank" rel="noopener">@s.Title</a></h3>
+          @if (e.Translated)
+          {
+            <p class="en">@s.Raw.Title</p>
+          }
+          <partial name="_Meta" model="new Meta(s, true)" />
+        </div>
+      </li>
+    }
+  </ol>
+</section>
+</main>
+
+@section FooterNav {
+  <nav class="edition-nav" aria-label="호 이동">
+    @if (Model.PrevDate is { } prev)
+    {
+      <a href="/@prev">← @prev 호</a>
+    }
+    <a href="/editions">지난 호 전체</a>
+    @if (Model.NextDate is { } next)
+    {
+      <a href="/@next">@next 호 →</a>
+    }
+  </nav>
+}
+}
