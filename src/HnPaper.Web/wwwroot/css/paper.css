@@ -201,7 +201,8 @@ footer .logo small{font-size:12px}
 }
 
 /* 중간 페이지: 요약(또는 HN 본문 번역)과 번역 댓글.
-   폭·글자 크기는 동아일보 기사 페이지에 맞춘다: 본문 칼럼 684px, 제목 34px/1.4, 본문 18px/1.8, 자간 -0.3px */
+   폭·글자 크기는 동아일보 기사 페이지에 맞춘다: 본문 칼럼 684px, 제목 34px/1.4, 본문 18px/1.8, 자간 -0.3px.
+   모바일(720px 이하)은 보통 사이트 크기로 줄인다: 제목 26px, 본문 16px/1.75, 댓글 15px */
 /* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 300px. 본문 중심이 화면 중심 근처에 온다.
    화면이 좁아지면 비어 있는 왼쪽 칸부터 줄어든다. */
 .story-page{display:grid;grid-template-columns:minmax(0,232px) 684px 300px;grid-template-areas:". head ." ". main right";column-gap:32px;row-gap:26px;justify-content:center;padding:32px 0 56px}
@@ -262,7 +263,11 @@ footer .logo small{font-size:12px}
   .story-page{padding-top:20px}
   .crumbs{font-size:14px}
   .article-head h1{font-size:26px}
-  .md{font-size:17px}
+  .article-text .md>p:first-child{font-size:18px}
+  .md{font-size:16px;line-height:1.75;letter-spacing:-.2px}
+  .md>*+*{margin-top:16px}
+  .md h1,.md h2,.md h3,.md h4{font-size:17px;margin-top:28px}
+  .comment .md{font-size:15px;line-height:1.7}
   .comment{margin-left:calc(min(var(--depth), 6) * 12px);padding-left:10px}
   .story-nav{grid-template-columns:1fr 1fr}
   .story-nav .home{grid-column:1/-1;order:3;text-align:center}

@@ -49,12 +49,12 @@ public static partial class EditionValidator
             if (year.Success && !story.Title.Contains(year.Value, StringComparison.Ordinal))
                 errors.Add($"{label}: 원제의 연도 표기 {year.Value}를 그대로 두어야 합니다.");
 
-            // 제목 문체: 합니다체로 통일하고 마침표를 찍지 않는다. 끝의 (2016)·[영상]은 떼고 본다.
+            // 제목 문체: 합니다체나 해요체로 쓰고(반말 금지) 마침표를 찍지 않는다. 끝의 (2016)·[영상]은 떼고 본다.
             var body = TrailingNote().Replace(story.Title, "").TrimEnd();
             if (body.EndsWith('.'))
                 warnings.Add($"{label}: 제목 끝에 마침표를 찍지 않습니다: {story.Title}");
             else if (PlainEnding().IsMatch(body))
-                warnings.Add($"{label}: 문장형 제목은 합니다체로 씁니다: {story.Title}");
+                warnings.Add($"{label}: 문장형 제목은 반말로 쓰지 않습니다: {story.Title}");
         }
 
         return (errors, warnings);
@@ -139,7 +139,7 @@ public static partial class EditionValidator
     [GeneratedRegex(@"(?:\s*(?:\([^)]*\)|\[[^\]]*\]))+$")]
     private static partial Regex TrailingNote();
 
-    // 합니다체가 아닌 문장 끝: ~한다/~했다(~니다 제외), ~요/~죠, ~는가?/~냐?/~나?/~니?
-    [GeneratedRegex(@"(?:(?<!니)다|[요죠]|(?:는가|냐|나|니)\?)[?!]?$")]
+    // 반말 문장 끝: ~한다/~했다(~니다 제외), ~는가?/~냐?/~나?/~니?/~지?/~까?(~니까? 제외). 해요체(~요/~죠)는 허용한다.
+    [GeneratedRegex(@"(?:(?<!니)다|(?:는가|냐|나|니|지|(?<!니)까)\?)[?!]?$")]
     private static partial Regex PlainEnding();
 }

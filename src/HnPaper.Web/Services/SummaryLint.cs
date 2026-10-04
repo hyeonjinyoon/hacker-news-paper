@@ -71,6 +71,10 @@ public static partial class SummaryLint
         var plain = doc.Sentences.Where(s => PlainEnding().IsMatch(s)).ToList();
         if (plain.Count > 0)
             errors.Add($"{label}: 합니다체가 아닌 문장이 {plain.Count}개 있습니다(예: {string.Join(" / ", plain.Take(2).Select(Clip))}).");
+
+        // 7. 굵게는 한 줄 요약에만
+        if (doc.BoldLines > 0)
+            errors.Add($"{label}: 한 줄 요약 밖에 굵게(**)를 쓴 줄이 {doc.BoldLines}개 있습니다. 굵게는 한 줄 요약에만 씁니다.");
     }
 
     private static void RequireSection(Doc doc, string label, string heading, int min, int max, List<string> errors)
@@ -84,7 +88,7 @@ public static partial class SummaryLint
 
     private sealed record Section(string Heading, List<string> Bullets);
 
-    private sealed record Doc(string? OneLiner, int IntroLength, List<Section> Sections, List<string> Sentences);
+    private sealed record Doc(string? OneLiner, int IntroLength, List<Section> Sections, List<string> Sentences, int BoldLines);
 
     /// <summary>스킬이 쓰는 단순한 마크다운(굵은 첫 줄, 문단, ### 소제목, - 글머리표, 코드 블록, 인용)을 줄 단위로 읽는다.</summary>
     private static Doc Parse(string body)
@@ -93,6 +97,7 @@ public static partial class SummaryLint
         var introLength = 0;
         var sections = new List<Section>();
         var sentences = new List<string>();
+        var boldLines = 0;
         var inCode = false;
         var sawFirst = false;
 
@@ -118,6 +123,8 @@ public static partial class SummaryLint
                     continue;
                 }
             }
+            if (line.Contains("**", StringComparison.Ordinal))
+                boldLines++;
 
             if (line.StartsWith("### ", StringComparison.Ordinal))
             {
@@ -136,7 +143,7 @@ public static partial class SummaryLint
             AddSentences(StripMarks(text), sentences);
         }
 
-        return new Doc(oneLiner, introLength, sections, sentences);
+        return new Doc(oneLiner, introLength, sections, sentences, boldLines);
     }
 
     private static void AddSentences(string text, List<string> sentences)

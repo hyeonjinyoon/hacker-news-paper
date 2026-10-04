@@ -8,6 +8,6 @@ namespace HnPaper.Web.Models;
 public sealed record KoEdition(string Date, IReadOnlyList<string>? Lead, IReadOnlyList<KoStory>? Stories);
 
 /// <param name="Id">HN 아이템 id. RawStory.Id와 맞춘다.</param>
-/// <param name="Title">원제를 자연스러운 한국어(합니다체)로 옮긴 제목.</param>
+/// <param name="Title">원제의 뉘앙스를 살려 한국어(합니다체·해요체)로 옮긴 제목.</param>
 /// <param name="Summary">예전 호에서 따로 쓰던 1면 요약. 본문이 없을 때만 대신 쓴다.</param>
 public sealed record KoStory(long Id, string Title, string? Summary = null);
