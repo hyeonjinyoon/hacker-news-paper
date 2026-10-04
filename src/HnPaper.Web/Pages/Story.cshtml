@@ -93,7 +93,7 @@
       <ol class="ranking">
         @foreach (var (r, i) in e.ByPoints.Select((r, i) => (r, i + 1)))
         {
-          <li class="@(r.Raw.Id == s.Raw.Id ? "current" : null)"><span class="n">@i</span><div><h3><a href="@r.Href">@r.Title</a></h3><p class="pts">▲ @r.Raw.Points</p></div></li>
+          <li class="linkbox@(r.Raw.Id == s.Raw.Id ? " current" : "")"><span class="n">@i</span><div><h3><a href="@r.Href">@r.Title</a></h3><p class="pts">▲ @r.Raw.Points</p></div></li>
         }
       </ol>
     </div>
@@ -102,7 +102,7 @@
       <ol class="ranking">
         @foreach (var (r, i) in e.ByComments.Select((r, i) => (r, i + 1)))
         {
-          <li class="@(r.Raw.Id == s.Raw.Id ? "current" : null)"><span class="n">@i</span><div><h3><a href="@r.Href">@r.Title</a></h3><p class="pts">댓글 @r.Raw.Comments</p></div></li>
+          <li class="linkbox@(r.Raw.Id == s.Raw.Id ? " current" : "")"><span class="n">@i</span><div><h3><a href="@r.Href">@r.Title</a></h3><p class="pts">댓글 @r.Raw.Comments</p></div></li>
         }
       </ol>
     </div>

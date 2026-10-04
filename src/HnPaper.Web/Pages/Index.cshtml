@@ -27,7 +27,7 @@ else
   <div class="lead">
     @if (e.Hero is { } hero)
     {
-    <article class="hero">
+    <article class="hero linkbox">
       <h1><a href="@hero.Href">@hero.Title</a></h1>
       <div class="hero-body">
         <partial name="_HeroVisual" model="hero" />
@@ -48,7 +48,7 @@ else
     <div class="subs">
       @foreach (var s in e.Subs)
       {
-      <article class="sub">
+      <article class="sub linkbox">
         <partial name="_Thumb" model="s" />
         <div>
           <partial name="_Story" model="s" />
@@ -66,7 +66,7 @@ else
   <aside class="side">
     @foreach (var s in e.Side)
     {
-    <article class="card">
+    <article class="card linkbox">
       <partial name="_Thumb" model="s" />
       <partial name="_Story" model="s" />
       <partial name="_Meta" model="new Meta(s)" />
@@ -82,6 +82,7 @@ else
   <div class="col-a photo-lead">
     @if (e.Photo is { } photo)
     {
+    <article class="linkbox">
       <partial name="_Thumb" model="photo" />
       <partial name="_Story" model="photo" />
       @if (photo.Summary is not null)
@@ -89,13 +90,14 @@ else
         <p class="desc">@photo.Summary</p>
       }
       <partial name="_Meta" model="new Meta(photo)" />
+    </article>
     }
   </div>
   <div class="col-b">
     <ul class="headlines">
       @foreach (var s in e.Headlines)
       {
-        <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
+        <li class="linkbox"><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
       }
     </ul>
   </div>
@@ -103,7 +105,7 @@ else
     <ul class="briefs">
       @foreach (var s in e.Briefs)
       {
-        <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
+        <li class="linkbox"><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
       }
     </ul>
   </div>
@@ -118,7 +120,7 @@ else
     <div class="grid4">
       @foreach (var s in e.GridA)
       {
-        <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
+        <article class="linkbox"><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
       }
     </div>
     }
@@ -127,7 +129,7 @@ else
     <ul class="textlist">
       @foreach (var s in e.ListA)
       {
-        <li>
+        <li class="linkbox">
           <partial name="_Story" model="s" />
           @if (s.Summary is not null)
           {
@@ -143,7 +145,7 @@ else
     <div class="grid4 grid-next">
       @foreach (var s in e.GridB)
       {
-        <article><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
+        <article class="linkbox"><partial name="_Thumb" model="s" /><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></article>
       }
     </div>
     }
@@ -155,7 +157,7 @@ else
         @* 1면에서는 왼쪽 기사 칸과 높이를 맞추려고 상위 5개만 보인다. 기사 페이지 오른쪽 칸은 10개. *@
         @foreach (var (s, i) in e.ByPoints.Take(5).Select((s, i) => (s, i + 1)))
         {
-          <li><span class="n">@i</span><div><h3><a href="@s.Href">@s.Title</a></h3><p class="pts">▲ @s.Raw.Points · 댓글 @s.Raw.Comments</p></div></li>
+          <li class="linkbox"><span class="n">@i</span><div><h3><a href="@s.Href">@s.Title</a></h3><p class="pts">▲ @s.Raw.Points · 댓글 @s.Raw.Comments</p></div></li>
         }
       </ol>
     </div>
@@ -164,7 +166,7 @@ else
       <ol class="ranking">
         @foreach (var (s, i) in e.ByComments.Select((s, i) => (s, i + 1)))
         {
-          <li><span class="n">@i</span><div><h3><a href="@s.Href">@s.Title</a></h3><p class="pts">댓글 @s.Raw.Comments · ▲ @s.Raw.Points</p></div></li>
+          <li class="linkbox"><span class="n">@i</span><div><h3><a href="@s.Href">@s.Title</a></h3><p class="pts">댓글 @s.Raw.Comments · ▲ @s.Raw.Points</p></div></li>
         }
       </ol>
     </div>
@@ -178,7 +180,7 @@ else
   <ul class="textlist">
     @foreach (var s in e.More)
     {
-      <li><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
+      <li class="linkbox"><partial name="_Story" model="s" /><partial name="_Meta" model="new Meta(s)" /></li>
     }
   </ul>
 </section>
@@ -189,7 +191,7 @@ else
   <ol class="fulllist">
     @foreach (var s in e.All)
     {
-      <li>
+      <li class="linkbox">
         <span class="n">@s.Raw.Rank</span>
         <div>
           <h3><a href="@s.Href">@s.Title</a></h3>

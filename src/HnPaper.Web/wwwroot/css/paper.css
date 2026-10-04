@@ -22,6 +22,11 @@ body{margin:0;background:var(--bg);color:var(--fg);
 a{color:inherit;text-decoration:none;transition:opacity .2s}
 a:hover{opacity:.7}
 a.thumb:hover{opacity:1}
+/* 기사 칸(.linkbox) 어디를 눌러도 기사로 간다: 제목 링크의 ::after가 칸 전체를 덮는다.
+   칸 안의 다른 링크(메타의 댓글 수)만 그 위로 올린다. 칸에 마우스를 올리면 제목이 흐려지고 사진이 커진다. */
+.linkbox{position:relative}
+.linkbox :is(h1,h3) a::after,.archive .date::after{content:"";position:absolute;inset:0;z-index:1}
+.linkbox .meta a{position:relative;z-index:2}
 h1,h2,h3,h4,p{margin:0}
 ol,ul{margin:0;padding:0;list-style:none}
 code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
@@ -65,10 +70,11 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 
 /* 썸네일 */
 /* 바탕(background-image)에는 그라데이션 패널 이미지가 깔리고(GradientLibrary),
-   og 이미지가 있으면 그 위를 덮는다. og 이미지를 불러오지 못하면 패널이 드러난다. */
-.thumb{position:relative;display:block;aspect-ratio:16/9;background:var(--ph) center/cover no-repeat;overflow:hidden}
+   og 이미지가 있으면 그 위를 덮는다. og 이미지를 불러오지 못하면 패널이 드러난다.
+   isolation은 og 이미지(z-index:1)가 .linkbox 제목 링크의 덮개 위로 올라오지 않게 한다. */
+.thumb{position:relative;isolation:isolate;display:block;aspect-ratio:16/9;background:var(--ph) center/cover no-repeat;overflow:hidden}
 .thumb img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;transition:transform .4s}
-a.thumb:hover img{transform:scale(1.03)}
+.linkbox:hover .thumb img{transform:scale(1.03)}
 
 .meta{display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:1px;font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
 .meta a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}

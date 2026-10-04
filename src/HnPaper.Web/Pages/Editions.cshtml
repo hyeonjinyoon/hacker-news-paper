@@ -13,7 +13,7 @@
   <ol>
     @foreach (var (info, headline) in Model.Items)
     {
-      <li>
+      <li class="linkbox">
         <a class="date" href="/@info.Date">@info.Date</a>
         <span class="headline">@(headline ?? "—")</span>
         @if (!info.Translated)
