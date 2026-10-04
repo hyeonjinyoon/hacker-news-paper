@@ -11,15 +11,12 @@ public sealed class StoryView
     public string? Summary { get; init; }
     public required string Kicker { get; init; }
     public string? Section { get; init; }
-    public string? Placeholder { get; init; }
     public required string Age { get; init; }
 
     public string Href => Raw.Url;
     public string HnUrl => $"https://news.ycombinator.com/item?id={Raw.Id}";
     public bool IsJob => Raw.Type == "job";
     public bool HasImage => !string.IsNullOrEmpty(Raw.Image);
-    public bool IsMemorial => Kicker == "부고" && !HasImage;
-    public string PlaceholderText => Placeholder ?? Raw.Site;
 }
 
 public sealed record Meta(StoryView Story, bool ShowBy = false);

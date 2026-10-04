@@ -1,18 +1,16 @@
 :root{
   --bg:#fff;--fg:#111;--sub:#3d3d3d;--muted:#767676;--line:#e3e3e3;--rule:#111;
-  --accent:#c2410c;--opinion:#c0392b;--ph:#f2f0eb;--ph-fg:#9a9384;--hover:#c2410c;
-  --card-bg:#141c28;--card-fg:#e9eef5;--card-mute:#8593a6;--card-hot:#ff7a1a;
-  --memorial-bg:#1b1b1b;--memorial-fg:#f1f1f1;
+  --accent:#c2410c;--opinion:#c0392b;--ph:#f2f0eb;--hover:#c2410c;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-    --accent:#fb923c;--opinion:#f87171;--ph:#1e1e1e;--ph-fg:#7d7d7d;--hover:#fb923c;--memorial-bg:#232323;
+    --accent:#fb923c;--opinion:#f87171;--ph:#1e1e1e;--hover:#fb923c;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-  --accent:#fb923c;--opinion:#f87171;--ph:#1e1e1e;--ph-fg:#7d7d7d;--hover:#fb923c;--memorial-bg:#232323;
+  --accent:#fb923c;--opinion:#f87171;--ph:#1e1e1e;--hover:#fb923c;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -49,14 +47,7 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 .side{padding-left:30px;padding-top:28px}
 .hero h1{font-size:37px;font-weight:800;letter-spacing:-.035em;line-height:1.28;margin:28px 0 22px}
 .hero-body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(0,1fr);gap:24px}
-.hero-graphic{aspect-ratio:16/9.2}
-.hero-card{display:grid;grid-template-rows:auto 1fr auto;aspect-ratio:16/9.2;padding:26px 28px;background:var(--card-bg);color:var(--card-fg)}
-.hero-card:hover{color:var(--card-fg)}
-.hero-card .kicker{color:var(--card-hot)}
-.hero-site{align-self:center;font-family:"Noto Serif KR",serif;font-weight:900;font-size:clamp(26px,3.2vw,42px);letter-spacing:-.02em;line-height:1.15}
-.hero-card dl{display:flex;gap:32px;margin:0}
-.hero-card dt{font-size:12px;color:var(--card-mute)}
-.hero-card dd{margin:2px 0 0;font-size:26px;font-weight:800;letter-spacing:-.02em}
+.thumb.hero-graphic{aspect-ratio:16/9.2}
 .lede{font-size:14.5px;line-height:1.72;color:var(--sub)}
 .lede p+p{margin-top:10px}
 .lede .meta{margin-top:14px}
@@ -65,19 +56,15 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 .sub h3{font-size:18.5px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
 .sub p.desc{margin-top:8px;font-size:14px;line-height:1.6;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card+.card{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
-.card .thumb,.card .memorial{margin-bottom:14px}
+.card .thumb{margin-bottom:14px}
 .card h3{font-size:19px;font-weight:700;line-height:1.42;letter-spacing:-.03em;margin-top:4px}
 
 /* 썸네일 */
-.thumb{position:relative;display:block;aspect-ratio:16/9;background:var(--ph);overflow:hidden}
-.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s}
+/* 바탕(background-image)에는 그라데이션 패널 이미지가 깔리고(GradientLibrary),
+   og 이미지가 있으면 그 위를 덮는다. og 이미지를 불러오지 못하면 패널이 드러난다. */
+.thumb{position:relative;display:block;aspect-ratio:16/9;background:var(--ph) center/cover no-repeat;overflow:hidden}
+.thumb img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;transition:transform .4s}
 a.thumb:hover img{transform:scale(1.04)}
-.ph-label{position:absolute;inset:0;display:grid;place-items:center;padding:12px;text-align:center;
-  font-family:"Noto Serif KR",serif;font-weight:700;font-size:15px;color:var(--ph-fg);letter-spacing:-.01em}
-.memorial{position:relative;display:grid;place-content:center;aspect-ratio:16/9;background:var(--memorial-bg);color:var(--memorial-fg);text-align:center;gap:6px}
-.memorial:hover{color:var(--memorial-fg)}
-.memorial span{font-size:10px;letter-spacing:.32em;opacity:.6}
-.memorial strong{font-family:"Noto Serif KR",serif;font-size:19px;font-weight:700}
 
 .kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px}
 .meta{display:flex;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
@@ -99,7 +86,7 @@ a.thumb:hover img{transform:scale(1.04)}
 .band-3 .col-a{padding-right:30px;border-right:1px solid var(--line)}
 .band-3 .col-b{padding:0 30px;border-right:1px solid var(--line)}
 .band-3 .col-c{padding-left:30px}
-.photo-lead .thumb,.photo-lead .memorial{margin-bottom:14px}
+.photo-lead .thumb{margin-bottom:14px}
 .photo-lead h3{font-size:18px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
 .photo-lead p.desc{margin-top:8px;font-size:14px;line-height:1.6;color:var(--muted)}
 .headlines li{padding:15px 0;border-bottom:1px solid var(--line)}

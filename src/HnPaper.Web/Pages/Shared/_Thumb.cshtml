@@ -1,17 +1,12 @@
 @model StoryView
-@if (Model.IsMemorial)
-{
-  <a class="memorial" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
-    <span>IN MEMORIAM</span><strong>@Model.PlaceholderText</strong>
-  </a>
+@inject HnPaper.Web.Services.GradientLibrary Gradients
+@{
+    var panel = Gradients.UrlFor(Model.Raw.Id);
 }
-else
-{
-  <a class="thumb" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
-    <span class="ph-label">@Model.PlaceholderText</span>
-    @if (Model.HasImage)
-    {
-      <img src="@Model.Raw.Image" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
-    }
-  </a>
-}
+@* og 이미지가 있으면 그 위에 덮고, 없거나 불러오지 못하면 그라데이션 패널 이미지가 보인다. *@
+<a class="thumb" style="@(panel is null ? null : $"background-image:url('{panel}')")" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+  @if (Model.HasImage)
+  {
+    <img src="@Model.Raw.Image" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+  }
+</a>

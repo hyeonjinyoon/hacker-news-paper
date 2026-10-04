@@ -7,8 +7,7 @@ public sealed record KoEdition(string Date, IReadOnlyList<string>? Lead, IReadOn
 /// <param name="Id">HN 아이템 id. RawStory.Id와 맞춘다.</param>
 /// <param name="Title">원제의 직역.</param>
 /// <param name="Section">지면. <see cref="Sections"/> 참고.</param>
-/// <param name="Placeholder">이미지가 없을 때 썸네일 자리에 넣을 짧은 글(예: 부고 기사의 인물 이름).</param>
-public sealed record KoStory(long Id, string Title, string Summary, string Kicker, string Section, string? Placeholder = null);
+public sealed record KoStory(long Id, string Title, string Summary, string Kicker, string Section);
 
 public static class Sections
 {

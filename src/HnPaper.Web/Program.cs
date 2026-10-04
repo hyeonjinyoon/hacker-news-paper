@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddSingleton(PaperOptions.Resolve(builder.Configuration["Paper:DataDirectory"]));
 builder.Services.AddSingleton<EditionStore>();
+builder.Services.AddSingleton<GradientLibrary>();
 
 var app = builder.Build();
 

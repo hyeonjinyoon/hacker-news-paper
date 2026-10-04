@@ -1,6 +1,6 @@
 ---
 name: hn-paper-update
-description: 해커뉴스 페이퍼의 오늘자 호를 만든다. HN 1면 상위 30개를 수집하고, 제목을 원문 그대로 직역하고, 짧은 요약·키커·지면 배치와 1면 리드 문단을 써서 data/ko/{날짜}.json에 저장한 뒤 검증한다. 매일 아침 launchd가 자동으로 실행하며, "기사 업데이트", "오늘 호 만들어줘", "해커뉴스 페이퍼 갱신" 같은 요청에도 쓴다.
+description: 해커뉴스 페이퍼의 오늘자 호를 만든다. HN 1면 상위 30개를 수집하고, 제목을 자연스러운 한국어로 옮기고, 짧은 요약·키커·지면 배치와 1면 리드 문단을 써서 data/ko/{날짜}.json에 저장한 뒤 검증한다. Claude 데스크톱 앱 루틴에서 매일 아침 실행하며, "기사 업데이트", "오늘 호 만들어줘", "해커뉴스 페이퍼 갱신" 같은 요청에도 쓴다.
 argument-hint: "[yyyy-MM-dd: 이미 수집한 날짜를 다시 번역할 때만]"
 allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dotnet run --project src/HnPaper.Web -- validate:*), Read, Glob, Edit(data/ko/**), WebFetch
 ---
@@ -58,8 +58,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
       "title": "밥 크린절리가 세상을 떠났다",
       "summary": "HN 이용자에 따르면 ...",
       "kicker": "부고",
-      "section": "sub",
-      "placeholder": "밥 크린절리"
+      "section": "sub"
     }
   ]
 }
@@ -67,26 +66,28 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 
 - `date`: 수집본의 `date`와 같아야 한다.
 - `id`: 수집본의 `id`를 숫자 그대로 쓴다.
-- `placeholder` (선택): 이미지가 없는 기사의 썸네일 자리에 넣을 짧은 글. 부고 기사라면 인물 이름을 넣는다. 그 밖의 경우에는 넣지 않는다(출처 도메인이 대신 들어간다).
+- 대표 이미지는 수집본의 og 이미지를 쓰고, 없으면 사이트가 그라데이션 패널을 자동으로 그린다. 번역본에서 따로 지정할 것은 없다.
 
-## 제목: 원문 그대로 직역
+## 제목: 자연스러운 번역
 
-사용자가 정한 원칙이다. 신문식으로 다듬지 말고 원제를 그대로 옮긴다.
+사용자가 정한 원칙이다. 단어를 하나하나 옮긴 직역보다, 원제의 뜻과 어조를 살린 **자연스러운 한국어 제목**을 쓴다.
 
-- 원제에 없는 정보를 더하지 않는다. 인명, 소속, 국가 약칭(美·獨 등), 말줄임표(…)를 새로 넣지 않는다.
-- 원제에 있는 정보를 빼지 않는다. 어조(평서·명령·의문)와 문장 구조도 최대한 따른다.
+- 한국어 독자가 처음 읽어도 매끄럽게 읽혀야 한다. 영어 어순이나 관용구를 그대로 옮겨 어색해지면 한국어 표현으로 바꾼다.
+- 뜻은 원제에 충실하게 둔다. 원제에 없는 사실(인명, 소속, 수치, 국가 등)을 새로 넣지 않고, 원제의 핵심 정보도 빼지 않는다. 신문식으로 과장하거나 낚시성으로 바꾸지 않는다.
+- 원제의 말투(단정, 질문, 권유, 농담)는 살린다.
 - `Show HN:`, `Ask HN:`, `Tell HN:`, `Launch HN:` 접두어는 그대로 둔다.
 - 끝의 연도 괄호 `(2016)`는 그대로 둔다. `[video]`는 `[영상]`, `[pdf]`는 `[PDF]`, `[audio]`는 `[오디오]`로 옮긴다.
-- 고유명사는 외래어 표기법에 따라 한글로 적는다(Cloudflare → 클라우드플레어, Opus → 오퍼스). 약어나 기술명(FTL, WebP, C2PA, RSS, UWB)은 그대로 둔다.
+- 고유명사는 외래어 표기법에 따라 한글로 적는다(Cloudflare → 클라우드플레어, Opus → 오퍼스). 약어나 기술명(FTL, WebP, C2PA, RSS, UWB, Git)은 그대로 둔다.
 - 따옴표는 'x' → ‘x’, "x" → “x”로 바꾼다.
-- 대시(–), 콜론(:) 같은 원제의 구두점을 유지한다.
 
 예:
-| 원제 | 번역 |
-|---|---|
-| Federal judge calls Flock 'indiscriminate mass surveillance' | 연방 판사, 플록을 ‘무차별 대량 감시’라고 지칭 |
-| Docker has always used microVMs (well since 2016) | 도커는 항상 마이크로VM을 써 왔다 (뭐, 2016년부터) |
-| Math's pedagogical curse – Grant Sanderson [video] | 수학의 교육적 저주 – 그랜트 샌더슨 [영상] |
+| 원제 | 어색한 직역 | 자연스러운 번역 |
+|---|---|---|
+| Your body of work thinks back at you | 당신의 작업 전체가 당신을 되돌아 생각한다 | 쌓아 온 작업이 나를 되돌아보게 한다 |
+| Surely you have ultra-wideband radios on your bins too? | 당신 쓰레기통에도 당연히 초광대역 무선 장치가 달려 있겠죠? | 쓰레기통에 UWB 무선쯤은 다들 달아 두셨죠? |
+| So You Think You Could Be an Electrician? | 그래서 당신이 전기기사가 될 수 있다고 생각하나? | 전기기사, 나도 할 수 있을 것 같나요? |
+| Docker has always used microVMs (well since 2016) | 도커는 항상 마이크로VM을 써 왔다 (뭐, 2016년부터) | 도커는 원래부터 마이크로VM을 써 왔다(정확히는 2016년부터) |
+| We want you to build the next Git platform on Cloudflare | 클라우드플레어 위에 다음 Git 플랫폼을 만들어 주길 바란다 | 클라우드플레어 위에 차세대 Git 플랫폼을 만들어 주세요 |
 
 ## 요약
 

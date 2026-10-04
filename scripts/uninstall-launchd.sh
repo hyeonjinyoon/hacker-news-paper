@@ -4,7 +4,7 @@ set -uo pipefail
 
 DOMAIN="gui/$(id -u)"
 
-for name in web update; do
+for name in web; do
   label="com.d9.hn-paper-$name"
   launchctl bootout "$DOMAIN/$label" 2>/dev/null
   rm -f "$HOME/Library/LaunchAgents/$label.plist"

@@ -25,7 +25,6 @@ public static class EditionBuilder
                     Summary = Nonblank(k?.Summary) ?? (ko is null ? Nonblank(r.Description) : null),
                     Kicker = Nonblank(k?.Kicker) ?? DefaultKicker(r),
                     Section = Nonblank(k?.Section),
-                    Placeholder = Nonblank(k?.Placeholder),
                     Age = RelativeAge(raw.CollectedAt, r.Time),
                 };
             })

@@ -1,24 +1,12 @@
 @model StoryView
-@if (Model.HasImage)
-{
-  <a class="thumb hero-graphic" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
-    <span class="ph-label">@Model.PlaceholderText</span>
+@inject HnPaper.Web.Services.GradientLibrary Gradients
+@{
+    var panel = Gradients.UrlFor(Model.Raw.Id);
+}
+@* 1면 톱의 대표 이미지. og 이미지가 없거나 불러오지 못하면 그라데이션 패널 이미지가 보인다. *@
+<a class="thumb hero-graphic" style="@(panel is null ? null : $"background-image:url('{panel}')")" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
+  @if (Model.HasImage)
+  {
     <img src="@Model.Raw.Image" alt="" referrerpolicy="no-referrer" onerror="this.remove()">
-  </a>
-}
-else
-{
-  @* 대표 이미지가 없는 톱기사는 출처와 반응 수치로 지면을 채운다. *@
-  <a class="hero-card" href="@Model.Href" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">
-    <span class="kicker">@(string.IsNullOrEmpty(Model.Kicker) ? "오늘의 1위" : Model.Kicker)</span>
-    <strong class="hero-site">@Model.PlaceholderText</strong>
-    <dl>
-      <div><dt>순위</dt><dd>@(Model.Raw.Rank)위</dd></div>
-      @if (Model.Raw.Points is { } points)
-      {
-        <div><dt>포인트</dt><dd>@points</dd></div>
-        <div><dt>댓글</dt><dd>@(Model.Raw.Comments ?? 0)</dd></div>
-      }
-    </dl>
-  </a>
-}
+  }
+</a>

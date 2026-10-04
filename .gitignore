@@ -7,3 +7,6 @@ obj/
 *.user
 .vs/
 .idea/
+
+# 날짜별 호 (수집본·번역본)
+data/
