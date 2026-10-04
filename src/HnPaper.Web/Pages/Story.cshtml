@@ -9,14 +9,14 @@
     ViewData["DateLabel"] = e.DateLabel;
     ViewData["NavBase"] = $"/{e.Date}";
 }
-@* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 많이 본 뉴스 300px. 제목을 누르면 원문이 열린다. *@
+@* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 많이 본 뉴스 300px. 제목을 누르면 원문이, 원제를 누르면 Hacker News 글이 열린다. *@
 <div class="story-page">
   <header class="article-head">
     <nav class="crumbs" aria-label="위치"><a href="/@e.Date">@e.Date 호</a><span>@(s.Raw.Rank)위</span></nav>
     <h1><a href="@s.SourceUrl" target="_blank" rel="noopener" title="@(s.IsSelfPost ? "Hacker News 원문 보기" : "원문 보기")">@s.Title</a></h1>
     @if (s.Title != s.Raw.Title)
     {
-      <p class="en">@s.Raw.Title</p>
+      <p class="en"><a href="@s.HnUrl" target="_blank" rel="noopener" title="Hacker News 글 보기">@s.Raw.Title</a></p>
     }
     <partial name="_Meta" model="new Meta(s, true)" />
   </header>
@@ -37,10 +37,6 @@
         else
         {
           <div class="md">@MarkdownRenderer.Render(item.Body)</div>
-        }
-        @if (!s.IsSelfPost)
-        {
-          <p class="source-note">이 글은 원문을 한국어로 요약한 것입니다. 전체 내용은 <a href="@s.SourceUrl" target="_blank" rel="noopener">@s.Raw.Site</a>에서 읽을 수 있습니다.</p>
         }
       </section>
     </div>

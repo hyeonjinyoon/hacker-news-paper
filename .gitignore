@@ -10,3 +10,5 @@ obj/
 
 # 날짜별 호 (수집본·번역본)
 data/
+.claude/.DS_Store
+.DS_Store
