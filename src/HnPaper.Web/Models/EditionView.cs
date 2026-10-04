@@ -41,6 +41,8 @@ public sealed class EditionView
 
     public required string Date { get; init; }
     public required DateTimeOffset CollectedAt { get; init; }
+    /// <summary>기사를 가져온 HN 과거 1면의 날짜(UTC). 메인 1면에서 수집한 예전 호는 null.</summary>
+    public string? Day { get; init; }
     public required bool Translated { get; init; }
     public required IReadOnlyList<StoryView> All { get; init; }
 
@@ -77,7 +79,10 @@ public sealed class EditionView
         get
         {
             var at = TimeZoneInfo.ConvertTime(CollectedAt, Kst.Zone);
-            return $"{at.ToString("yyyy년 M월 d일 dddd", Korean)} · {at.ToString("tt h시", Korean)} 기준";
+            var date = at.ToString("yyyy년 M월 d일 dddd", Korean);
+            return Day is null
+                ? $"{date} · {at.ToString("tt h시", Korean)} 기준"
+                : $"{date} · {DateOnly.ParseExact(Day, "yyyy-MM-dd").ToString("M월 d일", Korean)} HN 1면";
         }
     }
 }

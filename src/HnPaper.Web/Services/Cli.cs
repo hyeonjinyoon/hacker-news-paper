@@ -4,10 +4,10 @@ namespace HnPaper.Web.Services;
 
 /// <summary>
 /// hn-paper-update 스킬이 부르는 명령.
-///   collect [--comments N] [--out path]   1면 상위 30개와 기사별 댓글 수집
+///   collect [--comments N] [--out path]   전날(UTC) HN 과거 1면 상위 30개와 기사별 댓글 수집
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
 ///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 줄여 저장
-///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글을 빼고, 모자란 자리를 지금 HN 1면 글로 채움
+///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글을 빼고, 모자란 자리를 그 호의 HN 과거 1면 글로 채움
 ///   reuse yyyy-MM-dd                        이미 번역한 기사의 제목·본문과 지금 수집본에 있는 댓글의 번역을 이 호로 가져옴
 ///   merge-comments yyyy-MM-dd id            새로 번역한 댓글({id}.comments.new.json)을 댓글 번역본에 합침
 ///   validate [yyyy-MM-dd] [id ...] [--part body|comments]

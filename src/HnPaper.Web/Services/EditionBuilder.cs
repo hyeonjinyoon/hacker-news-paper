@@ -46,6 +46,7 @@ public static class EditionBuilder
         {
             Date = raw.Date,
             CollectedAt = raw.CollectedAt,
+            Day = raw.Day,
             Translated = ko is not null,
             All = stories,
         };

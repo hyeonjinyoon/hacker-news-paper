@@ -8,7 +8,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@(ViewData["Title"] ?? "Hacker News paper")</title>
-<meta name="description" content="Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지">
+<meta name="description" content="전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지">
 @* 글꼴: Pretendard Variable (github.com/orioncactus/pretendard, 공식 안내의 jsDelivr 동적 서브셋) *@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -49,7 +49,7 @@
     <p class="edition-date">@dateLabel</p>
   }
   @await RenderSectionAsync("FooterNav", required: false)
-  <p>매일 아침 Hacker News(news.ycombinator.com) 1면 상위 30개 글의 제목을 한국어로 옮기고 짧게 요약하는 비공식 페이지입니다. 포인트와 댓글 수는 수집 시점의 값입니다.</p>
+  <p>매일 아침 전날 Hacker News(news.ycombinator.com) 1면에 오른 상위 30개 글의 제목을 한국어로 옮기고 짧게 요약하는 비공식 페이지입니다. 포인트와 댓글 수는 수집 시점의 값입니다.</p>
   <p>각 글의 저작권은 원 출처에 있습니다. 제목을 누르면 한국어 요약과 번역 댓글이 있는 기사 페이지가 열리고, 그곳에서 원문과 Hacker News 토론으로 갈 수 있습니다.</p>
   <p class="repo-link"><a href="https://github.com/hyeonjinyoon/hacker-news-paper" target="_blank" rel="noopener">소스 코드 · GitHub ↗</a></p>
 </footer>

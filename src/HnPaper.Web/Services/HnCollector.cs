@@ -6,10 +6,14 @@ using HnPaper.Web.Models;
 
 namespace HnPaper.Web.Services;
 
-/// <summary>HN 1면 상위 글과 각 원문의 대표 이미지·설명을 모은다.</summary>
+/// <summary>HN 과거 1면(front?day=)의 상위 글과 각 원문의 대표 이미지·설명을 모은다.</summary>
 public sealed partial class HnCollector(HttpClient http)
 {
     private const string Api = "https://hacker-news.firebaseio.com/v0/";
+    // 그날(UTC) 1면에 오른 글을 모은 목록. API에는 없어서 HTML에서 글 id만 읽고, 나머지는 API로 받는다.
+    private const string Front = "https://news.ycombinator.com/front";
+    // 싣지 않는 글을 빼고도 count개를 채우려고 읽는 쪽 수(한 쪽에 30개)
+    private const int FrontPages = 2;
     private const int MaxHtmlBytes = 512 * 1024;
     private const int MaxDescription = 500;
     private const int MaxText = 1200;
@@ -33,17 +37,23 @@ public sealed partial class HnCollector(HttpClient http)
         return client;
     }
 
+    /// <summary>
+    /// 호 날짜(한국 시간 오늘)의 전날 HN 과거 1면에서 상위 count개를 모은다. HN의 하루는 UTC라서 전날 목록은
+    /// 한국 시간 오전 9시에 닫힌다. 그 전에 수집하면 그날 마지막 몇 시간 동안 1면에 오른 글이 빠질 수 있다.
+    /// </summary>
     public async Task<RawEdition> CollectAsync(int count, CancellationToken ct)
     {
         var collectedAt = Kst.Now;
-        var ids = await http.GetFromJsonAsync<long[]>(Api + "topstories.json", ct) ?? [];
+        var date = collectedAt.ToString("yyyy-MM-dd");
+        var day = DayBefore(date);
+        var ids = await FrontIdsAsync(day, ct);
         var stories = await FetchStoriesAsync(ids, count, 1, ct);
-        return new RawEdition(collectedAt.ToString("yyyy-MM-dd"), collectedAt, stories);
+        return new RawEdition(date, day, collectedAt, stories);
     }
 
     /// <summary>
-    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded)을 빼고 순위를 다시 매긴 뒤, 모자란 자리를 지금 HN 1면에서
-    /// 이 호에 없는 글로 순위대로 채운다. 수집 시각 뒤에 올라온 글은 그 호의 기사가 아니므로 넣지 않는다.
+    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded)을 빼고 순위를 다시 매긴 뒤, 모자란 자리를 그 호의 HN 과거 1면에서
+    /// 이 호에 없는 글로 순위대로 채운다. 메인 1면에서 수집한 예전 호(Day 없음)는 호 날짜의 전날 목록에서 채운다.
     /// </summary>
     public async Task<(RawEdition Edition, IReadOnlyList<RawStory> Added)> FillAsync(RawEdition edition, int count, CancellationToken ct)
     {
@@ -52,15 +62,33 @@ public sealed partial class HnCollector(HttpClient http)
             return (edition with { Stories = kept }, []);
 
         var known = edition.Stories.Select(s => s.Id).ToHashSet();
-        var ids = await http.GetFromJsonAsync<long[]>(Api + "topstories.json", ct) ?? [];
-        var before = edition.CollectedAt.ToUnixTimeSeconds();
-        var added = await FetchStoriesAsync(ids.Where(id => !known.Contains(id)), count - kept.Count, kept.Count + 1, ct,
-            item => item.Time <= before);
+        var ids = await FrontIdsAsync(edition.Day ?? DayBefore(edition.Date), ct);
+        var added = await FetchStoriesAsync(ids.Where(id => !known.Contains(id)), count - kept.Count, kept.Count + 1, ct);
         return (edition with { Stories = [.. kept, .. added] }, added);
     }
 
-    private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, CancellationToken ct,
-        Func<HnItem, bool>? accept = null)
+    private static string DayBefore(string date) =>
+        DateOnly.ParseExact(date, "yyyy-MM-dd").AddDays(-1).ToString("yyyy-MM-dd");
+
+    /// <summary>HN 과거 1면(front?day=)의 글 id를 순위대로 FrontPages쪽까지 읽는다.</summary>
+    private async Task<List<long>> FrontIdsAsync(string day, CancellationToken ct)
+    {
+        var ids = new List<long>();
+        for (var page = 1; page <= FrontPages; page++)
+        {
+            var html = await http.GetStringAsync($"{Front}?day={day}&p={page}", ct);
+            ids.AddRange(FrontRow().Matches(html).Select(m => long.Parse(m.Groups[1].Value)));
+            if (!html.Contains("morelink"))
+                break;
+        }
+
+        // HTML 구조가 바뀌었거나 HN이 요청을 막았으면 빈 호를 쓰지 않고 멈춘다.
+        if (ids.Count == 0)
+            throw new InvalidOperationException($"{Front}?day={day}에서 글을 찾지 못했습니다.");
+        return ids;
+    }
+
+    private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, CancellationToken ct)
     {
         // 채용 글·구인 스레드·포인트 미달 글·Show HN 글은 싣지 않고, count개가 찰 때까지 순위대로 더 받아 온다.
         // 순위는 남은 기사끼리 다시 매긴다.
@@ -71,8 +99,7 @@ public sealed partial class HnCollector(HttpClient http)
                 http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct)));
             live.AddRange(items.OfType<HnItem>().Where(i =>
                 i is { Dead: not true, Deleted: not true, Title: not null }
-                && !RawStory.IsExcluded(i.Type, i.By, i.Score, i.Title)
-                && (accept?.Invoke(i) ?? true)));
+                && !RawStory.IsExcluded(i.Type, i.By, i.Score, i.Title)));
             if (live.Count >= count)
                 break;
         }
@@ -304,6 +331,9 @@ public sealed partial class HnCollector(HttpClient http)
     private static string Collapse(string text) => Whitespace().Replace(text, " ").Trim();
 
     private static string Truncate(string text, int max) => text.Length <= max ? text : text[..max].TrimEnd() + "…";
+
+    [GeneratedRegex(@"<tr\s+class=""athing\b[^""]*""\s+id=""(\d+)""")]
+    private static partial Regex FrontRow();
 
     [GeneratedRegex(@"<meta\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex MetaTag();
