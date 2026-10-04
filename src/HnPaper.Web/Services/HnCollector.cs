@@ -21,8 +21,23 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     // 싣지 않는 글·지운 글을 빼고도 count개를 채우려고 한 번에 더 받아 두는 수
     private const int Spare = 10;
 
+    // 원문에 og 이미지가 없을 때 HN 본문 글에서 찾아볼 링크 수
+    private const int MaxTextLinks = 3;
+
     // 사용자 이름까지 붙여야 출처가 구분되는 호스트
     private static readonly HashSet<string> UserHosts = ["github.com", "gitlab.com", "codeberg.org", "medium.com", "x.com", "twitter.com"];
+
+    // HN 본문 링크에서 대표 이미지를 찾지 않는 호스트. archive.today의 og 이미지는 페이지 전체를 찍은 스크린숏이다.
+    private static readonly HashSet<string> SkippedLinkHosts =
+        ["archive.ph", "archive.today", "archive.is", "archive.li", "archive.md", "archive.vn", "archive.fo", "news.ycombinator.com"];
+
+    // 같은 기사인지 제목으로 볼 때 세지 않는 흔한 단어
+    private static readonly HashSet<string> CommonWords = ["that", "this", "with", "from", "what", "your", "have", "into", "about", "when", "than", "they"];
+
+    private int _fromTextLinks;
+
+    /// <summary>원문에 og 이미지가 없어 HN 본문 글의 링크에서 대표 이미지를 찾은 글 수</summary>
+    public int FromTextLinks => _fromTextLinks;
 
     public static HttpClient CreateHttpClient()
     {
@@ -117,8 +132,10 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         string? image = null, description = null;
         if (external)
         {
-            (image, description) = await FetchPreviewAsync(uri!, gate, ct);
+            (image, description, _) = await FetchPreviewAsync(uri!, gate, ct);
             image ??= YouTubeThumbnail(uri!);
+            if (image is null && item.Text is not null)
+                (image, description) = await FetchFromTextLinksAsync(item, uri!, description, gate, ct);
         }
 
         return new RawStory(
@@ -221,7 +238,51 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         return BlankLines().Replace(text, "\n\n").Trim();
     }
 
-    private async Task<(string? Image, string? Description)> FetchPreviewAsync(Uri uri, SemaphoreSlim gate, CancellationToken ct)
+    /// <summary>
+    /// 원문에서 og 이미지를 얻지 못했을 때(봇 차단·구독 벽 포함), 올린 사람이 HN 본문 글에 붙인 링크(다른 언론사의 같은 기사 등)에서
+    /// 찾는다. 링크 페이지의 제목이 HN 제목과 겹칠 때만 같은 기사로 보고 쓴다. 설명은 원문에 없을 때만 채운다.
+    /// </summary>
+    private async Task<(string? Image, string? Description)> FetchFromTextLinksAsync(
+        HnItem item, Uri original, string? description, SemaphoreSlim gate, CancellationToken ct)
+    {
+        foreach (var link in TextLinks(item.Text!, original).Take(MaxTextLinks))
+        {
+            var preview = await FetchPreviewAsync(link, gate, ct);
+            if (preview.Image is not null && SameStory(item.Title!, preview.Title))
+            {
+                Interlocked.Increment(ref _fromTextLinks);
+                return (preview.Image, description ?? preview.Description);
+            }
+        }
+        return (null, description);
+    }
+
+    /// <summary>HN 본문 글의 링크 가운데 원문과 다른 사이트의 것. archive.today·HN 링크는 뺀다.</summary>
+    private static IEnumerable<Uri> TextLinks(string html, Uri original) =>
+        Anchor().Matches(html)
+            .Select(m => Uri.TryCreate(WebUtility.HtmlDecode(m.Groups[1].Value), UriKind.Absolute, out var link) ? link : null)
+            .OfType<Uri>()
+            .Where(link => link.Scheme is "http" or "https"
+                && !SkippedLinkHosts.Contains(BareHost(link))
+                && BareHost(link) != BareHost(original))
+            .DistinctBy(link => link.ToString());
+
+    /// <summary>두 제목이 4글자 이상의 단어를 둘 이상 함께 쓰면 같은 기사로 본다.</summary>
+    private static bool SameStory(string title, string? other)
+    {
+        if (other is null)
+            return false;
+        var words = TitleWords(title);
+        return TitleWords(other).Count(words.Contains) >= 2;
+    }
+
+    private static HashSet<string> TitleWords(string title) =>
+        Word().Matches(title.ToLowerInvariant())
+            .Select(m => m.Value)
+            .Where(w => w.Length >= 4 && !CommonWords.Contains(w))
+            .ToHashSet();
+
+    private async Task<(string? Image, string? Description, string? Title)> FetchPreviewAsync(Uri uri, SemaphoreSlim gate, CancellationToken ct)
     {
         await gate.WaitAsync(ct);
         (string? Html, bool Blocked) fetched;
@@ -240,7 +301,7 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         if (fetched.Blocked && browser is not null && await browser.FetchHtmlAsync(uri, ct) is { } page)
             (html, baseUri) = (page.Html, page.Url);
         if (html is null)
-            return (null, null);
+            return (null, null, null);
 
         var meta = ParseMeta(html);
         var image = First(meta, "og:image", "og:image:url", "twitter:image", "twitter:image:src");
@@ -250,7 +311,8 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         if (image is not null && Uri.TryCreate(baseUri, image, out var abs) && abs.Scheme is "http" or "https")
             imageUrl = abs.ToString();
 
-        return (imageUrl, description is null ? null : Truncate(Collapse(description), MaxDescription));
+        return (imageUrl, description is null ? null : Truncate(Collapse(description), MaxDescription),
+            First(meta, "og:title", "twitter:title"));
     }
 
     /// <returns>HTML(받지 못하면 null)과, 봇 차단에 막혔거나 접속하지 못해 브라우저로 다시 열어 볼 만한지.</returns>
@@ -322,9 +384,12 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         return string.IsNullOrEmpty(id) ? null : $"https://i.ytimg.com/vi/{Uri.EscapeDataString(id)}/hqdefault.jpg";
     }
 
+    private static string BareHost(Uri uri) =>
+        uri.Host.StartsWith("www.", StringComparison.Ordinal) ? uri.Host[4..] : uri.Host;
+
     private static string SiteOf(Uri uri)
     {
-        var host = uri.Host.StartsWith("www.", StringComparison.Ordinal) ? uri.Host[4..] : uri.Host;
+        var host = BareHost(uri);
         if (UserHosts.Contains(host))
         {
             var user = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
@@ -355,6 +420,9 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
+
+    [GeneratedRegex(@"[\p{L}\p{N}]+")]
+    private static partial Regex Word();
 
     [GeneratedRegex(@"<pre><code>(.*?)</code></pre>", RegexOptions.Singleline)]
     private static partial Regex CodeBlock();

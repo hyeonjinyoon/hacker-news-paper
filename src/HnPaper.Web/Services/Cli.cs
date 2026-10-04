@@ -54,7 +54,7 @@ public static class Cli
 
         var images = edition.Stories.Count(s => s.Image is not null);
         var descriptions = edition.Stories.Count(s => s.Description is not null);
-        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 줄인 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened})");
+        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 줄인 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened}, HN 본문 링크에서 찾은 이미지 {collector.FromTextLinks})");
         Console.WriteLine(path);
         return 0;
     }
