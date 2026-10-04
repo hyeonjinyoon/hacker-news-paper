@@ -18,7 +18,7 @@ Claude Code 스킬 /hn-paper-update
           ├─ 메인: 1면 제목 번역 ─────────────▶ data/ko/{날짜}.json
           ├─ hn-paper-article (기사마다) ─────▶ data/ko/{날짜}/{id}.json          본문 요약
           └─ hn-paper-comments (기사마다,      ▶ data/ko/{날짜}/{id}.comments.json  댓글 번역
-             Sonnet 5.5 · 추론 medium)
+             Sonnet 5.5 · 추론 high)
           │
 ASP.NET Core 사이트 (src/HnPaper.Web) ◀── data/ 를 읽어 지면을 그린다(파일이 바뀌면 바로 반영)
 ```

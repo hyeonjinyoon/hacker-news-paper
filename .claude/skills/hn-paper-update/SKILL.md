@@ -16,7 +16,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 | `data/img/{날짜}/{id}-1600-v2.webp`, `{id}-800-v2.webp` | 수집기(`collect`, `collect-thumbs`) | 원문 og 이미지를 줄인 대표 이미지(16:9 칸 1600px·800px을 덮는 크기, 원본보다 키우지 않음). 사이트가 원문 서버 대신 직접 제공한다 |
 | `data/ko/{날짜}.json` | 이 스킬(메인) | 제목 번역 |
 | `data/ko/{날짜}/{id}.json` | `hn-paper-article` 서브에이전트 | 중간 페이지 본문(굵은 한 줄 요약 · 왜 중요한가 · 핵심 내용 · HN 반응, 합니다체) |
-| `data/ko/{날짜}/{id}.comments.json` | `hn-paper-comments` 서브에이전트(Sonnet 5.5, medium) | 중간 페이지 댓글 번역 |
+| `data/ko/{날짜}/{id}.comments.json` | `hn-paper-comments` 서브에이전트(Sonnet 5.5, high) | 중간 페이지 댓글 번역 |
 
 이 스킬은 `data/ko/` 아래만 쓴다. `data/raw`는 고치지 않는다. 사실 정보(순위·숫자·URL·댓글 순서·작성자)는 수집본이 책임진다.
 
@@ -60,7 +60,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
    `오류:`가 하나라도 나오면 고치고 다시 검증한다. `검사 통과`가 나올 때까지 반복한다. `경고:`는 가능하면 고치되, 남겨도 된다. 단, 제목 문체 경고(합니다체·마침표)는 제목이 고유명사로 끝나 생긴 오탐이 아니면 반드시 고친다.
 6. **보고**: 날짜, 기사 수, 1면 톱 제목, 만든 중간 페이지 수와 번역한 댓글 수, 원문을 읽지 못한 기사, 남은 경고를 짧게 알린다. 커밋은 사용자가 요청할 때만 한다.
 
-댓글은 기사당 최대 30개다. 댓글 번역은 비용을 줄이려고 Sonnet 5.5(추론 medium)로 돌리는 `hn-paper-comments`가 맡는다. 메인이 직접 댓글을 번역하지 않는다.
+댓글은 기사당 최대 30개다. 댓글 번역은 비용을 줄이려고 Sonnet 5.5(추론 high)로 돌리는 `hn-paper-comments`가 맡는다. 메인이 직접 댓글을 번역하지 않는다.
 
 ## 1면 번역본 형식
 

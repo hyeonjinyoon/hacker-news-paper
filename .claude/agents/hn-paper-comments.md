@@ -3,7 +3,7 @@ name: hn-paper-comments
 description: 해커뉴스 페이퍼 중간 페이지의 댓글을 번역한다. 기사 하나의 HN 댓글(최대 30개)을 한국어(합니다체)로 옮겨 data/ko/{날짜}/{id}.comments.json에 저장한다. hn-paper-update 스킬이 기사마다 하나씩 띄운다.
 tools: Read, Write, Bash
 model: claude-sonnet-5-5
-effort: medium
+effort: high
 background: false
 ---
 

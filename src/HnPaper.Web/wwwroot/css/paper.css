@@ -35,7 +35,7 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 /* 마스트헤드 */
 .masthead{display:flex;align-items:center;gap:40px;padding:18px 0 26px;border-bottom:3px solid var(--rule)}
 .logo{display:flex;align-items:baseline;gap:7px;flex:none;font-weight:800;font-size:40px;letter-spacing:-.045em;line-height:1}
-.logo small{font-size:16px;font-weight:600;letter-spacing:0;color:var(--accent)}
+.logo small{font-size:16px;font-weight:600;letter-spacing:0}
 .gnb{display:flex;gap:30px;flex:1;justify-content:center;font-size:16.5px;font-weight:700;white-space:nowrap}
 .tools{display:flex;gap:20px;flex:none}
 .tools svg{width:23px;height:23px;display:block}
