@@ -138,12 +138,12 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
         return Directory.Exists(dir) ? Directory.EnumerateFiles(dir, "*.webp").ToList() : [];
     }
 
-    /// <summary>data/ko/{date}/의 기사별 본문 번역본({id}.json). 댓글 번역본(*.comments.json)은 뺀다.</summary>
+    /// <summary>data/ko/{date}/의 기사별 본문 번역본({id}.json). 댓글 번역본(*.comments.json, *.comments.new.json)은 뺀다.</summary>
     private List<string> BodyFiles(string date)
     {
         var dir = Path.Combine(options.KoDirectory, date);
         return Directory.Exists(dir)
-            ? Directory.EnumerateFiles(dir, "*.json").Where(f => !f.EndsWith(".comments.json", StringComparison.Ordinal)).ToList()
+            ? Directory.EnumerateFiles(dir, "*.json").Where(f => Path.GetFileNameWithoutExtension(f).All(char.IsAsciiDigit)).ToList()
             : [];
     }
 }

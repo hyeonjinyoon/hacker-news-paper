@@ -21,6 +21,8 @@ public sealed record PaperOptions(string DataDirectory)
     public string RawItemPath(string date, long id) => Path.Combine(RawDirectory, date, id + ".json");
     public string KoItemPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".json");
     public string KoCommentsPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".comments.json");
+    // hn-paper-comments가 새로 번역한 댓글만 잠깐 담는 파일. merge-comments가 댓글 번역본에 합치고 지운다.
+    public string KoNewCommentsPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".comments.new.json");
 
     // 줄여 저장한 대표 이미지: data/img/{date}/{id}-{폭}-{버전}.webp. 사이트는 /thumbs/로 제공한다.
     // 폭과 형식 버전이 파일 이름에 들어 있어, 규칙을 바꾸면 주소도 바뀌고 캐시된 옛 이미지가 쓰이지 않는다.

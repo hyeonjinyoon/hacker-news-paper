@@ -8,6 +8,8 @@ namespace HnPaper.Web.Services;
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
 ///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 줄여 저장
 ///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글을 빼고, 모자란 자리를 지금 HN 1면 글로 채움
+///   reuse yyyy-MM-dd                        이미 번역한 기사의 제목·본문과 지금 수집본에 있는 댓글의 번역을 이 호로 가져옴
+///   merge-comments yyyy-MM-dd id            새로 번역한 댓글({id}.comments.new.json)을 댓글 번역본에 합침
 ///   validate [yyyy-MM-dd] [id ...] [--part body|comments]
 ///                                         번역본 검사. id를 주면 그 기사의 중간 페이지만, --part를 주면 본문이나 댓글만 검사
 /// </summary>
@@ -25,6 +27,8 @@ public static class Cli
             "collect-items" => await CollectItemsAsync(options, args),
             "collect-thumbs" => await CollectThumbsAsync(options, args),
             "collect-fill" => await CollectFillAsync(options, args),
+            "reuse" => Reuse(options, args),
+            "merge-comments" => MergeComments(options, args),
             _ => Validate(options, args),
         };
     }
@@ -114,6 +118,53 @@ public static class Cli
         foreach (var story in added)
             Console.WriteLine($"{story.Rank}위 {story.Id} {story.Title}");
         return 0;
+    }
+
+    private static int Reuse(PaperOptions options, string[] args)
+    {
+        var date = args.Length > 1 ? args[1] : null;
+        if (date is null || !Kst.DatePattern.IsMatch(date) || !File.Exists(options.RawPath(date)))
+        {
+            Console.Error.WriteLine("수집본이 있는 날짜를 주세요. 예: reuse 2026-10-04");
+            return 2;
+        }
+
+        var result = TranslationReuse.Apply(options, date);
+        Console.WriteLine($"번역 재사용: {date}");
+        Console.WriteLine($"제목: 이 호 {result.Titles.Kept}개, 지난 호에서 가져옴 {result.Titles.Carried}개, 새로 번역 {result.Titles.Missing}개");
+        Console.WriteLine($"본문: 이 호 {result.Bodies.Kept}개, 지난 호에서 가져옴 {result.Bodies.Carried}개, 새로 작성 {result.Bodies.Missing}개");
+        Console.WriteLine($"댓글: 이 호 {result.Comments.Kept}개, 지난 호에서 가져옴 {result.Comments.Carried}개, 새로 번역 {result.Comments.Missing}개");
+        if (result.NeedTitle.Count > 0)
+        {
+            Console.WriteLine("제목을 새로 번역할 기사:");
+            foreach (var story in result.NeedTitle)
+                Console.WriteLine($"{story.Rank}위 {story.Id} {story.Title}");
+        }
+        return 0;
+    }
+
+    private static int MergeComments(PaperOptions options, string[] args)
+    {
+        var date = args.Length > 1 ? args[1] : null;
+        long id = 0;
+        if (date is null || !Kst.DatePattern.IsMatch(date) || args.Length < 3 || !long.TryParse(args[2], out id)
+            || !File.Exists(options.RawItemPath(date, id)) || !File.Exists(options.KoNewCommentsPath(date, id)))
+        {
+            Console.Error.WriteLine("날짜와 기사 id를 주고, 새로 번역한 댓글을 data/ko/{날짜}/{id}.comments.new.json에 먼저 쓰세요. 예: merge-comments 2026-10-04 49949235");
+            return 2;
+        }
+
+        try
+        {
+            var counts = TranslationReuse.MergeComments(options, date, id);
+            Console.WriteLine($"댓글 병합: {id} · 새 번역 {counts.Carried}개 + 기존 {counts.Kept}개, 빠진 댓글 {counts.Missing}개");
+            return counts.Missing == 0 ? 0 : 1;
+        }
+        catch (System.Text.Json.JsonException e)
+        {
+            Console.Error.WriteLine($"새 댓글 번역 파일을 읽지 못했습니다: {e.Message}");
+            return 1;
+        }
     }
 
     private static int Validate(PaperOptions options, string[] args)

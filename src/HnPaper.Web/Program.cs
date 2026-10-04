@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.WebEncoders;
 
-// CLI: `dotnet run -- collect`, `collect-items <yyyy-MM-dd>`, `collect-thumbs <yyyy-MM-dd>`, `collect-fill <yyyy-MM-dd>`, `validate [yyyy-MM-dd] [id ...]`
-if (args.Length > 0 && args[0] is "collect" or "collect-items" or "collect-thumbs" or "collect-fill" or "validate")
+// CLI: `dotnet run -- collect`, `collect-items <yyyy-MM-dd>`, `collect-thumbs <yyyy-MM-dd>`, `collect-fill <yyyy-MM-dd>`,
+// `reuse <yyyy-MM-dd>`, `merge-comments <yyyy-MM-dd> <id>`, `validate [yyyy-MM-dd] [id ...]`
+if (args.Length > 0 && args[0] is "collect" or "collect-items" or "collect-thumbs" or "collect-fill" or "reuse" or "merge-comments" or "validate")
     return await Cli.RunAsync(args);
 
 var builder = WebApplication.CreateBuilder(args);

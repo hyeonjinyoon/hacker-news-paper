@@ -4,7 +4,7 @@
 
 - **1면**: HN 순위대로 고정된 자리에 기사를 배치합니다(1위 톱, 2–3위 보조 기사, 4–5위 사진 기사 …). 기사를 분류하지 않습니다. YC 회사 채용 글, 매달 올라오는 구인 스레드("Who is hiring?" 등), 포인트가 30점에 못 미치는 글(HN이 반응을 보려고 1면에 잠깐 올린 새 글 등 아직 반응이 적은 글)은 싣지 않고, 그 자리는 다음 순위 글로 채웁니다.
 - **기사 페이지**: 기사를 누르면 원문으로 가기 전에 중간 페이지가 열립니다. 원문 요약(굵은 한 줄 요약 · 왜 중요한가 · 핵심 내용 · HN 반응)과 HN 댓글 번역(최대 30개, HN 댓글란과 같은 순서)이 나오고, 제목을 누르면 원문으로, 그 아래 원제를 누르면 Hacker News 글로 갑니다.
-- **번역**: Claude Code 스킬이 맡습니다. 제목은 원제의 뉘앙스를 살려 옮기고(담담한 제목은 합니다체, 구어 느낌이 강한 제목은 해요체), 원문 기사는 전문을 번역하지 않고 자기 말로 요약합니다. HN에 직접 올라온 본문 글과 댓글은 번역합니다. 댓글도 원문 말투에 맞춰 합니다체나 해요체로 옮깁니다.
+- **번역**: Claude Code 스킬이 맡습니다. 제목은 원제의 뉘앙스를 살려 옮기고(담담한 제목은 합니다체, 구어 느낌이 강한 제목은 해요체), 원문 기사는 전문을 번역하지 않고 자기 말로 요약합니다. HN에 직접 올라온 본문 글과 댓글은 번역합니다. 댓글도 원문 말투에 맞춰 합니다체나 해요체로 옮깁니다. 이미 번역한 기사(같은 날 다시 수집했거나 며칠째 1면에 남은 글)는 제목·본문을 그대로 쓰고, 새로 달린 댓글만 번역합니다.
 
 이 사이트는 Y Combinator나 Hacker News와 관계가 없습니다. 각 글의 저작권은 원 출처에 있습니다.
 
@@ -15,7 +15,8 @@ HN API ──collect──▶ data/raw/      1면 수집본, 기사별 댓글
           │        data/img/      원문 og 이미지를 줄인 WebP
           │
 Claude Code 스킬 /hn-paper-update
-          ├─ 메인: 1면 제목 번역 ─────────────▶ data/ko/{날짜}.json
+          ├─ reuse: 이미 번역한 기사의 제목·본문, 남아 있는 댓글의 번역을 이 호로 가져옴
+          ├─ 메인: 1면 제목 번역(새 기사만) ──▶ data/ko/{날짜}.json
           ├─ hn-paper-article (기사마다) ─────▶ data/ko/{날짜}/{id}.json          본문 요약
           │    원문은 WebFetch로 읽고, 실패하면 에이전트 전용 헤드리스 브라우저(Playwright MCP)로 다시 읽는다
           └─ hn-paper-comments (기사마다,      ▶ data/ko/{날짜}/{id}.comments.json  댓글 번역
@@ -67,7 +68,7 @@ launchctl kickstart -k gui/$(id -u)/com.d9.hn-paper-web   # 코드를 바꾼 뒤
 
 ```
 /hn-paper-update                  새로 수집하고 1면 제목·기사 페이지를 모두 만든다
-/hn-paper-update 2026-10-04       그 호를 다시 번역한다(수집하지 않음, 끝난 기사 페이지는 건너뜀)
+/hn-paper-update 2026-10-04       그 호의 빠진 번역만 채운다(수집하지 않음, 있는 번역은 그대로 둠)
 /hn-paper-update 2026-10-04 49942706   그 기사의 페이지만 다시 만든다
 ```
 
@@ -79,6 +80,8 @@ mcp__hn-browser__browser_navigate  mcp__hn-browser__browser_wait_for  mcp__hn-br
 Bash(dotnet run --project src/HnPaper.Web -- collect:*)
 Bash(dotnet run --project src/HnPaper.Web -- collect-items:*)
 Bash(dotnet run --project src/HnPaper.Web -- collect-thumbs:*)
+Bash(dotnet run --project src/HnPaper.Web -- reuse:*)
+Bash(dotnet run --project src/HnPaper.Web -- merge-comments:*)
 Bash(dotnet run --project src/HnPaper.Web -- validate:*)
 ```
 
@@ -93,6 +96,8 @@ dotnet run --project src/HnPaper.Web -- collect [--comments 30] [--out 경로]
 dotnet run --project src/HnPaper.Web -- collect-items 2026-10-04 [--comments 30]
 dotnet run --project src/HnPaper.Web -- collect-thumbs 2026-10-04
 dotnet run --project src/HnPaper.Web -- collect-fill 2026-10-04 [--comments 30]
+dotnet run --project src/HnPaper.Web -- reuse 2026-10-04
+dotnet run --project src/HnPaper.Web -- merge-comments 2026-10-04 49949235
 dotnet run --project src/HnPaper.Web -- validate [2026-10-04] [id ...] [--part body|comments]
 ```
 
@@ -102,6 +107,8 @@ dotnet run --project src/HnPaper.Web -- validate [2026-10-04] [id ...] [--part b
 | `collect-items` | 이미 수집한 호의 기사별 댓글만 다시 수집 |
 | `collect-thumbs` | 이미 수집한 호의 대표 이미지만 다시 줄여 저장 |
 | `collect-fill` | 이미 수집한 호에서 싣지 않는 글(위 `collect`의 제외 기준)을 빼고 순위를 다시 매긴 뒤, 모자란 자리를 지금 HN 1면에서 그 호에 없는 글(수집 시각 전에 올라온 것)로 채움. 새로 넣은 기사만 댓글·대표 이미지를 모으므로, 그 기사의 제목 번역과 중간 페이지는 따로 만든다 |
+| `reuse` | 이미 번역한 기사(같은 id)의 제목·본문을 이 호에서, 없으면 최근 7개 호에서 가져오고, 지금 수집본에 있는 댓글의 번역만 모아 수집본 순서로 다시 씀. 새로 번역할 제목 목록을 알려 줌 |
+| `merge-comments` | `hn-paper-comments`가 새로 번역한 댓글(`data/ko/{날짜}/{id}.comments.new.json`)을 댓글 번역본에 합치고 그 파일을 지움 |
 | `validate` | 번역본 검사. 모든 기사가 빠짐없는지, 제목이 반말이 아닌지, 요약이 합니다체인지, 요약 틀(한 줄 요약·소제목·글머리표 개수·분량·HN 반응)을 지켰는지, 굵게를 한 줄 요약에만 썼는지, 수집한 댓글이 모두 번역됐는지 확인 |
 
 ## 데이터
