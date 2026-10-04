@@ -2,12 +2,12 @@
 name: hn-paper-update
 description: 해커뉴스 페이퍼의 오늘자 호를 만든다. HN 1면 상위 30개와 기사별 댓글(최대 30개)을 수집하고, 제목을 자연스러운 한국어로 옮기고, 기사마다 서브에이전트를 띄워 중간 페이지(원문 요약 + Sonnet으로 번역한 댓글)를 data/ko/에 저장한 뒤 검증한다. 1면의 요약과 리드는 따로 쓰지 않고 중간 페이지 요약의 첫 문단을 쓴다. Claude 데스크톱 앱 루틴에서 매일 아침 실행하며, "기사 업데이트", "오늘 호 만들어줘", "해커뉴스 페이퍼 갱신" 같은 요청에도 쓴다.
 argument-hint: "[yyyy-MM-dd] [기사 id ...]: 날짜만 주면 그 호를 다시 번역(끝난 중간 페이지는 건너뜀), id까지 주면 그 기사들의 중간 페이지만"
-allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dotnet run --project src/HnPaper.Web -- collect-items:*), Bash(dotnet run --project src/HnPaper.Web -- collect-thumbs:*), Bash(dotnet run --project src/HnPaper.Web -- validate:*), Read, Glob, Edit(data/ko/**), WebFetch
+allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dotnet run --project src/HnPaper.Web -- collect-items:*), Bash(dotnet run --project src/HnPaper.Web -- collect-thumbs:*), Bash(dotnet run --project src/HnPaper.Web -- validate:*), Read, Glob, Edit(data/ko/**), WebFetch, Agent
 ---
 
 # 해커뉴스 페이퍼 업데이트
 
-사이트(`src/HnPaper.Web`)는 날짜별 파일 두 개를 합쳐 지면을 그린다.
+사이트(`src/HnPaper.Web`)는 날짜별 수집본·번역본·이미지 파일을 합쳐 지면을 그린다.
 
 | 파일 | 누가 쓰나 | 내용 |
 |---|---|---|
