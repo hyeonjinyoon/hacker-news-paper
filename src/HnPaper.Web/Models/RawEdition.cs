@@ -32,12 +32,13 @@ public sealed record RawStory(
 
     /// <summary>지면과 중간 페이지에 싣지 않는 글. 수집 단계에서 빼지만, 그 전에 수집한 호에는 남아 있을 수 있다.</summary>
     [JsonIgnore]
-    public bool Excluded => IsExcluded(Type, By, Points);
+    public bool Excluded => IsExcluded(Type, By, Points, Title);
 
     /// <summary>
     /// 싣지 않는 글: YC 회사 채용 글(type job), 매달 올라오는 구인 스레드(whoishiring 계정의 "Who is hiring?" 등),
-    /// 포인트가 MinPoints에 못 미치는 글.
+    /// 포인트가 MinPoints에 못 미치는 글, 직접 만든 것을 소개하는 Show HN 글.
     /// </summary>
-    public static bool IsExcluded(string? type, string? by, int? points) =>
-        type == "job" || by == "whoishiring" || points < MinPoints;
+    public static bool IsExcluded(string? type, string? by, int? points, string? title) =>
+        type == "job" || by == "whoishiring" || points < MinPoints
+        || title?.StartsWith("Show HN", StringComparison.OrdinalIgnoreCase) == true;
 }

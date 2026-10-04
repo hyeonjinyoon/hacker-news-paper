@@ -62,7 +62,7 @@ public sealed partial class HnCollector(HttpClient http)
     private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, CancellationToken ct,
         Func<HnItem, bool>? accept = null)
     {
-        // 채용 글·구인 스레드·포인트 미달 글은 싣지 않고, count개가 찰 때까지 순위대로 더 받아 온다.
+        // 채용 글·구인 스레드·포인트 미달 글·Show HN 글은 싣지 않고, count개가 찰 때까지 순위대로 더 받아 온다.
         // 순위는 남은 기사끼리 다시 매긴다.
         var live = new List<HnItem>();
         foreach (var batch in ids.Chunk(count + Spare))
@@ -71,7 +71,7 @@ public sealed partial class HnCollector(HttpClient http)
                 http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct)));
             live.AddRange(items.OfType<HnItem>().Where(i =>
                 i is { Dead: not true, Deleted: not true, Title: not null }
-                && !RawStory.IsExcluded(i.Type, i.By, i.Score)
+                && !RawStory.IsExcluded(i.Type, i.By, i.Score, i.Title)
                 && (accept?.Invoke(i) ?? true)));
             if (live.Count >= count)
                 break;
