@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>해커뉴스 페이퍼</title>
+<meta name="description" content="Hacker News 1면 상위 30개 글을 한국어로 옮긴 신문형 페이지 (2026년 10월 4일 낮 12시 기준)">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&display=swap">
+<style>
+:root{
+  --bg:#fff;--fg:#111;--sub:#3d3d3d;--muted:#767676;--line:#e3e3e3;--rule:#111;
+  --accent:#c2410c;--ph:#f2f0eb;--ph-fg:#9a9384;--hover:#c2410c;
+  --chart-bg:#141c28;--chart-fg:#e9eef5;--chart-mute:#8593a6;--chart-grid:#26324a;--chart-hot:#ff7a1a;--chart-cap:#f05252;
+  --memorial-bg:#1b1b1b;--memorial-fg:#f1f1f1;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
+    --accent:#fb923c;--ph:#1e1e1e;--ph-fg:#7d7d7d;--hover:#fb923c;--memorial-bg:#232323;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
+  --accent:#fb923c;--ph:#1e1e1e;--ph-fg:#7d7d7d;--hover:#fb923c;--memorial-bg:#232323;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+  -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+a{color:inherit;text-decoration:none}
+a:hover{color:var(--hover)}
+h1,h2,h3,h4,p{margin:0}
+ol,ul{margin:0;padding:0;list-style:none}
+.wrap{max-width:1312px;margin:0 auto;padding:0 16px}
+
+/* 상단 유틸 바 */
+.util{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0 0;font-size:13px;color:var(--muted)}
+.util nav{display:flex;flex-wrap:wrap}
+.util nav a+a::before{content:"";display:inline-block;width:1px;height:10px;background:var(--line);margin:0 10px;vertical-align:middle}
+
+/* 마스트헤드 */
+.masthead{display:flex;align-items:center;gap:40px;padding:18px 0 26px;border-bottom:3px solid var(--rule)}
+.logo{display:flex;align-items:baseline;gap:8px;flex:none;font-family:"Noto Serif KR",serif;font-weight:900;font-size:42px;letter-spacing:-.02em;line-height:1}
+.logo b{display:inline-grid;place-items:center;width:38px;height:38px;background:#ff6600;color:#fff;font:700 26px/1 Verdana,sans-serif;align-self:center}
+.logo small{font:700 12px/1 "Pretendard",sans-serif;letter-spacing:.24em;color:var(--accent)}
+.gnb{display:flex;gap:30px;flex:1;justify-content:center;font-size:16.5px;font-weight:700;white-space:nowrap}
+.tools{display:flex;gap:20px;flex:none}
+.tools svg{width:23px;height:23px;display:block}
+
+/* 1면 톱 */
+.top{display:grid;grid-template-columns:minmax(0,1fr) 328px;padding-bottom:36px}
+.lead{padding-right:30px;border-right:1px solid var(--line)}
+.side{padding-left:30px;padding-top:28px}
+.hero h1{font-size:37px;font-weight:800;letter-spacing:-.035em;line-height:1.28;margin:28px 0 22px}
+.hero-body{display:grid;grid-template-columns:minmax(0,1.42fr) minmax(0,1fr);gap:24px}
+.hero-graphic{display:block;aspect-ratio:16/9.2;overflow:hidden}
+.hero-graphic svg{display:block;width:100%;height:100%;font-family:inherit}
+.lede{font-size:14.5px;line-height:1.72;color:var(--sub)}
+.lede p+p{margin-top:10px}
+.lede .meta{margin-top:14px}
+.subs{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:24px;padding-top:24px;border-top:1px solid var(--line)}
+.sub{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px}
+.sub h3{font-size:18.5px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
+.sub p.desc{margin-top:8px;font-size:14px;line-height:1.6;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card+.card{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+.card .thumb{margin-bottom:14px}
+.card h3{font-size:19px;font-weight:700;line-height:1.42;letter-spacing:-.03em;margin-top:4px}
+
+/* 썸네일 */
+.thumb{position:relative;display:block;aspect-ratio:16/9;background:var(--ph);overflow:hidden}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s}
+a.thumb:hover img{transform:scale(1.04)}
+.ph-label{position:absolute;inset:0;display:grid;place-items:center;padding:12px;text-align:center;
+  font-family:"Noto Serif KR",serif;font-weight:700;font-size:15px;color:var(--ph-fg);letter-spacing:-.01em}
+.memorial{position:relative;display:grid;place-content:center;aspect-ratio:16/9;background:var(--memorial-bg);color:var(--memorial-fg);text-align:center;gap:6px}
+.memorial span{font-size:10px;letter-spacing:.32em;opacity:.6}
+.memorial strong{font-family:"Noto Serif KR",serif;font-size:19px;font-weight:700}
+
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+.meta>*+*::before{content:"·";margin:0 6px;color:var(--line)}
+.meta a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.meta .site{font-weight:600}
+
+/* 섹션 공통 */
+.band{border-top:3px solid var(--rule);padding:32px 0 40px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+.sec-head h2{font-size:23px;font-weight:800;letter-spacing:-.03em}
+.sec-head a.more{font-size:13px;color:var(--muted)}
+.sec-head a.more::after{content:" ›"}
+
+/* 2단 띠: 사진기사 | 헤드라인 목록 | 오피니언 */
+.band-3{display:grid;grid-template-columns:300px minmax(0,1fr) 328px}
+.band-3>*{min-width:0}
+.band-3 .col-a{padding-right:30px;border-right:1px solid var(--line)}
+.band-3 .col-b{padding:0 30px;border-right:1px solid var(--line)}
+.band-3 .col-c{padding-left:30px}
+.photo-lead h3{font-size:18px;font-weight:700;line-height:1.45;letter-spacing:-.025em;margin-top:14px}
+.photo-lead p.desc{margin-top:8px;font-size:14px;line-height:1.6;color:var(--muted)}
+.headlines li{padding:15px 0;border-bottom:1px solid var(--line)}
+.headlines li:first-child{padding-top:0}
+.headlines h3{font-size:18.5px;font-weight:500;letter-spacing:-.03em;line-height:1.45}
+.headlines .meta{margin-top:5px}
+.opinion li{padding:16px 0;border-bottom:1px solid var(--line)}
+.opinion li:first-child{padding-top:0}
+.opinion .kicker{color:#c0392b}
+.opinion h3{font-size:16.5px;font-weight:500;line-height:1.5;letter-spacing:-.025em}
+
+/* 테크·라이프 섹션 */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 328px}
+.split>.main{padding-right:30px;border-right:1px solid var(--line);min-width:0}
+.split>.aside{padding-left:30px;min-width:0}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.grid4 h3{font-size:16.5px;font-weight:700;line-height:1.45;letter-spacing:-.025em;margin-top:12px}
+.grid4 .kicker{margin:12px 0 0;display:block}
+.grid4 .kicker+h3{margin-top:2px}
+.textlist{display:grid;grid-template-columns:1fr 1fr;column-gap:28px;margin-top:26px;border-top:1px solid var(--line)}
+.textlist li{padding:14px 0;border-bottom:1px solid var(--line)}
+.textlist h3{font-size:16px;font-weight:500;line-height:1.5;letter-spacing:-.02em}
+.textlist p.desc{font-size:13.5px;color:var(--muted);line-height:1.55;margin-top:4px}
+
+/* 많이 본 / 댓글 많은 */
+.ranking li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.ranking li:first-child{padding-top:0}
+.ranking .n{font-family:"Noto Serif KR",serif;font-weight:900;font-size:19px;line-height:1.25;color:var(--accent)}
+.ranking h3{font-size:15px;font-weight:500;line-height:1.45;letter-spacing:-.02em}
+.ranking .meta{margin-top:3px;font-size:12px}
+.aside .box+.box{margin-top:34px}
+.jobs{border:1px solid var(--line);padding:18px}
+.jobs h3{font-size:16px;font-weight:700;line-height:1.45}
+.jobs p.desc{font-size:13.5px;line-height:1.6;color:var(--muted);margin-top:6px}
+
+/* 전체 순위 */
+.fulllist{counter-reset:none;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;column-gap:40px}
+.fulllist li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px;padding:14px 0;border-bottom:1px solid var(--line)}
+.fulllist .n{font-family:"Noto Serif KR",serif;font-weight:900;font-size:22px;line-height:1.2;color:var(--muted)}
+.fulllist li:nth-child(-n+3) .n{color:var(--accent)}
+.fulllist h3{font-size:16px;font-weight:600;line-height:1.45;letter-spacing:-.02em}
+.fulllist .en{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+.fulllist .meta{margin-top:4px;font-size:12px}
+
+footer{border-top:3px solid var(--rule);padding:26px 0 48px;font-size:13px;line-height:1.7;color:var(--muted)}
+footer .logo{font-size:24px;margin-bottom:10px;color:var(--fg)}
+footer .logo b{width:24px;height:24px;font-size:16px}
+
+/* 반응형 */
+@media (max-width:1180px){
+  .gnb{gap:20px;font-size:15.5px}
+  .band-3{grid-template-columns:260px minmax(0,1fr)}
+  .band-3 .col-b{border-right:0;padding-right:0}
+  .band-3 .col-c{grid-column:1/-1;padding:28px 0 0;margin-top:28px;border-top:1px solid var(--line)}
+  .opinion{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}
+  .opinion li:nth-child(2){padding-top:0}
+  .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:1000px){
+  .masthead{flex-wrap:wrap;gap:16px 24px}
+  .gnb{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .tools{margin-left:auto}
+  .top,.split{grid-template-columns:minmax(0,1fr)}
+  .lead,.split>.main{padding-right:0;border-right:0}
+  .side{padding:28px 0 0;margin-top:28px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .card+.card{margin-top:0;padding-top:0;border-top:0}
+  .split>.aside{padding:28px 0 0;margin-top:28px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .aside .box+.box{margin-top:0}
+}
+@media (max-width:720px){
+  .util .date{display:none}
+  .logo{font-size:32px}
+  .logo b{width:30px;height:30px;font-size:20px}
+  .hero h1{font-size:27px;margin:22px 0 16px}
+  .hero-body,.subs,.textlist,.fulllist,.opinion{grid-template-columns:minmax(0,1fr)}
+  .sub{grid-template-columns:128px minmax(0,1fr);gap:14px}
+  .sub h3{font-size:16.5px}
+  .sub p.desc{-webkit-line-clamp:2}
+  .band-3{grid-template-columns:minmax(0,1fr)}
+  .band-3 .col-a{padding-right:0;border-right:0;padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--line)}
+  .band-3 .col-b{padding:0}
+  .opinion li:nth-child(2){padding-top:16px}
+  .side,.split>.aside{grid-template-columns:minmax(0,1fr)}
+  .card+.card{padding-top:22px;border-top:1px solid var(--line)}
+  .aside .box+.box{margin-top:34px}
+  .grid4{gap:20px 16px}
+  .grid4 h3{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="util">
+    <span class="date">2026년 10월 4일 일요일 · 낮 12시 기준</span>
+    <nav aria-label="바로가기">
+      <a href="https://news.ycombinator.com/" target="_blank" rel="noopener">Hacker News 원문</a>
+      <a href="https://news.ycombinator.com/newest" target="_blank" rel="noopener">최신</a>
+      <a href="https://news.ycombinator.com/ask" target="_blank" rel="noopener">Ask</a>
+      <a href="https://news.ycombinator.com/show" target="_blank" rel="noopener">Show</a>
+    </nav>
+  </div>
+  <div class="masthead">
+    <a class="logo" href="#top"><b>Y</b>해커뉴스<small>PAPER</small></a>
+    <nav class="gnb" aria-label="섹션">
+      <a href="#top">주요뉴스</a>
+      <a href="#opinion">오피니언</a>
+      <a href="#tech">테크</a>
+      <a href="#life">라이프</a>
+      <a href="#popular">많이 본 뉴스</a>
+      <a href="#jobs">채용</a>
+      <a href="#rank">전체 순위</a>
+    </nav>
+    <div class="tools">
+      <a href="https://hn.algolia.com/" target="_blank" rel="noopener" aria-label="Hacker News 검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg></a>
+      <a href="https://news.ycombinator.com/" target="_blank" rel="noopener" aria-label="Hacker News 원문 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="top" id="top">
+  <div class="lead">
+    <article class="hero">
+      <h1><a href="https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/" target="_blank" rel="noopener">사이먼 윌리슨 “거의 모든 서비스에 ‘기본 하드 예산 상한’ 필요해진다”</a></h1>
+      <div class="hero-body">
+        <a class="hero-graphic" href="https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/" target="_blank" rel="noopener" tabindex="-1"><svg viewBox="0 0 560 320" role="img" aria-label="소프트 상한과 하드 상한에서의 월 누적 요금 비교 그래픽">
+  <rect width="560" height="320" fill="var(--chart-bg)"/>
+  <text x="28" y="40" fill="var(--chart-fg)" font-size="17" font-weight="700">월 누적 사용 요금</text>
+  <text x="28" y="62" fill="var(--chart-mute)" font-size="12.5">에이전트가 띄운 서비스가 밤새 폭주한다면</text>
+  <g stroke="var(--chart-grid)" stroke-width="1">
+    <line x1="28" y1="282" x2="532" y2="282"/>
+    <line x1="28" y1="232" x2="532" y2="232"/>
+    <line x1="28" y1="132" x2="532" y2="132"/>
+  </g>
+  <line x1="352" y1="84" x2="352" y2="282" stroke="var(--chart-mute)" stroke-width="1" stroke-dasharray="2 4"/>
+  <text x="358" y="98" fill="var(--chart-mute)" font-size="12">00:00 잠든 사이</text>
+  <line x1="28" y1="182" x2="532" y2="182" stroke="var(--chart-cap)" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="32" y="174" fill="var(--chart-cap)" font-size="12.5" font-weight="700">월 예산 한도 $X</text>
+  <polyline fill="none" stroke="var(--chart-mute)" stroke-width="2.5" stroke-dasharray="7 6" stroke-linecap="round"
+    points="28,278 90,274 150,268 210,258 270,242 330,214 352,198 390,160 430,122 470,92 520,70"/>
+  <polyline fill="none" stroke="var(--chart-hot)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+    points="28,278 90,274 150,268 210,258 270,242 330,214 352,198 371,182 520,182"/>
+  <circle cx="371" cy="182" r="6" fill="var(--chart-hot)"/>
+  <text x="404" y="64" fill="var(--chart-mute)" font-size="12.5">소프트 상한: 경고 메일만</text>
+  <text x="392" y="208" fill="var(--chart-hot)" font-size="13" font-weight="700">하드 상한: 여기서 차단</text>
+  <text x="392" y="226" fill="var(--chart-fg)" font-size="12">초과분은 요금 대신 에러 반환</text>
+</svg></a>
+        <div class="lede">
+          <p>코딩 에이전트가 유료 API와 클라우드 자원을 손쉽게 띄우는 시대에는 ‘월 X달러를 넘으면 서비스를 끊고 에러를 반환하는’ 하드 예산 상한이 기본값이 돼야 한다는 주장이 나왔다. 장고(Django) 공동 창시자인 개발자 사이먼 윌리슨은 3일(현지시간) 블로그에서 경고 메일만 보내는 소프트 상한으로는 부족하다고 지적했다.</p>
+          <p>자는 사이 폭주한 서비스가 수백~수천 달러를 써 버리는 일을 막으려면 상한을 기본으로 켜 두고, 위험을 감수하려는 사용자만 명시적으로 해제하게 해야 한다는 것이다. 앱이 에러를 내는 걸 꺼리는 기업도 있겠지만, 대부분은 1만 달러가 넘는 ‘요금 폭탄’보다 에러를 택할 것이라고 그는 봤다. 특히 개인 프로젝트에 AWS를 쓰지 않는 이유로 이 공포를 꼽으며, AWS가 지난달 16일 프로젝트 단위 월 지출 한도 기능을 내놓은 점을 함께 소개했다.</p>
+          <p class="meta"><span class="site">simonwillison.net</span><span>▲ 220</span><a href="https://news.ycombinator.com/item?id=49949235" target="_blank" rel="noopener">댓글 117</a><span>2시간 전</span><span>elffjs</span></p>
+        </div>
+      </div>
+    </article>
+    <div class="subs">
+      <article class="sub"><a class="memorial" href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span>IN MEMORIAM</span><strong>밥 크린절리</strong></a><div><span class="kicker">부고</span><h3><a href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener">‘너드의 승리’ IT 칼럼니스트 밥 크린절리 별세 소식</a></h3><p class="desc">고인 가족의 지인에게서 소식을 들었다는 HN 이용자에 따르면 그는 토요일 새벽 잠자던 중 세상을 떠났다. 본명은 마크 스티븐스. 애플 초기 직원 출신으로 PBS 다큐멘터리 ‘너드의 승리’로 널리 알려졌다.</p><p class="meta"><span class="site">news.ycombinator.com</span><span>▲ 159</span><a href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener">댓글 26</a><span>2시간 전</span></p></div></article>
+      <article class="sub"><a class="thumb" href="https://cosmowenman.substack.com/p/rodin-museum-3d-scan-verdict" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">cosmowenman.substack.com</span><img src="https://substackcdn.com/image/fetch/$s_!ZCqr!,w_1200,h_675,c_fill,f_jpg,q_auto:good,fl_progressive:steep,g_auto/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F40df7005-5501-477f-ad3a-42327b210fe8_2507x1317.png" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><div><span class="kicker">문화·법</span><h3><a href="https://cosmowenman.substack.com/p/rodin-museum-3d-scan-verdict" target="_blank" rel="noopener">“때로는 법이 법이 아니다”…로댕미술관 3D 스캔 판결의 ‘배신’</a></h3><p class="desc">파리 로댕미술관 소장품의 3D 스캔 데이터 공개를 놓고 법정 다툼을 벌여 온 코스모 웬먼이 최근 판결을 정면으로 비판했다.</p><p class="meta"><span class="site">cosmowenman.substack.com</span><span>▲ 98</span><a href="https://news.ycombinator.com/item?id=49946355" target="_blank" rel="noopener">댓글 49</a><span>5시간 전</span></p></div></article>
+    </div>
+  </div>
+  <aside class="side" aria-label="주요 기사">
+    <article class="card"><a class="thumb" href="https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">aleph-alpha.com</span><img src="https://aleph-alpha.com/_astro/00-cover.Du35XCGh_zJqw.jpeg" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">AI</span><h3><a href="https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/" target="_blank" rel="noopener">獨 알레프 알파, ‘소버린’ 오픈웨이트 모델 ‘콜리브리’ 공개</a></h3><p class="meta"><span class="site">aleph-alpha.com</span><span>▲ 532</span><a href="https://news.ycombinator.com/item?id=49942706" target="_blank" rel="noopener">댓글 303</a><span>17시간 전</span></p></article>
+    <article class="card"><a class="thumb" href="https://www.theguardian.com/technology/2026/oct/03/openai-safety-leader-quits-warning-ai-companys-culture-is-broken" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">theguardian.com</span><img src="https://i.guim.co.uk/img/media/77b3a6702fa4e94c36e292a72e438fa40eb19184/625_0_6261_5010/master/6261.jpg?width=1200&amp;height=630&amp;quality=85&amp;auto=format&amp;fit=crop&amp;precrop=40:21,offset-x50,offset-y0&amp;overlay-align=bottom%2Cleft&amp;overlay-width=100p&amp;overlay-base64=L2ltZy9zdGF0aWMvb3ZlcmxheXMvdGctZGVmYXVsdC5wbmc&amp;enable=upscale&amp;s=e64134a41050264f5ceac249a333fc99" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">AI</span><h3><a href="https://www.theguardian.com/technology/2026/oct/03/openai-safety-leader-quits-warning-ai-companys-culture-is-broken" target="_blank" rel="noopener">오픈AI 안전 책임자 사임…“회사 문화 망가졌다” 경고</a></h3><p class="meta"><span class="site">theguardian.com</span><span>▲ 201</span><a href="https://news.ycombinator.com/item?id=49948332" target="_blank" rel="noopener">댓글 147</a><span>4시간 전</span></p></article>
+  </aside>
+</section>
+
+<section class="band band-3">
+  <div class="col-a photo-lead">
+    <a class="thumb" href="https://techcrunch.com/2026/10/03/federal-judge-calls-flock-indiscriminate-mass-surveillance/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">techcrunch.com</span><img src="https://techcrunch.com/wp-content/uploads/2026/08/flock-camera-pole.jpg?resize=1200,799" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a>
+    <span class="kicker" style="margin-top:14px">프라이버시</span>
+    <h3 style="margin-top:0"><a href="https://techcrunch.com/2026/10/03/federal-judge-calls-flock-indiscriminate-mass-surveillance/" target="_blank" rel="noopener">美 연방판사 “번호판 인식 카메라 ‘플록’은 무차별 대량감시”</a></h3>
+    <p class="desc">보안관 대리가 영장 없이 플록으로 한 여성의 차량 번호판을 조회한 것은 수정헌법 4조 위반이라고 연방 판사가 판결했다.</p>
+    <p class="meta"><span class="site">techcrunch.com</span><span>▲ 335</span><a href="https://news.ycombinator.com/item?id=49948254" target="_blank" rel="noopener">댓글 208</a><span>4시간 전</span></p>
+  </div>
+  <div class="col-b">
+    <ul class="headlines">
+      <li><h3><a href="https://notoriousbfg.com/hole-punch/" target="_blank" rel="noopener">블랙홀 뚫어 우주선 날린다…중력 퍼즐 웹게임 ‘홀 펀치’</a></h3><p class="meta"><span class="site">notoriousbfg.com</span><span>▲ 246</span><a href="https://news.ycombinator.com/item?id=49946393" target="_blank" rel="noopener">댓글 61</a><span>8시간 전</span></p></li><li><h3><a href="https://www.phoronix.com/news/XDC-2026-Valve-Timur-AMDGPU" target="_blank" rel="noopener">밸브 개발자, 10년 된 AMD 그래픽카드 리눅스 지원 끌어올렸다</a></h3><p class="meta"><span class="site">phoronix.com</span><span>▲ 159</span><a href="https://news.ycombinator.com/item?id=49946895" target="_blank" rel="noopener">댓글 21</a><span>7시간 전</span></p></li><li><h3><a href="https://www.whec.com/top-news/webster-man-celebrating-the-100th-birthday-of-the-kidney-his-mom-donated-to-him-as-a-teenager/" target="_blank" rel="noopener">10대 때 엄마에게 받은 신장, ‘100번째 생일’ 맞았다</a></h3><p class="meta"><span class="site">whec.com</span><span>▲ 152</span><a href="https://news.ycombinator.com/item?id=49923873" target="_blank" rel="noopener">댓글 40</a><span>10시간 전</span></p></li><li><h3><a href="https://claude.dev/blog/getting-the-most-out-of-opus-5-5/" target="_blank" rel="noopener">클로드·클로드 코드에서 ‘오퍼스 5.5’ 제대로 쓰는 법</a></h3><p class="meta"><span class="site">claude.dev</span><span>▲ 175</span><a href="https://news.ycombinator.com/item?id=49946567" target="_blank" rel="noopener">댓글 125</a><span>8시간 전</span></p></li><li><h3><a href="https://ftl-os.org/" target="_blank" rel="noopener">클라우드를 위한 새 운영체제 ‘FTL’</a></h3><p class="meta"><span class="site">ftl-os.org</span><span>▲ 152</span><a href="https://news.ycombinator.com/item?id=49944912" target="_blank" rel="noopener">댓글 61</a><span>12시간 전</span></p></li><li><h3><a href="https://blog.cloudflare.com/next-git-platform-on-cloudflare/" target="_blank" rel="noopener">클라우드플레어 “우리 위에서 차세대 깃 플랫폼 만들어 달라”</a></h3><p class="meta"><span class="site">cloudflare.com</span><span>▲ 104</span><a href="https://news.ycombinator.com/item?id=49947051" target="_blank" rel="noopener">댓글 96</a><span>7시간 전</span></p></li>
+    </ul>
+  </div>
+  <div class="col-c" id="opinion">
+    <div class="sec-head"><h2>오피니언</h2></div>
+    <ul class="opinion">
+      <li><span class="kicker">에세이</span><h3><a href="https://ben.stolovitz.com/posts/reasons-not-emt-ranked/" target="_blank" rel="noopener">내가 응급구조사가 되지 않은 이유, 순위 매겨봤다</a></h3><p class="meta"><span class="site">stolovitz.com</span><span>▲ 110</span><a href="https://news.ycombinator.com/item?id=49947631" target="_blank" rel="noopener">댓글 54</a><span>6시간 전</span></p></li><li><span class="kicker">칼럼</span><h3><a href="https://asteriskmag.com/issues/15/so-you-think-you-could-be-an-electrician" target="_blank" rel="noopener">“전기기사나 해볼까?”…현장직 권하는 사람은 왜 늘 사무직인가</a></h3><p class="meta"><span class="site">asteriskmag.com</span><span>▲ 28</span><a href="https://news.ycombinator.com/item?id=49910462" target="_blank" rel="noopener">댓글 15</a><span>3시간 전</span></p></li><li><span class="kicker">칼럼</span><h3><a href="https://liao.gg/blog/agents-dont-need-memory" target="_blank" rel="noopener">“AI 에이전트에 필요한 건 기억 아닌 문서”</a></h3><p class="meta"><span class="site">liao.gg</span><span>▲ 67</span><a href="https://news.ycombinator.com/item?id=49945933" target="_blank" rel="noopener">댓글 51</a><span>6시간 전</span></p></li><li><span class="kicker">칼럼</span><h3><a href="https://www.gadgetreview.com/apples-clean-design-is-stupidity-when-it-comes-to-hiding-fire-extinguishers" target="_blank" rel="noopener">“소화기까지 숨기는 애플 ‘클린 디자인’은 어리석다”</a></h3><p class="meta"><span class="site">gadgetreview.com</span><span>▲ 60</span><a href="https://news.ycombinator.com/item?id=49949152" target="_blank" rel="noopener">댓글 23</a><span>2시간 전</span></p></li><li><span class="kicker">에세이</span><h3><a href="https://photoni.st/index.php/2026/09/25/your-body-of-work-thinks-back-at-you/" target="_blank" rel="noopener">당신의 작업물이 당신을 되돌아본다</a></h3><p class="meta"><span class="site">photoni.st</span><span>▲ 24</span><a href="https://news.ycombinator.com/item?id=49908570" target="_blank" rel="noopener">댓글 1</a><span>4시간 전</span></p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="band split" id="tech">
+  <div class="main">
+    <div class="sec-head"><h2>테크</h2><a class="more" href="https://news.ycombinator.com/" target="_blank" rel="noopener">원문 1면</a></div>
+    <div class="grid4">
+      <article><a class="thumb" href="https://dave.recoil.org/docker-has-always-used-microvms/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">recoil.org</span><img src="https://dave.recoil.org/docker-has-always-used-microvms/microvms.jpg" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">인프라</span><h3><a href="https://dave.recoil.org/docker-has-always-used-microvms/" target="_blank" rel="noopener">“도커는 원래부터 마이크로VM을 썼다”(2016년부터)</a></h3><p class="meta"><span class="site">recoil.org</span><span>▲ 24</span><a href="https://news.ycombinator.com/item?id=49945352" target="_blank" rel="noopener">댓글 18</a><span>5시간 전</span></p></article><article><a class="thumb" href="https://halide.cx/blog/wpd/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">halide.cx</span><img src="https://halide.cx/img/hero/bouquet-med.avif" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">보안</span><h3><a href="https://halide.cx/blog/wpd/" target="_blank" rel="noopener">메모리 안전한 WebP 디코딩</a></h3><p class="meta"><span class="site">halide.cx</span><span>▲ 42</span><a href="https://news.ycombinator.com/item?id=49941641" target="_blank" rel="noopener">댓글 14</a><span>6시간 전</span></p></article><article><a class="thumb" href="https://github.com/andreasfertig/cppinsights" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">github.com/andreasfertig</span><img src="https://opengraph.githubassets.com/0ccd9fe6ba90655b81faa58ad92da0e81842adb0c4bfb4bc42082364121dd3b0/andreasfertig/cppinsights" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">개발</span><h3><a href="https://github.com/andreasfertig/cppinsights" target="_blank" rel="noopener">컴파일러의 눈으로 소스코드 본다…‘C++ 인사이트’</a></h3><p class="meta"><span class="site">github.com/andreasfertig</span><span>▲ 141</span><a href="https://news.ycombinator.com/item?id=49928361" target="_blank" rel="noopener">댓글 28</a><span>16시간 전</span></p></article><article><a class="thumb" href="https://royapakzad.substack.com/p/multilingual-ai-agents" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">royapakzad.substack.com</span><img src="https://substackcdn.com/image/fetch/$s_!PRgX!,w_1200,h_675,c_fill,f_jpg,q_auto:good,fl_progressive:steep,g_auto/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2F3a015e49-be95-466c-b3ad-5b5993668e9b_2114x1314.png" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">AI</span><h3><a href="https://royapakzad.substack.com/p/multilingual-ai-agents" target="_blank" rel="noopener">AI 에이전트 셋, 나라 둘…‘기울어진’ 월드와이드웹</a></h3><p class="meta"><span class="site">royapakzad.substack.com</span><span>▲ 9</span><a href="https://news.ycombinator.com/item?id=49938326" target="_blank" rel="noopener">토론하기</a><span>2시간 전</span></p></article>
+    </div>
+    <ul class="textlist">
+      <li><span class="kicker">보안</span><h3><a href="https://www.da.vidbuchanan.co.uk/blog/hacking-time.html" target="_blank" rel="noopener">C2PA로 ‘시간’을 해킹하는 법</a></h3><p class="desc">콘텐츠 출처 증명 표준 C2PA를 파고든 보안 연구 글.</p><p class="meta"><span class="site">da.vidbuchanan.co.uk</span><span>▲ 25</span><a href="https://news.ycombinator.com/item?id=49946707" target="_blank" rel="noopener">댓글 3</a><span>6시간 전</span></p></li><li><span class="kicker">웹</span><h3><a href="https://kevincox.ca/2022/05/06/rss-feed-best-practices/" target="_blank" rel="noopener">RSS 피드 모범 사례 (2022)</a></h3><p class="desc">RSS 피드를 제대로 만들고 운영하는 요령을 정리한 글.</p><p class="meta"><span class="site">kevincox.ca</span><span>▲ 41</span><a href="https://news.ycombinator.com/item?id=49946845" target="_blank" rel="noopener">댓글 8</a><span>7시간 전</span></p></li><li><span class="kicker">Show HN</span><h3><a href="https://thoreaubasic.com/" target="_blank" rel="noopener">[Show HN] BASIC이 유행에서 밀려나지 않았다면?…‘소로 베이직’</a></h3><p class="desc">윈도 x64와 베어메탈 x64 UEFI에서 돌아가는 무료 64비트 BASIC.</p><p class="meta"><span class="site">thoreaubasic.com</span><span>▲ 37</span><a href="https://news.ycombinator.com/item?id=49942103" target="_blank" rel="noopener">댓글 13</a><span>7시간 전</span></p></li><li><span class="kicker">Show HN</span><h3><a href="https://pipod.dev/" target="_blank" rel="noopener">[Show HN] 내 서버 샌드박스에서 코딩 에이전트 돌리는 ‘파이 팟’</a></h3><p class="desc">pi 코딩 에이전트 세션을 자체 서버의 샌드박스에서 실행해 주는 도구.</p><p class="meta"><span class="site">pipod.dev</span><span>▲ 80</span><a href="https://news.ycombinator.com/item?id=49937304" target="_blank" rel="noopener">댓글 30</a><span>9시간 전</span></p></li>
+    </ul>
+  </div>
+  <aside class="aside">
+    <div class="box" id="popular">
+      <div class="sec-head"><h2>많이 본 뉴스</h2><span class="meta" style="margin:0">포인트순</span></div>
+      <ol class="ranking"><li><span class="n">1</span><div><h3><a href="https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/" target="_blank" rel="noopener">獨 알레프 알파, ‘소버린’ 오픈웨이트 모델 ‘콜리브리’ 공개</a></h3><p class="meta"><span class="site">aleph-alpha.com</span><span>▲ 532</span><a href="https://news.ycombinator.com/item?id=49942706" target="_blank" rel="noopener">댓글 303</a><span>17시간 전</span></p></div></li><li><span class="n">2</span><div><h3><a href="https://techcrunch.com/2026/10/03/federal-judge-calls-flock-indiscriminate-mass-surveillance/" target="_blank" rel="noopener">美 연방판사 “번호판 인식 카메라 ‘플록’은 무차별 대량감시”</a></h3><p class="meta"><span class="site">techcrunch.com</span><span>▲ 335</span><a href="https://news.ycombinator.com/item?id=49948254" target="_blank" rel="noopener">댓글 208</a><span>4시간 전</span></p></div></li><li><span class="n">3</span><div><h3><a href="https://notoriousbfg.com/hole-punch/" target="_blank" rel="noopener">블랙홀 뚫어 우주선 날린다…중력 퍼즐 웹게임 ‘홀 펀치’</a></h3><p class="meta"><span class="site">notoriousbfg.com</span><span>▲ 246</span><a href="https://news.ycombinator.com/item?id=49946393" target="_blank" rel="noopener">댓글 61</a><span>8시간 전</span></p></div></li><li><span class="n">4</span><div><h3><a href="https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/" target="_blank" rel="noopener">사이먼 윌리슨 “거의 모든 서비스에 ‘기본 하드 예산 상한’ 필요해진다”</a></h3><p class="meta"><span class="site">simonwillison.net</span><span>▲ 220</span><a href="https://news.ycombinator.com/item?id=49949235" target="_blank" rel="noopener">댓글 117</a><span>2시간 전</span></p></div></li><li><span class="n">5</span><div><h3><a href="https://www.theguardian.com/technology/2026/oct/03/openai-safety-leader-quits-warning-ai-companys-culture-is-broken" target="_blank" rel="noopener">오픈AI 안전 책임자 사임…“회사 문화 망가졌다” 경고</a></h3><p class="meta"><span class="site">theguardian.com</span><span>▲ 201</span><a href="https://news.ycombinator.com/item?id=49948332" target="_blank" rel="noopener">댓글 147</a><span>4시간 전</span></p></div></li><li><span class="n">6</span><div><h3><a href="https://claude.dev/blog/getting-the-most-out-of-opus-5-5/" target="_blank" rel="noopener">클로드·클로드 코드에서 ‘오퍼스 5.5’ 제대로 쓰는 법</a></h3><p class="meta"><span class="site">claude.dev</span><span>▲ 175</span><a href="https://news.ycombinator.com/item?id=49946567" target="_blank" rel="noopener">댓글 125</a><span>8시간 전</span></p></div></li><li><span class="n">7</span><div><h3><a href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener">‘너드의 승리’ IT 칼럼니스트 밥 크린절리 별세 소식</a></h3><p class="meta"><span class="site">news.ycombinator.com</span><span>▲ 159</span><a href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener">댓글 26</a><span>2시간 전</span></p></div></li><li><span class="n">8</span><div><h3><a href="https://www.phoronix.com/news/XDC-2026-Valve-Timur-AMDGPU" target="_blank" rel="noopener">밸브 개발자, 10년 된 AMD 그래픽카드 리눅스 지원 끌어올렸다</a></h3><p class="meta"><span class="site">phoronix.com</span><span>▲ 159</span><a href="https://news.ycombinator.com/item?id=49946895" target="_blank" rel="noopener">댓글 21</a><span>7시간 전</span></p></div></li><li><span class="n">9</span><div><h3><a href="https://www.whec.com/top-news/webster-man-celebrating-the-100th-birthday-of-the-kidney-his-mom-donated-to-him-as-a-teenager/" target="_blank" rel="noopener">10대 때 엄마에게 받은 신장, ‘100번째 생일’ 맞았다</a></h3><p class="meta"><span class="site">whec.com</span><span>▲ 152</span><a href="https://news.ycombinator.com/item?id=49923873" target="_blank" rel="noopener">댓글 40</a><span>10시간 전</span></p></div></li><li><span class="n">10</span><div><h3><a href="https://ftl-os.org/" target="_blank" rel="noopener">클라우드를 위한 새 운영체제 ‘FTL’</a></h3><p class="meta"><span class="site">ftl-os.org</span><span>▲ 152</span><a href="https://news.ycombinator.com/item?id=49944912" target="_blank" rel="noopener">댓글 61</a><span>12시간 전</span></p></div></li></ol>
+    </div>
+  </aside>
+</section>
+
+<section class="band split" id="life">
+  <div class="main">
+    <div class="sec-head"><h2>라이프·과학</h2></div>
+    <div class="grid4">
+      <article><a class="thumb" href="http://www.darbiansphotography.com/woking-electrical-control-room-urbex" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">darbiansphotography.com</span><img src="http://static1.squarespace.com/static/53e2c0c6e4b04523ac5b9dd9/t/5ee8f2350363d068a9c67d30/1592324671297/DSC_5143.jpg?format=1500w" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">포토</span><h3><a href="http://www.darbiansphotography.com/woking-electrical-control-room-urbex" target="_blank" rel="noopener">버려진 영국 워킹 철도 전기관제실 (2016)</a></h3><p class="meta"><span class="site">darbiansphotography.com</span><span>▲ 126</span><a href="https://news.ycombinator.com/item?id=49938399" target="_blank" rel="noopener">댓글 25</a><span>13시간 전</span></p></article><article><a class="thumb" href="https://blog.willmeye.rs/new-york-city-should-carefully-measure-a-new-tree/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">willmeye.rs</span><img src="https://blog.willmeye.rs/static/og-image.png" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">과학</span><h3><a href="https://blog.willmeye.rs/new-york-city-should-carefully-measure-a-new-tree/" target="_blank" rel="noopener">“뉴욕시, 새 나무 키 정밀 측정해야”…최고 기록은 22년 전 것</a></h3><p class="meta"><span class="site">willmeye.rs</span><span>▲ 53</span><a href="https://news.ycombinator.com/item?id=49940877" target="_blank" rel="noopener">댓글 10</a><span>6시간 전</span></p></article><article><a class="thumb" href="https://www.youtube.com/watch?v=UOuxo6SA8Uc" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">youtube.com</span><img src="https://i.ytimg.com/vi/UOuxo6SA8Uc/hqdefault.jpg" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></a><span class="kicker">영상</span><h3><a href="https://www.youtube.com/watch?v=UOuxo6SA8Uc" target="_blank" rel="noopener">수학 교육의 저주 – 그랜트 샌더슨 [영상]</a></h3><p class="meta"><span class="site">youtube.com</span><span>▲ 14</span><a href="https://news.ycombinator.com/item?id=49940482" target="_blank" rel="noopener">댓글 6</a><span>3시간 전</span></p></article><article><a class="thumb" href="https://sjg.io/writing/binrange-have-you-actually-put-the-bins-out/" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><span class="ph-label">sjg.io</span></a><span class="kicker">메이커</span><h3><a href="https://sjg.io/writing/binrange-have-you-actually-put-the-bins-out/" target="_blank" rel="noopener">“설마 쓰레기통에 UWB 무선 안 달았어요?”</a></h3><p class="meta"><span class="site">sjg.io</span><span>▲ 48</span><a href="https://news.ycombinator.com/item?id=49947472" target="_blank" rel="noopener">댓글 25</a><span>6시간 전</span></p></article>
+    </div>
+  </div>
+  <aside class="aside">
+    <div class="box">
+      <div class="sec-head"><h2>댓글 많은 뉴스</h2></div>
+      <ol class="ranking"><li><span class="n">1</span><div><h3><a href="https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/" target="_blank" rel="noopener">獨 알레프 알파, ‘소버린’ 오픈웨이트 모델 ‘콜리브리’ 공개</a></h3><p class="meta"><span class="site">aleph-alpha.com</span><span>▲ 532</span><a href="https://news.ycombinator.com/item?id=49942706" target="_blank" rel="noopener">댓글 303</a><span>17시간 전</span></p></div></li><li><span class="n">2</span><div><h3><a href="https://techcrunch.com/2026/10/03/federal-judge-calls-flock-indiscriminate-mass-surveillance/" target="_blank" rel="noopener">美 연방판사 “번호판 인식 카메라 ‘플록’은 무차별 대량감시”</a></h3><p class="meta"><span class="site">techcrunch.com</span><span>▲ 335</span><a href="https://news.ycombinator.com/item?id=49948254" target="_blank" rel="noopener">댓글 208</a><span>4시간 전</span></p></div></li><li><span class="n">3</span><div><h3><a href="https://www.theguardian.com/technology/2026/oct/03/openai-safety-leader-quits-warning-ai-companys-culture-is-broken" target="_blank" rel="noopener">오픈AI 안전 책임자 사임…“회사 문화 망가졌다” 경고</a></h3><p class="meta"><span class="site">theguardian.com</span><span>▲ 201</span><a href="https://news.ycombinator.com/item?id=49948332" target="_blank" rel="noopener">댓글 147</a><span>4시간 전</span></p></div></li><li><span class="n">4</span><div><h3><a href="https://claude.dev/blog/getting-the-most-out-of-opus-5-5/" target="_blank" rel="noopener">클로드·클로드 코드에서 ‘오퍼스 5.5’ 제대로 쓰는 법</a></h3><p class="meta"><span class="site">claude.dev</span><span>▲ 175</span><a href="https://news.ycombinator.com/item?id=49946567" target="_blank" rel="noopener">댓글 125</a><span>8시간 전</span></p></div></li><li><span class="n">5</span><div><h3><a href="https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/" target="_blank" rel="noopener">사이먼 윌리슨 “거의 모든 서비스에 ‘기본 하드 예산 상한’ 필요해진다”</a></h3><p class="meta"><span class="site">simonwillison.net</span><span>▲ 220</span><a href="https://news.ycombinator.com/item?id=49949235" target="_blank" rel="noopener">댓글 117</a><span>2시간 전</span></p></div></li></ol>
+    </div>
+    <div class="box" id="jobs">
+      <div class="sec-head"><h2>채용</h2><a class="more" href="https://news.ycombinator.com/jobs" target="_blank" rel="noopener">전체보기</a></div>
+      <div class="jobs"><span class="kicker">채용</span><h3><a href="https://www.ycombinator.com/companies/retailready/jobs/bFcgIe4-implementations" target="_blank" rel="noopener">리테일레디(YC W24), 구현 담당 인재 채용</a></h3><p class="desc">AI 기반 공급망 컴플라이언스 엔진 스타트업. 660만 달러 투자 유치, 고객사 50곳 이상, 최근 1년 매출 4배 성장.</p><p class="meta"><span class="site">ycombinator.com</span><span>10시간 전</span></p></div>
+    </div>
+  </aside>
+</section>
+
+<section class="band" id="rank">
+  <div class="sec-head"><h2>Hacker News 1면 전체 순위</h2><span class="meta" style="margin:0">원제 병기 · 30위까지</span></div>
+  <ol class="fulllist"><li><span class="n">1</span><div><h3><a href="https://simonwillison.net/2026/Oct/3/default-hard-budget-caps/" target="_blank" rel="noopener">사이먼 윌리슨 “거의 모든 서비스에 ‘기본 하드 예산 상한’ 필요해진다”</a></h3><p class="en">We&#x27;re going to need default hard budget caps on pretty much everything</p><p class="meta"><span class="site">simonwillison.net</span><span>▲ 220</span><a href="https://news.ycombinator.com/item?id=49949235" target="_blank" rel="noopener">댓글 117</a><span>2시간 전</span><span>elffjs</span></p></div></li><li><span class="n">2</span><div><h3><a href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener">‘너드의 승리’ IT 칼럼니스트 밥 크린절리 별세 소식</a></h3><p class="en">Bob Cringely Has Died</p><p class="meta"><span class="site">news.ycombinator.com</span><span>▲ 159</span><a href="https://news.ycombinator.com/item?id=49949438" target="_blank" rel="noopener">댓글 26</a><span>2시간 전</span><span>paveworld</span></p></div></li><li><span class="n">3</span><div><h3><a href="https://cosmowenman.substack.com/p/rodin-museum-3d-scan-verdict" target="_blank" rel="noopener">“때로는 법이 법이 아니다”…로댕미술관 3D 스캔 판결의 ‘배신’</a></h3><p class="en">Treachery in the Rodin Museum 3D scan verdict</p><p class="meta"><span class="site">cosmowenman.substack.com</span><span>▲ 98</span><a href="https://news.ycombinator.com/item?id=49946355" target="_blank" rel="noopener">댓글 49</a><span>5시간 전</span><span>CosmoWenman</span></p></div></li><li><span class="n">4</span><div><h3><a href="https://notoriousbfg.com/hole-punch/" target="_blank" rel="noopener">블랙홀 뚫어 우주선 날린다…중력 퍼즐 웹게임 ‘홀 펀치’</a></h3><p class="en">Hole Punch: Sling your spaceship around gravitational fields</p><p class="meta"><span class="site">notoriousbfg.com</span><span>▲ 246</span><a href="https://news.ycombinator.com/item?id=49946393" target="_blank" rel="noopener">댓글 61</a><span>8시간 전</span><span>trwhite</span></p></div></li><li><span class="n">5</span><div><h3><a href="https://www.phoronix.com/news/XDC-2026-Valve-Timur-AMDGPU" target="_blank" rel="noopener">밸브 개발자, 10년 된 AMD 그래픽카드 리눅스 지원 끌어올렸다</a></h3><p class="en">The work by Valve&#x27;s Timur Kristóf on improving old AMD GPUs on Linux</p><p class="meta"><span class="site">phoronix.com</span><span>▲ 159</span><a href="https://news.ycombinator.com/item?id=49946895" target="_blank" rel="noopener">댓글 21</a><span>7시간 전</span><span>speckx</span></p></div></li><li><span class="n">6</span><div><h3><a href="https://ben.stolovitz.com/posts/reasons-not-emt-ranked/" target="_blank" rel="noopener">내가 응급구조사가 되지 않은 이유, 순위 매겨봤다</a></h3><p class="en">Reasons I didn&#x27;t become an EMT, ranked</p><p class="meta"><span class="site">stolovitz.com</span><span>▲ 110</span><a href="https://news.ycombinator.com/item?id=49947631" target="_blank" rel="noopener">댓글 54</a><span>6시간 전</span><span>citelao</span></p></div></li><li><span class="n">7</span><div><h3><a href="https://www.whec.com/top-news/webster-man-celebrating-the-100th-birthday-of-the-kidney-his-mom-donated-to-him-as-a-teenager/" target="_blank" rel="noopener">10대 때 엄마에게 받은 신장, ‘100번째 생일’ 맞았다</a></h3><p class="en">Celebrating the 100th birthday of the kidney donated to him as a teenager</p><p class="meta"><span class="site">whec.com</span><span>▲ 152</span><a href="https://news.ycombinator.com/item?id=49923873" target="_blank" rel="noopener">댓글 40</a><span>10시간 전</span><span>gscott</span></p></div></li><li><span class="n">8</span><div><h3><a href="https://www.theguardian.com/technology/2026/oct/03/openai-safety-leader-quits-warning-ai-companys-culture-is-broken" target="_blank" rel="noopener">오픈AI 안전 책임자 사임…“회사 문화 망가졌다” 경고</a></h3><p class="en">OpenAI safety leader quits, warning AI company&#x27;s culture is &#x27;broken&#x27;</p><p class="meta"><span class="site">theguardian.com</span><span>▲ 201</span><a href="https://news.ycombinator.com/item?id=49948332" target="_blank" rel="noopener">댓글 147</a><span>4시간 전</span><span>jethronethro</span></p></div></li><li><span class="n">9</span><div><h3><a href="https://asteriskmag.com/issues/15/so-you-think-you-could-be-an-electrician" target="_blank" rel="noopener">“전기기사나 해볼까?”…현장직 권하는 사람은 왜 늘 사무직인가</a></h3><p class="en">So You Think You Could Be an Electrician?</p><p class="meta"><span class="site">asteriskmag.com</span><span>▲ 28</span><a href="https://news.ycombinator.com/item?id=49910462" target="_blank" rel="noopener">댓글 15</a><span>3시간 전</span><span>zdw</span></p></div></li><li><span class="n">10</span><div><h3><a href="https://aleph-alpha.com/en/blog/kolibri-has-landed-a-sovereign-open-weight-model/" target="_blank" rel="noopener">獨 알레프 알파, ‘소버린’ 오픈웨이트 모델 ‘콜리브리’ 공개</a></h3><p class="en">Kolibri: A Sovereign Open-Weight Model</p><p class="meta"><span class="site">aleph-alpha.com</span><span>▲ 532</span><a href="https://news.ycombinator.com/item?id=49942706" target="_blank" rel="noopener">댓글 303</a><span>17시간 전</span><span>bastitx</span></p></div></li><li><span class="n">11</span><div><h3><a href="https://www.youtube.com/watch?v=UOuxo6SA8Uc" target="_blank" rel="noopener">수학 교육의 저주 – 그랜트 샌더슨 [영상]</a></h3><p class="en">Math&#x27;s pedagogical curse – Grant Sanderson [video]</p><p class="meta"><span class="site">youtube.com</span><span>▲ 14</span><a href="https://news.ycombinator.com/item?id=49940482" target="_blank" rel="noopener">댓글 6</a><span>3시간 전</span><span>bobajeff</span></p></div></li><li><span class="n">12</span><div><h3><a href="https://claude.dev/blog/getting-the-most-out-of-opus-5-5/" target="_blank" rel="noopener">클로드·클로드 코드에서 ‘오퍼스 5.5’ 제대로 쓰는 법</a></h3><p class="en">Getting the most out of Opus 5.5 in Claude and Claude Code</p><p class="meta"><span class="site">claude.dev</span><span>▲ 175</span><a href="https://news.ycombinator.com/item?id=49946567" target="_blank" rel="noopener">댓글 125</a><span>8시간 전</span><span>saikatsg</span></p></div></li><li><span class="n">13</span><div><h3><a href="https://photoni.st/index.php/2026/09/25/your-body-of-work-thinks-back-at-you/" target="_blank" rel="noopener">당신의 작업물이 당신을 되돌아본다</a></h3><p class="en">Your body of work thinks back at you</p><p class="meta"><span class="site">photoni.st</span><span>▲ 24</span><a href="https://news.ycombinator.com/item?id=49908570" target="_blank" rel="noopener">댓글 1</a><span>4시간 전</span><span>surprisetalk</span></p></div></li><li><span class="n">14</span><div><h3><a href="https://thoreaubasic.com/" target="_blank" rel="noopener">[Show HN] BASIC이 유행에서 밀려나지 않았다면?…‘소로 베이직’</a></h3><p class="en">Show HN: Thoreau BASIC – What if BASIC hadn&#x27;t gone out of fashion?</p><p class="meta"><span class="site">thoreaubasic.com</span><span>▲ 37</span><a href="https://news.ycombinator.com/item?id=49942103" target="_blank" rel="noopener">댓글 13</a><span>7시간 전</span><span>Gorsefound</span></p></div></li><li><span class="n">15</span><div><h3><a href="https://ftl-os.org/" target="_blank" rel="noopener">클라우드를 위한 새 운영체제 ‘FTL’</a></h3><p class="en">FTL: A new operating system for clouds</p><p class="meta"><span class="site">ftl-os.org</span><span>▲ 152</span><a href="https://news.ycombinator.com/item?id=49944912" target="_blank" rel="noopener">댓글 61</a><span>12시간 전</span><span>romac</span></p></div></li><li><span class="n">16</span><div><h3><a href="https://blog.willmeye.rs/new-york-city-should-carefully-measure-a-new-tree/" target="_blank" rel="noopener">“뉴욕시, 새 나무 키 정밀 측정해야”…최고 기록은 22년 전 것</a></h3><p class="en">New York City should carefully measure a new tree</p><p class="meta"><span class="site">willmeye.rs</span><span>▲ 53</span><a href="https://news.ycombinator.com/item?id=49940877" target="_blank" rel="noopener">댓글 10</a><span>6시간 전</span><span>willmeyers</span></p></div></li><li><span class="n">17</span><div><h3><a href="https://royapakzad.substack.com/p/multilingual-ai-agents" target="_blank" rel="noopener">AI 에이전트 셋, 나라 둘…‘기울어진’ 월드와이드웹</a></h3><p class="en">Three AI agents, two countries, and one uneven world wide web</p><p class="meta"><span class="site">royapakzad.substack.com</span><span>▲ 9</span><a href="https://news.ycombinator.com/item?id=49938326" target="_blank" rel="noopener">토론하기</a><span>2시간 전</span><span>effects</span></p></div></li><li><span class="n">18</span><div><h3><a href="https://sjg.io/writing/binrange-have-you-actually-put-the-bins-out/" target="_blank" rel="noopener">“설마 쓰레기통에 UWB 무선 안 달았어요?”</a></h3><p class="en">Surely you have ultra-wideband radios on your bins too?</p><p class="meta"><span class="site">sjg.io</span><span>▲ 48</span><a href="https://news.ycombinator.com/item?id=49947472" target="_blank" rel="noopener">댓글 25</a><span>6시간 전</span><span>simonjgreen</span></p></div></li><li><span class="n">19</span><div><h3><a href="https://liao.gg/blog/agents-dont-need-memory" target="_blank" rel="noopener">“AI 에이전트에 필요한 건 기억 아닌 문서”</a></h3><p class="en">Agents don&#x27;t need memory, they need documentation</p><p class="meta"><span class="site">liao.gg</span><span>▲ 67</span><a href="https://news.ycombinator.com/item?id=49945933" target="_blank" rel="noopener">댓글 51</a><span>6시간 전</span><span>kmeh</span></p></div></li><li><span class="n">20</span><div><h3><a href="https://pipod.dev/" target="_blank" rel="noopener">[Show HN] 내 서버 샌드박스에서 코딩 에이전트 돌리는 ‘파이 팟’</a></h3><p class="en">Show HN: Pi pod – Run your pi coding agent in sandboxes on your own server</p><p class="meta"><span class="site">pipod.dev</span><span>▲ 80</span><a href="https://news.ycombinator.com/item?id=49937304" target="_blank" rel="noopener">댓글 30</a><span>9시간 전</span><span>edverma2</span></p></div></li><li><span class="n">21</span><div><h3><a href="https://techcrunch.com/2026/10/03/federal-judge-calls-flock-indiscriminate-mass-surveillance/" target="_blank" rel="noopener">美 연방판사 “번호판 인식 카메라 ‘플록’은 무차별 대량감시”</a></h3><p class="en">Federal judge calls Flock &#x27;indiscriminate mass surveillance&#x27;</p><p class="meta"><span class="site">techcrunch.com</span><span>▲ 335</span><a href="https://news.ycombinator.com/item?id=49948254" target="_blank" rel="noopener">댓글 208</a><span>4시간 전</span><span>sbulaev</span></p></div></li><li><span class="n">22</span><div><h3><a href="https://dave.recoil.org/docker-has-always-used-microvms/" target="_blank" rel="noopener">“도커는 원래부터 마이크로VM을 썼다”(2016년부터)</a></h3><p class="en">Docker has always used microVMs (well since 2016)</p><p class="meta"><span class="site">recoil.org</span><span>▲ 24</span><a href="https://news.ycombinator.com/item?id=49945352" target="_blank" rel="noopener">댓글 18</a><span>5시간 전</span><span>avsm</span></p></div></li><li><span class="n">23</span><div><h3><a href="http://www.darbiansphotography.com/woking-electrical-control-room-urbex" target="_blank" rel="noopener">버려진 영국 워킹 철도 전기관제실 (2016)</a></h3><p class="en">Woking Electrical Control Room (2016)</p><p class="meta"><span class="site">darbiansphotography.com</span><span>▲ 126</span><a href="https://news.ycombinator.com/item?id=49938399" target="_blank" rel="noopener">댓글 25</a><span>13시간 전</span><span>NaOH</span></p></div></li><li><span class="n">24</span><div><h3><a href="https://kevincox.ca/2022/05/06/rss-feed-best-practices/" target="_blank" rel="noopener">RSS 피드 모범 사례 (2022)</a></h3><p class="en">RSS Feed Best Practices (2022)</p><p class="meta"><span class="site">kevincox.ca</span><span>▲ 41</span><a href="https://news.ycombinator.com/item?id=49946845" target="_blank" rel="noopener">댓글 8</a><span>7시간 전</span><span>KomoD</span></p></div></li><li><span class="n">25</span><div><h3><a href="https://www.ycombinator.com/companies/retailready/jobs/bFcgIe4-implementations" target="_blank" rel="noopener">리테일레디(YC W24), 구현 담당 인재 채용</a></h3><p class="en">RetailReady (YC W24) Is Hiring</p><p class="meta"><span class="site">ycombinator.com</span><span>10시간 전</span></p></div></li><li><span class="n">26</span><div><h3><a href="https://halide.cx/blog/wpd/" target="_blank" rel="noopener">메모리 안전한 WebP 디코딩</a></h3><p class="en">Memory-Safe WebP Decoding</p><p class="meta"><span class="site">halide.cx</span><span>▲ 42</span><a href="https://news.ycombinator.com/item?id=49941641" target="_blank" rel="noopener">댓글 14</a><span>6시간 전</span><span>computerbuster</span></p></div></li><li><span class="n">27</span><div><h3><a href="https://www.gadgetreview.com/apples-clean-design-is-stupidity-when-it-comes-to-hiding-fire-extinguishers" target="_blank" rel="noopener">“소화기까지 숨기는 애플 ‘클린 디자인’은 어리석다”</a></h3><p class="en">Apple&#x27;s &quot;Clean Design&quot; Is Stupidity When It Comes to Hiding Fire Extinguishers</p><p class="meta"><span class="site">gadgetreview.com</span><span>▲ 60</span><a href="https://news.ycombinator.com/item?id=49949152" target="_blank" rel="noopener">댓글 23</a><span>2시간 전</span><span>josephcsible</span></p></div></li><li><span class="n">28</span><div><h3><a href="https://blog.cloudflare.com/next-git-platform-on-cloudflare/" target="_blank" rel="noopener">클라우드플레어 “우리 위에서 차세대 깃 플랫폼 만들어 달라”</a></h3><p class="en">We want you to build the next Git platform on Cloudflare</p><p class="meta"><span class="site">cloudflare.com</span><span>▲ 104</span><a href="https://news.ycombinator.com/item?id=49947051" target="_blank" rel="noopener">댓글 96</a><span>7시간 전</span><span>geoffbp</span></p></div></li><li><span class="n">29</span><div><h3><a href="https://www.da.vidbuchanan.co.uk/blog/hacking-time.html" target="_blank" rel="noopener">C2PA로 ‘시간’을 해킹하는 법</a></h3><p class="en">How to hack time, with C2PA</p><p class="meta"><span class="site">da.vidbuchanan.co.uk</span><span>▲ 25</span><a href="https://news.ycombinator.com/item?id=49946707" target="_blank" rel="noopener">댓글 3</a><span>6시간 전</span><span>Retr0id</span></p></div></li><li><span class="n">30</span><div><h3><a href="https://github.com/andreasfertig/cppinsights" target="_blank" rel="noopener">컴파일러의 눈으로 소스코드 본다…‘C++ 인사이트’</a></h3><p class="en">C++ Insights – See your source code with the eyes of a Compiler</p><p class="meta"><span class="site">github.com/andreasfertig</span><span>▲ 141</span><a href="https://news.ycombinator.com/item?id=49928361" target="_blank" rel="noopener">댓글 28</a><span>16시간 전</span><span>rramadass</span></p></div></li></ol>
+</section>
+</main>
+
+<footer>
+  <div class="logo"><b>Y</b>해커뉴스<small>PAPER</small></div>
+  <p>Hacker News(news.ycombinator.com) 1면 상위 30개 글의 제목을 한국어로 옮기고 짧게 요약한 비공식 페이지입니다. 2026년 10월 4일 낮 12시(KST) 기준이며, 포인트와 댓글 수는 수집 시점의 값입니다.</p>
+  <p>각 글의 저작권은 원 출처에 있습니다. 제목을 누르면 원문으로, ‘댓글’을 누르면 Hacker News 토론으로 이동합니다.</p>
+</footer>
+</div>
+</body>
+</html>
