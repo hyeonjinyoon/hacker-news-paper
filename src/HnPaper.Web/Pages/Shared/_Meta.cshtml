@@ -9,7 +9,7 @@
     <span>▲ @points</span>
     <a href="@(s.Href)#comments">@(s.Raw.Comments > 0 ? $"댓글 {s.Raw.Comments}" : "토론하기")</a>
   }
-  <span>@s.Age</span>
+  <partial name="_Ago" model="s.Raw.Time" />
   @if (Model.ShowBy && !string.IsNullOrEmpty(s.Raw.By))
   {
     <span>@s.Raw.By</span>

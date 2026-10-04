@@ -1,0 +1,4 @@
+@model long
+@using HnPaper.Web.Services
+@* HN 작성 시각을 "3시간 전"으로 적는다. 서버는 페이지를 그리는 시각 기준으로 적고, _Layout의 스크립트가 브라우저 시각 기준으로 고친다. *@
+<time datetime="@DateTimeOffset.FromUnixTimeSeconds(Model).ToString("yyyy-MM-ddTHH:mm:ssZ")" data-ago="@Model">@EditionBuilder.RelativeAge(DateTimeOffset.UtcNow, Model)</time>

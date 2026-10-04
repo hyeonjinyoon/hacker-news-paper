@@ -44,7 +44,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
    날짜가 인자로 왔는데 `data/raw/{날짜}/` 폴더가 없으면 댓글만 수집한다: `dotnet run --project src/HnPaper.Web -- collect-items {날짜}`
    `data/img/{날짜}/` 폴더가 없으면 대표 이미지만 만든다: `dotnet run --project src/HnPaper.Web -- collect-thumbs {날짜}` (실패한 이미지는 사이트가 원본 주소를 쓰므로 다시 시도하지 않아도 된다)
 2. **수집본 읽기**: Read로 `data/raw/{날짜}.json` 전체를 읽는다. 기사마다 `id`, `rank`, `type`, `title`, `site`, `points`, `comments`, `image`, `description`, `text`가 있다.
-3. **1면 제목 번역**: 아래 "1면 번역본 형식"과 제목 규칙에 맞춰 `data/ko/{날짜}.json`을 Write로 만든다. 수집본의 **모든 기사**를 빠짐없이 넣는다. 채용 글(`type`이 job)은 싣지 않으므로 수집기가 미리 빼 둔다. 예전 수집본에 남아 있으면 넣지 않는다. 1면의 요약과 톱기사 리드는 사이트가 4단계에서 만든 본문 요약의 첫 문단(소제목 앞)을 가져다 쓰므로 여기서 쓰지 않는다. 원문도 읽지 않는다.
+3. **1면 제목 번역**: 아래 "1면 번역본 형식"과 제목 규칙에 맞춰 `data/ko/{날짜}.json`을 Write로 만든다. 수집본의 **모든 기사**를 빠짐없이 넣는다. 채용 글(`type`이 job), 구인 스레드(작성자가 `whoishiring`), 10포인트 미만 글은 싣지 않으므로 수집기가 미리 빼 둔다. 예전 수집본에 남아 있으면 넣지 않는다. 1면의 요약과 톱기사 리드는 사이트가 4단계에서 만든 본문 요약의 첫 문단(소제목 앞)을 가져다 쓰므로 여기서 쓰지 않는다. 원문도 읽지 않는다.
 4. **중간 페이지 (기사마다 서브에이전트)**: 메인은 기사별 수집본(`data/raw/{날짜}/{id}.json`)이나 원문을 직접 읽지 않는다. 기사마다 새 서브에이전트에게 맡겨, 앞 기사의 본문·댓글이 메인 대화에 쌓이지 않게 한다.
    1. 할 일 고르기: `dotnet run --project src/HnPaper.Web -- validate {날짜}`를 실행해 `중간 페이지` 오류가 난 기사만 고른다(기사 id 인자가 있으면 그 기사들만). 본문 번역본 오류가 있으면 `hn-paper-article`, 댓글 번역본 오류가 있으면 `hn-paper-comments`가 필요하다.
    2. 띄우기: Agent 도구로 `subagent_type`에 에이전트 이름을 넣어 띄운다. 한 메시지에 Agent 호출을 여러 개 넣어 병렬로 띄우되, 한 번에 최대 10개(기사 5개 × 2)씩 순위 순서대로 진행한다.

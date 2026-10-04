@@ -14,9 +14,9 @@ public static class EditionBuilder
         foreach (var story in ko?.Stories ?? [])
             koById.TryAdd(story.Id, story);
 
-        // 채용 글은 수집 단계에서 빼지만, 그 전에 수집한 호에 남은 것도 지면에 싣지 않는다.
+        // 싣지 않는 글은 수집 단계에서 빼지만, 그 전에 수집한 호에 남은 것도 지면에 싣지 않는다.
         var stories = raw.Stories
-            .Where(s => !s.IsJob)
+            .Where(s => !s.Excluded)
             .OrderBy(s => s.Rank)
             .Select(r =>
             {
@@ -38,7 +38,6 @@ public static class EditionBuilder
                     Intro = intro,
                     // 본문 요약의 첫 문단 → 예전 호의 1면 요약 → (번역 전 호면) 원문 설명
                     Summary = intro.FirstOrDefault() ?? Nonblank(k?.Summary) ?? (ko is null ? Nonblank(r.Description) : null),
-                    Age = RelativeAge(raw.CollectedAt, r.Time),
                 };
             })
             .ToList();
@@ -91,7 +90,7 @@ public static class EditionBuilder
     }
 
     /// <summary>댓글 수집본과 본문·댓글 번역본을 합친다. 번역이 없으면 원문 댓글과 원문 소개를 보여 준다.</summary>
-    public static ItemView BuildItem(DateTimeOffset collectedAt, StoryView story, RawItem? raw, KoItem? ko, KoComments? koComments)
+    public static ItemView BuildItem(StoryView story, RawItem? raw, KoItem? ko, KoComments? koComments)
     {
         var translations = new Dictionary<long, string>();
         foreach (var comment in koComments?.Comments ?? [])
@@ -111,7 +110,7 @@ public static class EditionBuilder
                 Id = c.Id,
                 Depth = c.Depth,
                 By = c.By,
-                Age = RelativeAge(collectedAt, c.Time),
+                Time = c.Time,
                 Deleted = c.Deleted,
                 Text = translated ?? c.Text,
             });
@@ -133,6 +132,7 @@ public static class EditionBuilder
         };
     }
 
+    /// <summary>"3시간 전" 표기. 브라우저에서는 _Layout의 스크립트가 같은 규칙으로 보는 사람의 현재 시각 기준으로 다시 계산한다.</summary>
     internal static string RelativeAge(DateTimeOffset at, long unixTime)
     {
         var span = at - DateTimeOffset.FromUnixTimeSeconds(unixTime);

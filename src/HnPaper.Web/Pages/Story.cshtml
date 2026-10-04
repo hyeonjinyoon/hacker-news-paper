@@ -59,7 +59,7 @@
         @foreach (var c in item.Comments)
         {
           <li class="comment@(c.Depth == 0 ? " root" : "")" style="--depth:@c.Depth">
-            <div class="comment-meta"><span class="by">@c.By</span><span>@c.Age</span><a href="@c.HnUrl" target="_blank" rel="noopener">HN</a></div>
+            <div class="comment-meta"><span class="by">@c.By</span><partial name="_Ago" model="c.Time" /><a href="@c.HnUrl" target="_blank" rel="noopener">HN</a></div>
             @if (c.Deleted)
             {
               <p class="deleted">삭제된 댓글입니다.</p>

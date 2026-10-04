@@ -7,6 +7,7 @@ namespace HnPaper.Web.Services;
 ///   collect [--comments N] [--out path]   1면 상위 30개와 기사별 댓글 수집
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
 ///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 줄여 저장
+///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글을 빼고, 모자란 자리를 지금 HN 1면 글로 채움
 ///   validate [yyyy-MM-dd] [id ...] [--part body|comments]
 ///                                         번역본 검사. id를 주면 그 기사의 중간 페이지만, --part를 주면 본문이나 댓글만 검사
 /// </summary>
@@ -23,6 +24,7 @@ public static class Cli
             "collect" => await CollectAsync(options, args),
             "collect-items" => await CollectItemsAsync(options, args),
             "collect-thumbs" => await CollectThumbsAsync(options, args),
+            "collect-fill" => await CollectFillAsync(options, args),
             _ => Validate(options, args),
         };
     }
@@ -85,6 +87,35 @@ public static class Cli
         return 0;
     }
 
+    private static async Task<int> CollectFillAsync(PaperOptions options, string[] args)
+    {
+        var date = args.Length > 1 ? args[1] : null;
+        if (date is null || !Kst.DatePattern.IsMatch(date) || !File.Exists(options.RawPath(date)))
+        {
+            Console.Error.WriteLine("수집본이 있는 날짜를 주세요. 예: collect-fill 2026-10-04");
+            return 2;
+        }
+
+        var edition = PaperJson.Read<RawEdition>(options.RawPath(date))!;
+        using var http = HnCollector.CreateHttpClient();
+        var collector = new HnCollector(http);
+        var (filled, added) = await collector.FillAsync(edition, StoryCount, CancellationToken.None);
+        PaperJson.Write(options.RawPath(date), filled);
+
+        // 새로 넣은 기사만 댓글과 대표 이미지를 모은다. 이미 번역한 기사의 댓글 수집본은 건드리지 않는다.
+        var addedOnly = edition with { Stories = added };
+        var items = await collector.CollectItemsAsync(addedOnly, CommentLimit(args),
+            id => options.RawItemPath(date, id), CancellationToken.None);
+        var thumbs = await new ThumbnailMaker(http, options).MakeAllAsync(addedOnly, CancellationToken.None);
+
+        foreach (var story in edition.Stories.Where(s => s.Excluded))
+            Console.WriteLine($"뺌: {story.Rank}위 {story.Id} {story.Title} ({story.Type}, {story.By}, {story.Points?.ToString() ?? "-"}포인트)");
+        Console.WriteLine($"보충 완료: {date} · {edition.Stories.Count(s => s.Excluded)}개 뺌, {added.Count}개 추가 (줄인 이미지 {thumbs.Made}, 기사별 댓글 파일 {items})");
+        foreach (var story in added)
+            Console.WriteLine($"{story.Rank}위 {story.Id} {story.Title}");
+        return 0;
+    }
+
     private static int Validate(PaperOptions options, string[] args)
     {
         var date = args.Length > 1 ? args[1] : LatestRawDate(options);
@@ -130,7 +161,7 @@ public static class Cli
         // 서브에이전트가 자기 몫(--part)만 검사할 때는 1면 번역본 검사를 건너뛴다.
         var (errors, warnings) = part is null ? EditionValidator.Validate(raw, ko) : ([], []);
 
-        var items = raw.Stories.Where(s => !s.IsJob && (onlyIds.Count == 0 || onlyIds.Contains(s.Id))).ToList();
+        var items = raw.Stories.Where(s => !s.Excluded && (onlyIds.Count == 0 || onlyIds.Contains(s.Id))).ToList();
         foreach (var story in items)
         {
             var rawItemPath = options.RawItemPath(date, story.Id);

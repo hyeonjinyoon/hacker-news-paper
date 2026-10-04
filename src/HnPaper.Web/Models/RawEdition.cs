@@ -7,7 +7,7 @@ public sealed record RawEdition(string Date, DateTimeOffset CollectedAt, IReadOn
 
 /// <param name="Type">HN 아이템 종류: story, job 등.</param>
 /// <param name="Url">원문 주소. 본문만 있는 HN 글이면 HN 토론 주소.</param>
-/// <param name="Points">예전 수집본에 남은 채용 글은 null.</param>
+/// <param name="Points">수집할 때의 포인트. 예전 수집본에 남은 채용 글은 null.</param>
 /// <param name="Time">HN 제출 시각(유닉스 초).</param>
 /// <param name="Image">원문의 og:image.</param>
 /// <param name="Description">원문의 og:description.</param>
@@ -27,7 +27,17 @@ public sealed record RawStory(
     string? Description,
     string? Text)
 {
-    /// <summary>YC 회사 채용 글. 지면과 중간 페이지에 싣지 않는다.</summary>
+    /// <summary>이보다 포인트가 적은 글은 HN이 반응을 보려고 1면에 잠깐 올린 새 글로 보고 싣지 않는다.</summary>
+    public const int MinPoints = 10;
+
+    /// <summary>지면과 중간 페이지에 싣지 않는 글. 수집 단계에서 빼지만, 그 전에 수집한 호에는 남아 있을 수 있다.</summary>
     [JsonIgnore]
-    public bool IsJob => Type == "job";
+    public bool Excluded => IsExcluded(Type, By, Points);
+
+    /// <summary>
+    /// 싣지 않는 글: YC 회사 채용 글(type job), 매달 올라오는 구인 스레드(whoishiring 계정의 "Who is hiring?" 등),
+    /// 포인트가 MinPoints에 못 미치는 글.
+    /// </summary>
+    public static bool IsExcluded(string? type, string? by, int? points) =>
+        type == "job" || by == "whoishiring" || points < MinPoints;
 }

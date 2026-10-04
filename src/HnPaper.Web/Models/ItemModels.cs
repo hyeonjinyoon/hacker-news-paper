@@ -41,7 +41,8 @@ public sealed class CommentView
     public required long Id { get; init; }
     public required int Depth { get; init; }
     public required string By { get; init; }
-    public required string Age { get; init; }
+    /// <summary>HN 작성 시각(유닉스 초). "3시간 전" 같은 표기는 화면에서 보는 시각 기준으로 계산한다(_Ago).</summary>
+    public required long Time { get; init; }
     public required bool Deleted { get; init; }
     /// <summary>번역문. 번역 전이면 원문.</summary>
     public string? Text { get; init; }

@@ -57,5 +57,20 @@
   <p class="repo-link"><a href="https://github.com/hyeonjinyoon/hacker-news-paper" target="_blank" rel="noopener">소스 코드 · GitHub ↗</a></p>
 </footer>
 </div>
+<script>
+// "3시간 전" 같은 표기(_Ago)를 수집 시각이 아니라 보는 사람의 현재 시각 기준으로 계산하고, 1분마다 고친다.
+// 규칙은 EditionBuilder.RelativeAge와 같다. 스크립트가 없으면 서버가 페이지를 그린 시각 기준 값이 남는다.
+(() => {
+  const ago = t => {
+    const minutes = Math.floor((Date.now() / 1000 - t) / 60);
+    if (minutes < 60) return `${Math.max(1, minutes)}분 전`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}시간 전`;
+    return `${Math.floor(minutes / 1440)}일 전`;
+  };
+  const update = () => document.querySelectorAll('time[data-ago]').forEach(el => { el.textContent = ago(Number(el.dataset.ago)); });
+  update();
+  setInterval(update, 60000);
+})();
+</script>
 </body>
 </html>

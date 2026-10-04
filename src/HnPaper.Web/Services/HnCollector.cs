@@ -13,7 +13,7 @@ public sealed partial class HnCollector(HttpClient http)
     private const int MaxHtmlBytes = 512 * 1024;
     private const int MaxDescription = 500;
     private const int MaxText = 1200;
-    // 채용 글·지운 글을 빼고도 count개를 채우려고 더 받아 두는 수
+    // 싣지 않는 글·지운 글을 빼고도 count개를 채우려고 한 번에 더 받아 두는 수
     private const int Spare = 10;
 
     // 사용자 이름까지 붙여야 출처가 구분되는 호스트
@@ -37,19 +37,48 @@ public sealed partial class HnCollector(HttpClient http)
     {
         var collectedAt = Kst.Now;
         var ids = await http.GetFromJsonAsync<long[]>(Api + "topstories.json", ct) ?? [];
-        var items = await Task.WhenAll(ids.Take(count + Spare).Select(id =>
-            http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct)));
+        var stories = await FetchStoriesAsync(ids, count, 1, ct);
+        return new RawEdition(collectedAt.ToString("yyyy-MM-dd"), collectedAt, stories);
+    }
 
-        // 채용 글(type job)은 기사가 아니므로 싣지 않는다. 순위는 남은 기사끼리 다시 매긴다.
-        var live = items.OfType<HnItem>()
-            .Where(i => i is { Dead: not true, Deleted: not true, Title: not null } && i.Type != "job")
-            .Take(count)
-            .ToList();
+    /// <summary>
+    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded)을 빼고 순위를 다시 매긴 뒤, 모자란 자리를 지금 HN 1면에서
+    /// 이 호에 없는 글로 순위대로 채운다. 수집 시각 뒤에 올라온 글은 그 호의 기사가 아니므로 넣지 않는다.
+    /// </summary>
+    public async Task<(RawEdition Edition, IReadOnlyList<RawStory> Added)> FillAsync(RawEdition edition, int count, CancellationToken ct)
+    {
+        var kept = edition.Stories.Where(s => !s.Excluded).OrderBy(s => s.Rank).Select((s, i) => s with { Rank = i + 1 }).ToList();
+        if (kept.Count >= count)
+            return (edition with { Stories = kept }, []);
+
+        var known = edition.Stories.Select(s => s.Id).ToHashSet();
+        var ids = await http.GetFromJsonAsync<long[]>(Api + "topstories.json", ct) ?? [];
+        var before = edition.CollectedAt.ToUnixTimeSeconds();
+        var added = await FetchStoriesAsync(ids.Where(id => !known.Contains(id)), count - kept.Count, kept.Count + 1, ct,
+            item => item.Time <= before);
+        return (edition with { Stories = [.. kept, .. added] }, added);
+    }
+
+    private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, CancellationToken ct,
+        Func<HnItem, bool>? accept = null)
+    {
+        // 채용 글·구인 스레드·포인트 미달 글은 싣지 않고, count개가 찰 때까지 순위대로 더 받아 온다.
+        // 순위는 남은 기사끼리 다시 매긴다.
+        var live = new List<HnItem>();
+        foreach (var batch in ids.Chunk(count + Spare))
+        {
+            var items = await Task.WhenAll(batch.Select(id =>
+                http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct)));
+            live.AddRange(items.OfType<HnItem>().Where(i =>
+                i is { Dead: not true, Deleted: not true, Title: not null }
+                && !RawStory.IsExcluded(i.Type, i.By, i.Score)
+                && (accept?.Invoke(i) ?? true)));
+            if (live.Count >= count)
+                break;
+        }
 
         using var gate = new SemaphoreSlim(8);
-        var stories = await Task.WhenAll(live.Select((item, i) => BuildStoryAsync(item, i + 1, gate, ct)));
-
-        return new RawEdition(collectedAt.ToString("yyyy-MM-dd"), collectedAt, stories);
+        return await Task.WhenAll(live.Take(count).Select((item, i) => BuildStoryAsync(item, firstRank + i, gate, ct)));
     }
 
     private async Task<RawStory> BuildStoryAsync(HnItem item, int rank, SemaphoreSlim gate, CancellationToken ct)

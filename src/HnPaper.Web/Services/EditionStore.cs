@@ -31,7 +31,7 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
         var raw = rawStamp == DateTime.MinValue ? null : TryRead<RawItem>(rawPath);
         var ko = koStamp == DateTime.MinValue ? null : TryRead<KoItem>(koPath);
         var comments = commentsStamp == DateTime.MinValue ? null : TryRead<KoComments>(commentsPath);
-        var view = EditionBuilder.BuildItem(edition.CollectedAt, story, raw, ko, comments);
+        var view = EditionBuilder.BuildItem(story, raw, ko, comments);
         _items[key] = new ItemCacheEntry(rawStamp, koStamp, commentsStamp, view);
         return view;
     }
