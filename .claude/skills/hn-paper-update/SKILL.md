@@ -98,6 +98,8 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 ### 자유롭게 바꿔도 되는 것
 
 - 단어: 영어 단어에 한국어 단어를 하나씩 대응시키지 말고 문맥에 맞는 말을 고른다(everything → 항목·서비스, default → 기본값으로).
+- 생략된 말 채우기: 영어가 문맥에 기대 생략한 말은 한국어 독자가 바로 알아듣도록 채운다. 회사 이야기의 culture는 그냥 "문화"가 아니라 "조직 문화"이고, its·their가 가리키는 대상이 한국어에서 빠지면 살린다("오픈AI의 조직 문화"). 원제에 없는 사실을 더하는 것이 아니라, 원제가 이미 말한 뜻을 드러내는 것이다.
+- 단어 짝: 한국어에서 실제로 함께 쓰는 짝을 고른다. 영어 단어의 사전 뜻을 그대로 붙이면 뜻이 흐려진다(culture is broken → "문화가 망가지다" ✗, "조직 문화가 무너지다" ✓).
 - 문장 형태: 어조가 더 잘 산다면 질문을 평서문으로, 평서문을 명사형으로(또는 그 반대로) 바꿔도 된다. 명사로 끝나는 제목(예: "FTL: 클라우드를 위한 새 운영체제")을 억지로 문장으로 바꿀 필요는 없다.
 - 관용구·패러디: 영화·책 제목, 밈, 숙어를 비튼 제목은 한국어에서 같은 구실을 하는 표현으로 옮긴다. 직역해서 원래 표현의 맛이 사라지면 실패다.
 - 말투: 원제의 말투에 맞춰 고른다.
@@ -112,13 +114,15 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 - 제목 끝에 마침표를 찍지 않는다.
 - `Show HN:`, `Ask HN:`, `Tell HN:`, `Launch HN:` 접두어는 그대로 둔다.
 - 끝의 연도 괄호 `(2016)`는 그대로 둔다. `[video]`는 `[영상]`, `[pdf]`는 `[PDF]`, `[audio]`는 `[오디오]`로 옮긴다.
-- 고유명사는 외래어 표기법에 따라 한글로 적는다(Cloudflare → 클라우드플레어, Opus → 오퍼스). 약어나 기술명(FTL, WebP, C2PA, RSS, UWB, Git)은 그대로 둔다.
+- 고유명사는 외래어 표기법에 따라 한글로 적는다(Cloudflare → 클라우드플레어, Opus → 오퍼스). 약어나 기술명(FTL, WebP, C2PA, RSS, UWB, Git)은 그대로 둔다. 개발 도구·라이브러리·프로그래밍 언어처럼 개발자들이 영어 이름 그대로 부르는 것도 그대로 둔다(C++ Insights, Mesa, Home Assistant).
+- 국내에서 굳어진 용어가 있으면 그것을 쓴다(sovereign AI → 소버린 AI, open-weight → 오픈 웨이트).
 - 따옴표는 'x' → ‘x’, "x" → “x”로 바꾼다.
 
 ### 쓰고 나서 확인할 것
 
 - 원제를 모르는 사람이 읽어도 번역투로 들리지 않는가? 주제를 쉼표로 앞에 빼거나("전기기사, ~"), "당신"·"그것"이 남은 문장은 대개 번역투다.
 - 원제를 아는 사람이 읽고 "그 말을 한국말로 하면 딱 이거네" 할 만한가?
+- 처음 읽는 사람이 "누구의 무엇이 어떻다는 건지"를 다시 읽지 않고 바로 알 수 있는가? 주어나 소유가 빠져 뜻이 흐린 제목("문화가 망가져서 ~")은 다시 쓴다.
 
 예:
 | 원제 | 직역 | 뉘앙스를 살린 번역 |
@@ -126,6 +130,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 | So You Think You Could Be an Electrician? | 그래서 당신이 전기기사가 될 수 있다고 생각하나? | 전기 기술자가 될 수 있을 것 같다고요? (TV 쇼 'So You Think You Can Dance'를 비튼 되묻기라 해요체) |
 | Surely you have ultra-wideband radios on your bins too? | 당신 쓰레기통에도 당연히 초광대역 무선 장치가 달려 있겠죠? | 쓰레기통에도 당연히 UWB 무선 달아 두셨죠? (과하게 만든 장치를 두고 하는 너스레) |
 | We're going to need default hard budget caps on pretty much everything | 앞으로 거의 모든 것에 기본 하드 예산 상한이 필요해진다 | 거의 모든 항목에 기본값으로 하드 예산 상한을 설정해야 할 것 같습니다 (완곡한 전망) |
+| I quit OpenAI because its culture is broken | 문화가 망가져서 오픈AI를 그만뒀습니다 | 오픈AI의 조직 문화가 무너져서 회사를 그만뒀습니다 (누구의 어떤 문화인지 드러내고, 한국어에서 쓰는 단어 짝으로) |
 | Your body of work thinks back at you | 당신의 작업 전체가 당신을 되돌아 생각한다 | 쌓아 온 작업이 나를 되돌아보게 합니다 |
 | Docker has always used microVMs (well since 2016) | 도커는 항상 마이크로VM을 써 왔다 (뭐, 2016년부터) | 도커는 원래부터 마이크로VM을 써 왔습니다(정확히는 2016년부터) |
 | We want you to build the next Git platform on Cloudflare | 클라우드플레어 위에 다음 Git 플랫폼을 만들어 주길 바란다 | 클라우드플레어 위에 차세대 Git 플랫폼을 만들어 주세요 (독자에게 건네는 제안) |
