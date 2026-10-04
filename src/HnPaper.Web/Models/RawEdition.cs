@@ -28,7 +28,7 @@ public sealed record RawStory(
     string? Text)
 {
     /// <summary>이보다 포인트가 적은 글은 아직 반응이 적은 글(HN이 반응을 보려고 1면에 잠깐 올린 새 글 등)로 보고 싣지 않는다.</summary>
-    public const int MinPoints = 30;
+    public const int MinPoints = 50;
 
     /// <summary>지면과 중간 페이지에 싣지 않는 글. 수집 단계에서 빼지만, 그 전에 수집한 호에는 남아 있을 수 있다.</summary>
     [JsonIgnore]
