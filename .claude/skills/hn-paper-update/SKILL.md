@@ -135,6 +135,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 | Your body of work thinks back at you | 당신의 작업 전체가 당신을 되돌아 생각한다 | 쌓아 온 작업이 나를 되돌아보게 합니다 |
 | Docker has always used microVMs (well since 2016) | 도커는 항상 마이크로VM을 써 왔다 (뭐, 2016년부터) | 도커는 원래부터 마이크로VM을 써 왔습니다(정확히는 2016년부터) |
 | We want you to build the next Git platform on Cloudflare | 클라우드플레어 위에 다음 Git 플랫폼을 만들어 주길 바란다 | 클라우드플레어 위에 차세대 Git 플랫폼을 만들어 주세요 (독자에게 건네는 제안) |
+| Celebrating the 100th birthday of the kidney donated to him as a teenager | 10대 때 기증받은 신장의 100번째 생일을 축하하는 남자 | 10대 시절 기증받은 신장의 100번째 생일을 축하하며 (동명사로 시작하는 제목은 "~하며"로 옮긴다. "남자" 같은 주어를 붙여 명사구로 만들지 않는다) |
 | FTL: A new operating system for clouds | — | FTL: 클라우드를 위한 새 운영체제 (명사형은 그대로) |
 
 ## 주의
