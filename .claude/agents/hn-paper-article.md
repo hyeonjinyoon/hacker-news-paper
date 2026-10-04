@@ -8,7 +8,7 @@ mcpServers:
   - hn-browser:
       type: stdio
       command: npx
-      args: ["-y", "@playwright/mcp@latest", "--headless", "--isolated", "--no-webmcp", "--snapshot-mode", "none", "--output-dir", ".build/playwright-mcp"]
+      args: ["-y", "@playwright/mcp@latest", "--isolated", "--no-webmcp", "--snapshot-mode", "none", "--output-dir", ".build/playwright-mcp"]
 model: inherit
 background: false
 ---
@@ -23,7 +23,7 @@ background: false
 
 1. `data/raw/{날짜}/{id}.json`을 Read로 읽는다. `text`는 HN 본문 글이나 작성자 설명이고, `comments`는 HN 댓글(최대 30개, HN 순서)이다. 댓글은 "HN 반응"을 쓰는 데 쓴다.
 2. URL이 `https://news.ycombinator.com/item?id=`로 시작하지 않는 외부 링크면 WebFetch로 원문을 읽는다.
-   WebFetch가 실패했거나(오류, 403, 빈 응답), 받은 내용이 본문 없이 로그인·구독 안내, 봇 확인, 쿠키 동의, "자바스크립트를 켜라" 같은 안내뿐이면 헤드리스 브라우저(Playwright)로 **한 번 더** 읽는다. 이 에이전트 전용으로 뜬 브라우저라 다른 에이전트와 섞이지 않는다.
+   WebFetch가 실패했거나(오류, 403, 빈 응답), 받은 내용이 본문 없이 로그인·구독 안내, 봇 확인, 쿠키 동의, "자바스크립트를 켜라" 같은 안내뿐이면 브라우저(Playwright, 헤드리스가 아니라 화면에 창을 띄운다)로 **한 번 더** 읽는다. 이 에이전트 전용으로 뜬 브라우저라 다른 에이전트와 섞이지 않는다.
    1. `mcp__hn-browser__browser_navigate`로 URL을 열고, `mcp__hn-browser__browser_wait_for`(`time: 2`)로 2초 기다린다. 바로 읽으면 페이지가 아직 넘어가는 중이라 오류가 날 수 있다.
    2. `mcp__hn-browser__browser_evaluate`로 본문 글만 가져온다: `() => (document.querySelector('article') || document.querySelector('main') || document.body).innerText.slice(0, 30000)`
    3. 다 읽었으면 `mcp__hn-browser__browser_close`로 닫는다.
