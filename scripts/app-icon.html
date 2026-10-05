@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  아이폰 홈 화면 아이콘(wwwroot/apple-touch-icon.png)의 원본. 파비콘(wwwroot/favicon.svg)을 180×180으로 찍어 PNG로 저장한다.
+  모서리는 iOS가 둥글게 깎으므로 꽉 찬 정사각형으로 둔다. 파비콘을 바꾸면 이것도 다시 찍는다. 저장소 루트에서 실행한다.
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --hide-scrollbars \
+      --window-size=180,180 --screenshot="$PWD/src/HnPaper.Web/wwwroot/apple-touch-icon.png" "file://$PWD/scripts/app-icon.html"
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0}
+  html,body{width:180px;height:180px;overflow:hidden;background:#111}
+  img{display:block;width:180px;height:180px}
+</style>
+</head>
+<body>
+<img src="../src/HnPaper.Web/wwwroot/favicon.svg" alt="">
+</body>
+</html>
