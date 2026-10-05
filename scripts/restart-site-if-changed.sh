@@ -10,7 +10,8 @@ STAMP="$ROOT/.build/.site-restarted"
 export PATH="/usr/local/share/dotnet:/opt/homebrew/bin:/usr/local/bin:$PATH"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
-if [ -f "$STAMP" ] && [ -z "$(find "$ROOT/src/HnPaper.Web" -type f -newer "$STAMP" -not -path '*/bin/*' -not -path '*/obj/*' -print -quit)" ]; then
+# 파일뿐 아니라 폴더도 본다. 파일을 지우면 그 파일은 없지만 담긴 폴더의 수정 시각이 바뀐다.
+if [ -f "$STAMP" ] && [ -z "$(find "$ROOT/src/HnPaper.Web" \( -path '*/bin' -o -path '*/obj' \) -prune -o -newer "$STAMP" -print -quit)" ]; then
   exit 0
 fi
 

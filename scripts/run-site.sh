@@ -11,6 +11,8 @@ export PATH="/usr/local/share/dotnet:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_NOLOGO=1
 
+# 게시는 새 파일을 덮어쓰기만 하고 원본에서 지운 파일(바꾼 그라데이션 이미지 등)은 남겨 두므로, 먼저 비운다.
+rm -rf "$OUT"
 dotnet publish "$ROOT/src/HnPaper.Web" -c Release -o "$OUT"
 
 export ASPNETCORE_URLS="${HN_PAPER_URLS:-http://0.0.0.0:5080}"
