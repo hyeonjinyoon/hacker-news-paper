@@ -39,8 +39,7 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 
 /* 마스트헤드 */
 .masthead{display:flex;align-items:center;gap:40px;padding:18px 0 26px;border-bottom:3px solid var(--rule)}
-.logo{display:flex;align-items:baseline;gap:7px;flex:none;font-weight:800;font-size:40px;letter-spacing:-.045em;line-height:1}
-.logo small{font-size:16px;font-weight:600;letter-spacing:0}
+.logo{display:block;flex:none;font-weight:800;font-size:40px;letter-spacing:-.045em;line-height:1}
 .gnb{display:flex;gap:30px;flex:1;justify-content:center;font-size:16.5px;font-weight:700;white-space:nowrap}
 .tools{display:flex;gap:20px;flex:none}
 .tools svg{width:23px;height:23px;display:block}
@@ -149,7 +148,6 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 
 footer{border-top:3px solid var(--rule);padding:26px 0 48px;font-size:13px;line-height:1.7;color:var(--muted)}
 footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)}
-footer .logo small{font-size:12px}
 .edition-date{margin-bottom:8px;font-size:13px;color:var(--sub)}
 .repo-link{margin-top:6px}
 .repo-link a{color:var(--accent);font-weight:600}
@@ -180,7 +178,6 @@ footer .logo small{font-size:12px}
 @media (max-width:720px){
   .logo{font-size:30px}
   .gnb a[href="/editions"]{display:none}
-  .logo small{font-size:13px}
   .hero h1{font-size:27px;margin:22px 0 16px}
   .hero-body,.subs,.textlist,.fulllist,.briefs{grid-template-columns:minmax(0,1fr)}
   .sub{grid-template-columns:128px minmax(0,1fr);gap:14px}

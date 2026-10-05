@@ -17,7 +17,7 @@ namespace HnPaper.Web.Services;
 public sealed class OgImageMaker(PaperOptions options, GradientLibrary gradients)
 {
     /// <summary>그리는 규칙을 바꾸면 올린다. key에 들어가므로 저장해 둔 옛 이미지 대신 새로 그린다.</summary>
-    private const string Version = "v1";
+    private const string Version = "v2";
     public const int Width = 1200;
     public const int Height = 630;
     private const int Quality = 90;
@@ -92,8 +92,7 @@ public sealed class OgImageMaker(PaperOptions options, GradientLibrary gradients
         canvas.Clear(SKColors.White);
 
         // 마스트헤드: 왼쪽에 로고, 오른쪽에 호 날짜와 순위. 아래에 굵은 괘선.
-        var logo = Draw(canvas, "Hacker News", left, masthead, new TextStyle(ExtraBold, 46, Fg, -0.045f));
-        Draw(canvas, "paper", left + logo + 8, masthead, new TextStyle(SemiBold, 20, Fg));
+        Draw(canvas, "Hacker Newspaper", left, masthead, new TextStyle(ExtraBold, 46, Fg, -0.045f));
         var rankStyle = new TextStyle(Bold, 24, Accent);
         var rank = $"{story.Raw.Rank}위";
         var rankWidth = Measure(rank, rankStyle);

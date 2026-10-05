@@ -2,7 +2,7 @@
 @{
     // 1면이 아닌 페이지에서는 섹션 앵커가 1면으로 돌아가야 한다.
     var navBase = ViewData["NavBase"] as string ?? "";
-    var title = ViewData["Title"] as string ?? "Hacker News paper";
+    var title = ViewData["Title"] as string ?? "Hacker Newspaper";
     const string description = "전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지";
     // 공유 이미지는 절대 주소여야 한다. 기사 페이지는 기사마다 그린 이미지(OgImageMaker)를,
     // 나머지는 scripts/og-image.html로 만든 wwwroot/og.png를 쓴다. 둘 다 내용이 바뀌면 ?v=도 바뀐다.
@@ -20,14 +20,14 @@
 <title>@title</title>
 <meta name="description" content="@description">
 <meta property="og:type" content="@(ViewData["OgType"] ?? "website")">
-<meta property="og:site_name" content="Hacker News paper">
+<meta property="og:site_name" content="Hacker Newspaper">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:title" content="@ogTitle">
 <meta property="og:description" content="@(ViewData["OgDescription"] as string ?? description)">
 <meta property="og:image" content="@ogImage">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="@(ViewData["OgImage"] is null ? "Hacker News paper — 전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로" : ogTitle)">
+<meta property="og:image:alt" content="@(ViewData["OgImage"] is null ? "Hacker Newspaper — 전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로" : ogTitle)">
 <meta name="twitter:card" content="summary_large_image">
 @* 글꼴: Pretendard Variable (github.com/orioncactus/pretendard, 공식 안내의 jsDelivr 동적 서브셋) *@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -46,10 +46,11 @@
     <nav aria-label="바로가기">
       <a href="/editions">지난 호</a>
       <a href="https://news.ycombinator.com/" target="_blank" rel="noopener">Hacker News</a>
+      <a href="https://github.com/hyeonjinyoon/hacker-news-paper" target="_blank" rel="noopener">GitHub</a>
     </nav>
   </div>
   <div class="masthead">
-    <a class="logo" href="/">Hacker News<small>paper</small></a>
+    <a class="logo" href="/">Hacker Newspaper</a>
     <nav class="gnb" aria-label="섹션">
       <a href="@(navBase)#top">주요뉴스</a>
       <a href="@(navBase)#popular">많이 본 뉴스</a>
@@ -67,7 +68,7 @@
 @RenderBody()
 
 <footer>
-  <a class="logo" href="/">Hacker News<small>paper</small></a>
+  <a class="logo" href="/">Hacker Newspaper</a>
   @if (ViewData["DateLabel"] is string dateLabel)
   {
     <p class="edition-date">@dateLabel</p>
