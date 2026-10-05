@@ -23,8 +23,10 @@ public sealed class StoryView
     public string? ImageUrl { get; init; }
     /// <summary>작은 썸네일. 줄여 둔 파일이 없으면 ImageUrl과 같다.</summary>
     public string? ImageSmallUrl { get; init; }
-    /// <summary>줄여 둔 두 크기가 있을 때만 쓰는 srcset.</summary>
+    /// <summary>줄여 둔 두 크기가 있을 때만 쓰는 srcset. 폭은 파일의 실제 폭이다.</summary>
     public string? ImageSrcset { get; init; }
+    /// <summary>줄여 둔 큰 파일의 실제 폭(px). 원본이 1600px보다 좁으면 원본 폭이다. 줄여 둔 파일이 없으면 null.</summary>
+    public int? ImageWidth { get; init; }
     public bool HasImage => !string.IsNullOrEmpty(ImageUrl);
 }
 

@@ -11,4 +11,5 @@ obj/
 # 날짜별 호 (수집본·번역본)
 data/
 .claude/.DS_Store
+.claude/settings.local.json
 .DS_Store

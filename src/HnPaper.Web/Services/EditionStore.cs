@@ -120,14 +120,20 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
                 bodyById.TryAdd(item.Id, body);
         }
 
-        // 큰 것과 작은 것이 둘 다 있는 기사만 줄인 이미지를 쓴다.
+        // 큰 것과 작은 것이 둘 다 있는 기사만 줄인 이미지를 쓴다. srcset에 적을 실제 폭은 파일 머리에서 읽는다.
         var names = thumbFiles.Select(Path.GetFileName).ToHashSet();
-        var thumbIds = raw.Stories.Select(s => s.Id)
-            .Where(id => names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.LargeWidth))
-                      && names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.SmallWidth)))
-            .ToHashSet();
+        var thumbWidths = new Dictionary<long, (int Small, int Large)>();
+        foreach (var id in raw.Stories.Select(s => s.Id))
+        {
+            if (!names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.LargeWidth))
+                || !names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.SmallWidth)))
+                continue;
+            if (ThumbnailMaker.ReadWidth(options.ThumbPath(date, id, ThumbnailMaker.SmallWidth)) is { } small
+                && ThumbnailMaker.ReadWidth(options.ThumbPath(date, id, ThumbnailMaker.LargeWidth)) is { } large)
+                thumbWidths.TryAdd(id, (small, large));
+        }
 
-        var view = EditionBuilder.Build(raw, ko, bodyById, thumbIds);
+        var view = EditionBuilder.Build(raw, ko, bodyById, thumbWidths);
         _cache[date] = new CacheEntry(rawStamp, koStamp, bodies, thumbs, view);
         return view;
     }

@@ -65,6 +65,20 @@ public sealed class ThumbnailMaker(HttpClient http, PaperOptions options)
         }
     }
 
+    /// <summary>저장해 둔 파일의 실제 폭(파일 머리만 읽는다). 원본보다 키우지 않으므로 이름의 폭(1600·800)보다 작을 수 있다. 읽지 못하면 null.</summary>
+    public static int? ReadWidth(string path)
+    {
+        try
+        {
+            using var codec = SKCodec.Create(path);
+            return codec is { Info.Width: > 0 } ? codec.Info.Width : null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     private static void Save(SKBitmap original, int boxWidth, int quality, string path)
     {
         // 폭만 맞추면 가로로 긴 이미지(배너 등)를 16:9 칸에 꽉 채울 때 높이가 모자라 늘어나 흐려진다.

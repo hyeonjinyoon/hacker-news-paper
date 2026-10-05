@@ -15,7 +15,7 @@
     ViewData["OgDescription"] = s.Summary;
     ViewData["OgImage"] = $"~{s.Href}/og.jpg?v={OgImages.Key(s)}";
 }
-@* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 많이 본 뉴스 300px. 제목을 누르면 원문이, 원제를 누르면 Hacker News 글이 열린다. *@
+@* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 많이 본 뉴스 300px. 제목을 누르면 원문이, 원제를 누르면 Hacker News 글이, 댓글 제목을 누르면 Hacker News 댓글란이 열린다. *@
 <div class="story-page">
   <header class="article-head">
     <nav class="crumbs" aria-label="위치"><a href="/@e.Date">@e.Date 호</a><span>@(s.Raw.Rank)위</span></nav>
@@ -45,10 +45,31 @@
           <div class="md">@MarkdownRenderer.Render(item.Body)</div>
         }
       </section>
+
+      @* 본문 끝의 원문 링크. Slack이 링크를 펼쳐 보여 주는 미리보기처럼 원문의 사이트·원제·og 설명·대표 이미지를 그대로 보여 준다.
+         칸 어디를 눌러도 원문이 열린다. 파비콘은 원문 사이트의 /favicon.ico를 쓰고, 없으면 지운다. *@
+      <aside class="unfurl linkbox" aria-label="원문 링크">
+        <p class="unfurl-site">
+          @if (Uri.TryCreate(s.SourceUrl, UriKind.Absolute, out var source))
+          {
+            <img src="https://@source.Host/favicon.ico" alt="" width="16" height="16" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">
+          }
+          <span>@s.Raw.Site</span>
+        </p>
+        <h3><a href="@s.SourceUrl" target="_blank" rel="noopener">@s.Raw.Title</a></h3>
+        @if (!string.IsNullOrWhiteSpace(s.Raw.Description))
+        {
+          <p class="unfurl-desc">@s.Raw.Description</p>
+        }
+        @if (s.HasImage)
+        {
+          <img class="unfurl-img" src="@s.ImageSmallUrl" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">
+        }
+      </aside>
     </div>
 
     <section class="comments" id="comments">
-      <div class="sec-head"><h2>댓글</h2><span class="meta">@(item.Comments.Count)개 표시 · 전체 @(item.TotalComments)개</span></div>
+      <div class="sec-head"><h2><a href="@s.HnUrl" target="_blank" rel="noopener" title="Hacker News 댓글 보기">댓글</a></h2><span class="meta">@(item.Comments.Count)개 표시 · 전체 @(item.TotalComments)개</span></div>
       @if (item.Comments.Count == 0)
       {
         <p class="meta">@(item.Collected ? "아직 댓글이 없습니다." : "댓글을 아직 수집하지 않았습니다.")</p>
