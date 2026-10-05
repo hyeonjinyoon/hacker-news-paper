@@ -245,7 +245,7 @@ footer .logo small{font-size:12px}
 .unfurl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px;background:var(--line)}
 .unfurl-site{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--sub)}
 .unfurl-site img{flex:none;border-radius:3px}
-.unfurl h3{margin-top:4px;font-size:17px;font-weight:700;line-height:1.45;color:var(--accent)}
+.unfurl h3{margin-top:4px;font-size:17px;font-weight:700;line-height:1.45;color:var(--fg)}
 .unfurl-desc{margin-top:4px;font-size:15px;line-height:1.6;color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 
 .comments{margin-top:40px;padding-top:28px;border-top:3px solid var(--rule)}
