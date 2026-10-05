@@ -148,7 +148,7 @@ code{font-size:.92em;padding:1px 5px;background:var(--ph);border-radius:3px}
 .archive .badge{flex:none;font-size:12px;color:var(--muted);border:1px solid var(--line);padding:2px 8px}
 
 footer{border-top:3px solid var(--rule);padding:26px 0 48px;font-size:13px;line-height:1.7;color:var(--muted)}
-footer .logo{font-size:24px;margin-bottom:10px;color:var(--fg)}
+footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)}
 footer .logo small{font-size:12px}
 .edition-date{margin-bottom:8px;font-size:13px;color:var(--sub)}
 .repo-link{margin-top:6px}
@@ -240,14 +240,13 @@ footer .logo small{font-size:12px}
 .md pre code{background:none;padding:0}
 .md blockquote{margin-left:0;border-left:3px solid var(--line);padding-left:12px;color:var(--sub)}
 
-/* 본문 끝의 원문 링크: Slack 링크 미리보기처럼 왼쪽 띠 + 사이트 · 원제 · 설명 · 이미지(가로 최대 240px·세로 최대 160px, 원래 비율) */
+/* 본문 끝의 원문 링크: Slack 링크 미리보기처럼 왼쪽 띠 + 사이트 · 원제 · 설명 */
 .unfurl{margin-top:40px;padding:2px 0 2px 16px}
 .unfurl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px;background:var(--line)}
 .unfurl-site{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--sub)}
 .unfurl-site img{flex:none;border-radius:3px}
 .unfurl h3{margin-top:4px;font-size:17px;font-weight:700;line-height:1.45;color:var(--accent)}
 .unfurl-desc{margin-top:4px;font-size:15px;line-height:1.6;color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.unfurl-img{display:block;margin-top:10px;max-width:min(100%,240px);max-height:160px;width:auto;height:auto;border-radius:8px}
 
 .comments{margin-top:40px;padding-top:28px;border-top:3px solid var(--rule)}
 .comments .notice{margin:0 0 12px}

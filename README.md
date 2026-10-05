@@ -1,6 +1,6 @@
 # Hacker News (paper)
 
-![Screenshot1](src/screenshots/2026-10-05_144317.png)
+![Screenshot1](src/screenshots/2026-10-05_210738.png)
 
 전날 [Hacker News](https://news.ycombinator.com/)의 상위 30개 글을 매일 아침 한국어로 번역해, 신문 1면처럼 보여 주는 비공식 사이트입니다.
 

@@ -46,8 +46,9 @@
         }
       </section>
 
-      @* 본문 끝의 원문 링크. Slack이 링크를 펼쳐 보여 주는 미리보기처럼 원문의 사이트·원제·og 설명·대표 이미지를 그대로 보여 준다.
-         칸 어디를 눌러도 원문이 열린다. 파비콘은 원문 사이트의 /favicon.ico를 쓰고, 없으면 지운다. *@
+      @* 본문 끝의 원문 링크. Slack이 링크를 펼쳐 보여 주는 미리보기처럼 원문의 사이트·원제·og 설명을 그대로 보여 준다.
+         대표 이미지는 본문 위에 이미 있으므로 넣지 않는다. 칸 어디를 눌러도 원문이 열린다.
+         파비콘은 원문 사이트의 /favicon.ico를 쓰고, 없으면 지운다. *@
       <aside class="unfurl linkbox" aria-label="원문 링크">
         <p class="unfurl-site">
           @if (Uri.TryCreate(s.SourceUrl, UriKind.Absolute, out var source))
@@ -60,10 +61,6 @@
         @if (!string.IsNullOrWhiteSpace(s.Raw.Description))
         {
           <p class="unfurl-desc">@s.Raw.Description</p>
-        }
-        @if (s.HasImage)
-        {
-          <img class="unfurl-img" src="@s.ImageSmallUrl" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()">
         }
       </aside>
     </div>
