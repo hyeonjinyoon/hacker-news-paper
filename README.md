@@ -120,6 +120,7 @@ data/
 ├── raw/{날짜}/{id}.json                기사별 HN 본문 글과 댓글
 ├── img/{날짜}/{id}-1600-v2.webp        줄인 대표 이미지(큰 것) — /thumbs/ 로 제공
 ├── img/{날짜}/{id}-800-v2.webp         줄인 대표 이미지(썸네일)
+├── img/{날짜}/{id}-og-{key}.jpg        기사 공유 이미지(처음 요청할 때 그림)
 ├── ko/{날짜}.json                      1면 제목 번역
 ├── ko/{날짜}/{id}.json                 기사 본문(마크다운)
 └── ko/{날짜}/{id}.comments.json        댓글 번역
@@ -136,6 +137,7 @@ data/
 | `/` | 번역이 끝난 가장 최근 호의 1면 |
 | `/{날짜}` | 그 날짜의 1면 |
 | `/{날짜}/{id}` | 기사 페이지(요약·댓글) |
+| `/{날짜}/{id}/og.jpg` | 기사 공유 이미지(og:image) |
 | `/editions` | 지난 호 목록 |
 
 번역이 아직 없는 호나 기사는 원문 제목·설명·댓글로 표시합니다.
@@ -144,4 +146,5 @@ data/
 
 - 마크다운은 [Markdig](https://github.com/xoofx/markdig)로 렌더링합니다. 번역본과 댓글은 외부에서 온 글이라 원시 HTML을 막고 http(s)·mailto가 아닌 링크는 지웁니다.
 - 이미지는 [SkiaSharp](https://github.com/mono/SkiaSharp)로 줄이고, 글꼴은 [Pretendard](https://github.com/orioncactus/pretendard)를 씁니다.
+- 링크를 공유하면 1면·지난 호는 사이트 공유 이미지(`wwwroot/og.png`, 원본 `scripts/og-image.html`)를, 기사 페이지는 기사마다 그린 이미지를 보여 줍니다. 기사 이미지는 마스트헤드·호 날짜·순위 아래에 한국어 제목(자리가 남으면 한 줄 요약)과 대표 이미지(없으면 그라데이션 패널)·출처·포인트·댓글 수를 그린 1200×630 JPEG로, 처음 요청할 때 SkiaSharp로 그려 `data/img/`에 저장합니다. 제목 번역이나 대표 이미지가 바뀌면 주소(`?v=`)가 바뀌어 새로 그립니다. 그리는 데 쓰는 Pretendard 글꼴 파일(SIL OFL)은 `src/HnPaper.Web/Fonts/`에 있습니다.
 - HTML·CSS는 Brotli/Gzip으로 압축하고, 정적 파일은 오래 캐시합니다(버전이 붙은 CSS 1년, 줄인 이미지 30일).

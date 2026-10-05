@@ -29,6 +29,8 @@ public sealed record PaperOptions(string DataDirectory)
     public string ThumbDirectory => Path.Combine(DataDirectory, "img");
     public string ThumbPath(string date, long id, int width) => Path.Combine(ThumbDirectory, date, ThumbFileName(id, width));
     public static string ThumbFileName(long id, int width) => $"{id}-{width}-{ThumbnailMaker.Version}.webp";
+    // 기사 공유 이미지: data/img/{date}/{id}-og-{key}.jpg. 요청이 오면 OgImageMaker가 그려 둔다.
+    public string OgPath(string date, long id, string key) => Path.Combine(ThumbDirectory, date, $"{id}-og-{key}.jpg");
 
     public static PaperOptions Resolve(string? configured)
     {

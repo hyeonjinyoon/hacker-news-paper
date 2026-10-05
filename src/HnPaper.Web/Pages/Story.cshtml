@@ -1,6 +1,7 @@
 @page "/{date}/{id:long}"
 @model StoryModel
 @using HnPaper.Web.Services
+@inject OgImageMaker OgImages
 @{
     var e = Model.Edition;
     var s = Model.Story;
@@ -8,6 +9,11 @@
     ViewData["Title"] = $"{s.Title} · Hacker News paper";
     ViewData["DateLabel"] = e.DateLabel;
     ViewData["NavBase"] = $"/{e.Date}";
+    // 링크를 공유하면 사이트 공용 이미지 대신 이 기사의 제목·대표 이미지를 그린 이미지와 요약 첫 문단이 보인다.
+    ViewData["OgType"] = "article";
+    ViewData["OgTitle"] = s.Title;
+    ViewData["OgDescription"] = s.Summary;
+    ViewData["OgImage"] = $"~{s.Href}/og.jpg?v={OgImages.Key(s)}";
 }
 @* 동아일보 기사 페이지와 같은 칸 배치: 왼쪽 232px(비워 둠) · 본문 684px · 오른쪽 많이 본 뉴스 300px. 제목을 누르면 원문이, 원제를 누르면 Hacker News 글이 열린다. *@
 <div class="story-page">

@@ -13,4 +13,9 @@
     <PackageReference Include="SkiaSharp" Version="4.153.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 기사 공유 이미지(OgImageMaker)를 그리는 글꼴 -->
+    <None Include="Fonts\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

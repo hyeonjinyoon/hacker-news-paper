@@ -17,6 +17,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddSingleton(PaperOptions.Resolve(builder.Configuration["Paper:DataDirectory"]));
 builder.Services.AddSingleton<EditionStore>();
 builder.Services.AddSingleton<GradientLibrary>();
+builder.Services.AddSingleton<OgImageMaker>();
 
 // 한글을 &#xAC70; 같은 엔티티로 바꾸지 않고 그대로 출력한다(HTML이 크게 줄어든다). HTML 특수문자는 그대로 인코딩된다.
 builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
@@ -61,6 +62,20 @@ app.UseStaticFiles(new StaticFileOptions
 });
 app.UseRouting();
 app.MapRazorPages();
+
+// 기사 페이지의 공유 이미지(og:image). 처음 요청할 때 그려 저장해 두고 그 파일을 준다.
+// 주소의 v가 지금 내용으로 만든 key와 같으면 그 주소의 내용은 바뀌지 않으므로 1년 캐시한다.
+// 링크 미리보기를 만드는 서비스 가운데 HEAD로 먼저 확인하는 곳이 있어 HEAD도 받는다.
+app.MapMethods("/{date}/{id:long}/og.jpg", [HttpMethods.Get, HttpMethods.Head], (string date, long id, string? v, HttpContext http, EditionStore store, OgImageMaker og) =>
+{
+    var story = store.Load(date)?.All.FirstOrDefault(s => s.Raw.Id == id);
+    if (story is null)
+        return Results.NotFound();
+
+    var key = og.Key(story);
+    http.Response.Headers.CacheControl = v == key ? "public, max-age=31536000, immutable" : "public, max-age=3600";
+    return Results.File(og.GetOrCreate(story, key), "image/jpeg");
+});
 
 app.Run();
 return 0;
