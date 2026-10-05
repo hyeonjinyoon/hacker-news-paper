@@ -35,6 +35,6 @@
 
 - 이 사이트는 Y Combinator나 Hacker News와 관계가 없습니다. 각 글의 저작권은 원 출처에 있습니다.
 - 마크다운은 [Markdig](https://github.com/xoofx/markdig)로 렌더링합니다. 번역본과 댓글은 외부에서 온 글이라 원시 HTML을 막고 http(s), mailto가 아닌 링크는 지웁니다.
-- 이미지는 [SkiaSharp](https://github.com/mono/SkiaSharp)로 줄이고, 글꼴은 [Pretendard](https://github.com/orioncactus/pretendard)를 씁니다.
+- 이미지는 [SkiaSharp](https://github.com/mono/SkiaSharp)로 WebP 압축하고, 글꼴은 [Pretendard](https://github.com/orioncactus/pretendard)를 씁니다.
 
 라이선스: MIT

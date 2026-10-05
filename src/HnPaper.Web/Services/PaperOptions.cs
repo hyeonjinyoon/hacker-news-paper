@@ -24,11 +24,12 @@ public sealed record PaperOptions(string DataDirectory)
     // hn-paper-comments가 새로 번역한 댓글만 잠깐 담는 파일. merge-comments가 댓글 번역본에 합치고 지운다.
     public string KoNewCommentsPath(string date, long id) => Path.Combine(KoDirectory, date, id + ".comments.new.json");
 
-    // 줄여 저장한 대표 이미지: data/img/{date}/{id}-{폭}-{버전}.webp. 사이트는 /thumbs/로 제공한다.
-    // 폭과 형식 버전이 파일 이름에 들어 있어, 규칙을 바꾸면 주소도 바뀌고 캐시된 옛 이미지가 쓰이지 않는다.
+    // WebP로 압축해 저장한 대표 이미지: 원본 크기는 data/img/{date}/{id}-{버전}.webp, 1면 썸네일은 {id}-{폭}-{버전}.webp.
+    // 사이트는 /thumbs/로 제공한다. 형식 버전이 파일 이름에 들어 있어, 규칙을 바꾸면 주소도 바뀌고 캐시된 옛 이미지가 쓰이지 않는다.
     public string ThumbDirectory => Path.Combine(DataDirectory, "img");
-    public string ThumbPath(string date, long id, int width) => Path.Combine(ThumbDirectory, date, ThumbFileName(id, width));
-    public static string ThumbFileName(long id, int width) => $"{id}-{width}-{ThumbnailMaker.Version}.webp";
+    public string ThumbPath(string date, long id, int? width = null) => Path.Combine(ThumbDirectory, date, ThumbFileName(id, width));
+    public static string ThumbFileName(long id, int? width = null) =>
+        width is null ? $"{id}-{ThumbnailMaker.Version}.webp" : $"{id}-{width}-{ThumbnailMaker.Version}.webp";
     // 기사 공유 이미지: data/img/{date}/{id}-og-{key}.jpg. 요청이 오면 OgImageMaker가 그려 둔다.
     public string OgPath(string date, long id, string key) => Path.Combine(ThumbDirectory, date, $"{id}-og-{key}.jpg");
 

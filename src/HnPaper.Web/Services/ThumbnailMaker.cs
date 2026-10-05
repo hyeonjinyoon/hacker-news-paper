@@ -4,17 +4,17 @@ using SkiaSharp;
 namespace HnPaper.Web.Services;
 
 /// <summary>
-/// 원문 사이트의 og 이미지를 내려받아 두 크기의 WebP로 줄여 data/img/{date}/에 저장한다.
-/// 큰 것(1600px)은 1면 톱·기사 페이지처럼 넓은 칸을 레티나 화면에서도 선명하게, 작은 것(800px)은 썸네일에 쓴다.
-/// 사이트는 이 파일이 있으면 원문 서버 대신 직접 제공한다(크기·대기 시간이 크게 준다).
-/// 줄이지 못한 이미지(SVG, AVIF 등 디코딩할 수 없는 형식)는 건너뛰고, 사이트는 원본 주소를 그대로 쓴다.
+/// 원문 사이트의 og 이미지를 내려받아 WebP로 압축해 data/img/{date}/에 두 파일로 저장한다.
+/// 원본 크기 그대로인 것은 1면 톱·기사 페이지에, 800px로 줄인 것은 1면 썸네일에 쓴다.
+/// 사이트는 이 파일이 있으면 원문 서버 대신 직접 제공한다(용량·대기 시간이 준다).
+/// 압축하지 못한 이미지(SVG, AVIF 등 디코딩할 수 없는 형식, WebP 한계 16383px을 넘는 이미지)는 건너뛰고, 사이트는 원본 주소를 그대로 쓴다.
 /// </summary>
 public sealed class ThumbnailMaker(HttpClient http, PaperOptions options)
 {
-    public const int LargeWidth = 1600;
+    /// <summary>1면 썸네일의 폭. 300px 칸을 레티나 화면에서도 선명하게 채운다.</summary>
     public const int SmallWidth = 800;
     /// <summary>파일 이름에 붙는 형식 버전. 크기·품질 규칙을 바꾸면 올려서 브라우저·CDN에 캐시된 옛 이미지를 피한다.</summary>
-    public const string Version = "v2";
+    public const string Version = "v3";
     // 사진은 84로 충분하지만, 글자·선이 많은 PNG·GIF(슬라이드, 로고, 화면 캡처)는 압축 티가 잘 나서 92로 둔다.
     private const int PhotoQuality = 84;
     private const int GraphicQuality = 92;
@@ -54,18 +54,30 @@ public sealed class ThumbnailMaker(HttpClient http, PaperOptions options)
             if (original is null || original.Width <= 0 || original.Height <= 0)
                 return false;
 
-            Directory.CreateDirectory(Path.GetDirectoryName(options.ThumbPath(date, story.Id, LargeWidth))!);
-            Save(original, LargeWidth, quality, options.ThumbPath(date, story.Id, LargeWidth));
-            Save(original, SmallWidth, quality, options.ThumbPath(date, story.Id, SmallWidth));
+            using var image = SKImage.FromBitmap(original);
+            using var encoded = image.Encode(SKEncodedImageFormat.Webp, quality);
+            if (encoded is null)
+                return false;
+
+            // 원본이 이미 WebP인데 다시 압축해도 작아지지 않으면 화질만 잃으므로 원본을 그대로 둔다.
+            var full = codec.EncodedFormat == SKEncodedImageFormat.Webp && encoded.Size >= bytes.Length
+                ? bytes
+                : encoded.ToArray();
+            // 원본이 썸네일 칸보다 작으면 썸네일도 원본 크기 파일과 같다.
+            var small = Shrink(original, SmallWidth, quality) ?? full;
+
+            Directory.CreateDirectory(Path.GetDirectoryName(options.ThumbPath(date, story.Id))!);
+            Write(options.ThumbPath(date, story.Id), full);
+            Write(options.ThumbPath(date, story.Id, SmallWidth), small);
             return true;
         }
-        catch (Exception)
+        catch (Exception) when (!ct.IsCancellationRequested)
         {
             return false;
         }
     }
 
-    /// <summary>저장해 둔 파일의 실제 폭(파일 머리만 읽는다). 원본보다 키우지 않으므로 이름의 폭(1600·800)보다 작을 수 있다. 읽지 못하면 null.</summary>
+    /// <summary>저장해 둔 파일의 실제 폭(파일 머리만 읽는다). 썸네일은 원본보다 키우지 않으므로 이름의 폭(800)보다 작을 수 있다. 읽지 못하면 null.</summary>
     public static int? ReadWidth(string path)
     {
         try
@@ -79,25 +91,28 @@ public sealed class ThumbnailMaker(HttpClient http, PaperOptions options)
         }
     }
 
-    private static void Save(SKBitmap original, int boxWidth, int quality, string path)
+    /// <summary>boxWidth×(16:9) 칸을 덮는 크기로 줄여 WebP로 압축한다. 원본이 그보다 작아 줄일 필요가 없거나 압축하지 못하면 null.</summary>
+    private static byte[]? Shrink(SKBitmap original, int boxWidth, int quality)
     {
         // 폭만 맞추면 가로로 긴 이미지(배너 등)를 16:9 칸에 꽉 채울 때 높이가 모자라 늘어나 흐려진다.
-        // 그래서 boxWidth×(16:9) 칸을 덮는 데 필요한 크기로 줄인다. 원본보다 키우지는 않는다.
         var boxHeight = boxWidth * 9 / 16;
-        var scale = Math.Min(1.0, Math.Max(boxWidth / (double)original.Width, boxHeight / (double)original.Height));
+        var scale = Math.Max(boxWidth / (double)original.Width, boxHeight / (double)original.Height);
+        if (scale >= 1.0)
+            return null;
+
         var width = Math.Max(1, (int)Math.Round(original.Width * scale));
         var height = Math.Max(1, (int)Math.Round(original.Height * scale));
-
-        using var resized = scale >= 1.0
-            ? original.Copy()
-            : original.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKCubicResampler.CatmullRom));
+        using var resized = original.Resize(new SKImageInfo(width, height), new SKSamplingOptions(SKCubicResampler.CatmullRom));
         using var image = SKImage.FromBitmap(resized);
         using var data = image.Encode(SKEncodedImageFormat.Webp, quality);
+        return data?.ToArray();
+    }
 
-        // 다 쓴 뒤에 이름을 바꿔, 사이트가 반쯤 쓴 파일을 읽지 않게 한다.
+    /// <summary>다 쓴 뒤에 이름을 바꿔, 사이트가 반쯤 쓴 파일을 읽지 않게 한다.</summary>
+    private static void Write(string path, byte[] bytes)
+    {
         var temp = path + ".tmp";
-        using (var file = File.Create(temp))
-            data.SaveTo(file);
+        File.WriteAllBytes(temp, bytes);
         File.Move(temp, path, overwrite: true);
     }
 

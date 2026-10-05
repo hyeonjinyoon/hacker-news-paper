@@ -51,7 +51,7 @@ app.UseStaticFiles(new StaticFileOptions
             : "public, max-age=604800";
     },
 });
-// 수집 때 줄여 둔 대표 이미지(data/img)를 /thumbs/로 제공한다. 날짜·기사별로 바뀌지 않으므로 30일 캐시한다.
+// 수집 때 WebP로 압축해 둔 대표 이미지(data/img)를 /thumbs/로 제공한다. 날짜·기사별로 바뀌지 않으므로 30일 캐시한다.
 var paper = app.Services.GetRequiredService<PaperOptions>();
 Directory.CreateDirectory(paper.ThumbDirectory);
 app.UseStaticFiles(new StaticFileOptions

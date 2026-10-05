@@ -6,9 +6,9 @@ namespace HnPaper.Web.Services;
 public static class EditionBuilder
 {
     /// <param name="bodies">기사별 본문 번역본(마크다운). 1면 요약과 리드는 이 본문의 첫 문단들을 쓴다.</param>
-    /// <param name="thumbs">대표 이미지를 줄여 저장해 둔 기사 id와 두 파일(작은 것·큰 것)의 실제 폭.</param>
+    /// <param name="thumbs">대표 이미지를 WebP로 압축해 저장해 둔 기사 id와 두 파일(썸네일·원본 크기)의 실제 폭.</param>
     public static EditionView Build(RawEdition raw, KoEdition? ko, IReadOnlyDictionary<long, string>? bodies = null,
-        IReadOnlyDictionary<long, (int Small, int Large)>? thumbs = null)
+        IReadOnlyDictionary<long, (int Small, int Full)>? thumbs = null)
     {
         var koById = new Dictionary<long, KoStory>();
         foreach (var story in ko?.Stories ?? [])
@@ -24,17 +24,14 @@ public static class EditionBuilder
                 var intro = bodies is not null && bodies.TryGetValue(r.Id, out var body)
                     ? MarkdownRenderer.IntroParagraphs(body, 2)
                     : [];
-                (int Small, int Large)? widths = thumbs is not null && thumbs.TryGetValue(r.Id, out var w) ? w : null;
-                var large = widths is null ? r.Image : ThumbUrl(raw.Date, r.Id, ThumbnailMaker.LargeWidth);
-                var small = widths is null ? r.Image : ThumbUrl(raw.Date, r.Id, ThumbnailMaker.SmallWidth);
+                (int Small, int Full)? widths = thumbs is not null && thumbs.TryGetValue(r.Id, out var w) ? w : null;
                 return new StoryView
                 {
                     Date = raw.Date,
                     Raw = r,
-                    ImageUrl = large,
-                    ImageSmallUrl = small,
+                    ImageUrl = widths is null ? r.Image : ThumbUrl(raw.Date, r.Id),
+                    ImageSmallUrl = widths is null ? r.Image : ThumbUrl(raw.Date, r.Id, ThumbnailMaker.SmallWidth),
                     ImageSrcset = widths is { } wd ? Srcset(raw.Date, r.Id, wd) : null,
-                    ImageWidth = widths?.Large,
                     Title = Nonblank(k?.Title) ?? r.Title,
                     Intro = intro,
                     // 본문 요약의 첫 문단 → 예전 호의 1면 요약 → (번역 전 호면) 원문 설명
@@ -147,16 +144,15 @@ public static class EditionBuilder
 
     private static string? Nonblank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static string ThumbUrl(string date, long id, int width) => $"/thumbs/{date}/{PaperOptions.ThumbFileName(id, width)}";
+    private static string ThumbUrl(string date, long id, int? width = null) => $"/thumbs/{date}/{PaperOptions.ThumbFileName(id, width)}";
 
     /// <summary>
-    /// 줄여 둔 두 크기의 srcset. 원본보다 키우지 않고 줄였으므로 이름의 폭(1600·800)이 아니라 파일의 실제 폭을 적는다.
-    /// 이름의 폭을 적으면 1200px 파일을 1600px로 알고 그만큼 작게 그린다(레티나 모바일에서 칸의 3분의 2쯤).
+    /// 1면 썸네일의 srcset(줄인 것·원본 크기). 썸네일은 원본보다 키우지 않으므로 이름의 폭(800)이 아니라 파일의 실제 폭을 적는다.
     /// 원본이 작아 두 파일의 폭이 같으면 하나만 적는다.
     /// </summary>
-    private static string Srcset(string date, long id, (int Small, int Large) widths)
+    private static string Srcset(string date, long id, (int Small, int Full) widths)
     {
         var small = $"{ThumbUrl(date, id, ThumbnailMaker.SmallWidth)} {widths.Small}w";
-        return widths.Small == widths.Large ? small : $"{small}, {ThumbUrl(date, id, ThumbnailMaker.LargeWidth)} {widths.Large}w";
+        return widths.Small == widths.Full ? small : $"{small}, {ThumbUrl(date, id)} {widths.Full}w";
     }
 }

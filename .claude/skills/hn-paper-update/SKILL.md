@@ -13,7 +13,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 |---|---|---|
 | `data/raw/{날짜}.json` | 수집기(`collect`) | 순위, 원제, URL, 포인트, 댓글 수, 대표 이미지, 원문 설명 |
 | `data/raw/{날짜}/{id}.json` | 수집기(`collect`, `collect-items`) | 기사별 HN 본문 글과 댓글(HN 댓글란 순서, 답글 포함, 최대 30개) |
-| `data/img/{날짜}/{id}-1600-v2.webp`, `{id}-800-v2.webp` | 수집기(`collect`, `collect-thumbs`) | 원문 og 이미지를 줄인 대표 이미지(16:9 칸 1600px·800px을 덮는 크기, 원본보다 키우지 않음). 사이트가 원문 서버 대신 직접 제공한다 |
+| `data/img/{날짜}/{id}-v3.webp`, `{id}-800-v3.webp` | 수집기(`collect`, `collect-thumbs`) | 원문 og 이미지를 WebP로 압축한 대표 이미지(원본 크기 그대로인 것은 1면 톱·기사 페이지용, 16:9 칸 800px을 덮는 크기로 줄인 것은 1면 썸네일용). 사이트가 원문 서버 대신 직접 제공한다 |
 | `data/ko/{날짜}.json` | `reuse`(이미 번역한 기사), 이 스킬(메인, 새 기사) | 제목 번역 |
 | `data/ko/{날짜}/{id}.json` | `reuse`(이미 번역한 기사), `hn-paper-article` 서브에이전트(새 기사) | 중간 페이지 본문(굵은 한 줄 요약 · 왜 중요한가 · 핵심 내용 · HN 반응, 합니다체) |
 | `data/ko/{날짜}/{id}.comments.json` | `reuse`(이미 번역한 댓글), `hn-paper-comments` 서브에이전트(Sonnet 5.5, high, 새 댓글만 번역해 `merge-comments`로 합침) | 중간 페이지 댓글 번역 |
@@ -36,7 +36,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 | 날짜 | 수집하지 않고 2~6단계를 한다. 이미 있는 번역은 그대로 두고, 빠진 제목과 아직 없거나 검증을 통과하지 못한 중간 페이지만 만든다 |
 | 날짜 + 기사 id | 그 기사들의 중간 페이지(4단계)만 다시 만든다 |
 
-1. **수집**: 인자가 없을 때만 실행한다. 1면, 기사별 댓글, 줄인 대표 이미지를 함께 만든다.
+1. **수집**: 인자가 없을 때만 실행한다. 1면, 기사별 댓글, WebP로 압축한 대표 이미지를 함께 만든다.
    ```
    dotnet run --project src/HnPaper.Web -- collect
    ```

@@ -120,17 +120,17 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
                 bodyById.TryAdd(item.Id, body);
         }
 
-        // 큰 것과 작은 것이 둘 다 있는 기사만 줄인 이미지를 쓴다. srcset에 적을 실제 폭은 파일 머리에서 읽는다.
+        // 원본 크기 파일과 썸네일이 둘 다 있는 기사만 압축해 둔 이미지를 쓴다. srcset에 적을 실제 폭은 파일 머리에서 읽는다.
         var names = thumbFiles.Select(Path.GetFileName).ToHashSet();
-        var thumbWidths = new Dictionary<long, (int Small, int Large)>();
+        var thumbWidths = new Dictionary<long, (int Small, int Full)>();
         foreach (var id in raw.Stories.Select(s => s.Id))
         {
-            if (!names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.LargeWidth))
+            if (!names.Contains(PaperOptions.ThumbFileName(id))
                 || !names.Contains(PaperOptions.ThumbFileName(id, ThumbnailMaker.SmallWidth)))
                 continue;
             if (ThumbnailMaker.ReadWidth(options.ThumbPath(date, id, ThumbnailMaker.SmallWidth)) is { } small
-                && ThumbnailMaker.ReadWidth(options.ThumbPath(date, id, ThumbnailMaker.LargeWidth)) is { } large)
-                thumbWidths.TryAdd(id, (small, large));
+                && ThumbnailMaker.ReadWidth(options.ThumbPath(date, id)) is { } full)
+                thumbWidths.TryAdd(id, (small, full));
         }
 
         var view = EditionBuilder.Build(raw, ko, bodyById, thumbWidths);

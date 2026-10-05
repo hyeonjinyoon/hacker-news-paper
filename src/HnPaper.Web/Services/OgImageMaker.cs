@@ -76,10 +76,10 @@ public sealed class OgImageMaker(PaperOptions options, GradientLibrary gradients
         return path;
     }
 
-    // 줄여 둔 대표 이미지가 있으면 그것을, 없으면(원문에 이미지가 없거나 줄이지 못한 형식) 1면과 같은 그라데이션 패널을 쓴다.
+    // 압축해 둔 대표 이미지가 있으면 그것을, 없으면(원문에 이미지가 없거나 압축하지 못한 형식) 1면과 같은 그라데이션 패널을 쓴다.
     private string? ImagePath(StoryView story)
     {
-        var thumb = options.ThumbPath(story.Date, story.Raw.Id, ThumbnailMaker.LargeWidth);
+        var thumb = options.ThumbPath(story.Date, story.Raw.Id);
         return File.Exists(thumb) ? thumb : gradients.PathFor(story.Raw.Id);
     }
 

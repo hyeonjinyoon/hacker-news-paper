@@ -6,7 +6,7 @@ namespace HnPaper.Web.Services;
 /// hn-paper-update 스킬이 부르는 명령.
 ///   collect [--comments N] [--out path]   전날(UTC) HN 과거 1면 상위 30개와 기사별 댓글 수집
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
-///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 줄여 저장
+///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 WebP로 압축해 저장
 ///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글을 빼고, 모자란 자리를 그 호의 HN 과거 1면 글로 채움
 ///   reuse yyyy-MM-dd                        이미 번역한 기사의 제목·본문과 지금 수집본에 있는 댓글의 번역을 이 호로 가져옴
 ///   merge-comments yyyy-MM-dd id            새로 번역한 댓글({id}.comments.new.json)을 댓글 번역본에 합침
@@ -54,7 +54,7 @@ public static class Cli
 
         var images = edition.Stories.Count(s => s.Image is not null);
         var descriptions = edition.Stories.Count(s => s.Description is not null);
-        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, 줄인 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened}, HN 본문 링크에서 찾은 이미지 {collector.FromTextLinks})");
+        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, WebP 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened}, HN 본문 링크에서 찾은 이미지 {collector.FromTextLinks})");
         Console.WriteLine(path);
         return 0;
     }
@@ -88,7 +88,7 @@ public static class Cli
         var edition = PaperJson.Read<RawEdition>(options.RawPath(date))!;
         using var http = HnCollector.CreateHttpClient();
         var (made, skipped) = await new ThumbnailMaker(http, options).MakeAllAsync(edition, CancellationToken.None);
-        Console.WriteLine($"대표 이미지 줄이기 완료: {date} · {made}개 저장, {skipped}개는 원본 주소 사용(내려받기·디코딩 실패)");
+        Console.WriteLine($"대표 이미지 압축 완료: {date} · {made}개 저장, {skipped}개는 원본 주소 사용(내려받기·디코딩 실패)");
         return 0;
     }
 
@@ -116,7 +116,7 @@ public static class Cli
 
         foreach (var story in edition.Stories.Where(s => s.Excluded))
             Console.WriteLine($"뺌: {story.Rank}위 {story.Id} {story.Title} ({story.Type}, {story.By}, {story.Points?.ToString() ?? "-"}포인트)");
-        Console.WriteLine($"보충 완료: {date} · {edition.Stories.Count(s => s.Excluded)}개 뺌, {added.Count}개 추가 (줄인 이미지 {thumbs.Made}, 기사별 댓글 파일 {items})");
+        Console.WriteLine($"보충 완료: {date} · {edition.Stories.Count(s => s.Excluded)}개 뺌, {added.Count}개 추가 (WebP 이미지 {thumbs.Made}, 기사별 댓글 파일 {items})");
         foreach (var story in added)
             Console.WriteLine($"{story.Rank}위 {story.Id} {story.Title}");
         return 0;
