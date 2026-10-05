@@ -30,7 +30,7 @@ ASP.NET Core 사이트 (src/HnPaper.Web) ◀── data/ 를 읽어 지면을 �
 | `src/HnPaper.Web/` | Razor Pages 사이트와 수집·검증 CLI (.NET 10) |
 | `.claude/skills/hn-paper-update/` | 오늘자 호를 만드는 스킬 (순서, 제목 번역 규칙) |
 | `.claude/agents/` | 기사별 서브에이전트 (본문 요약 `hn-paper-article`, 댓글 번역 `hn-paper-comments`) |
-| `scripts/` | 사이트 구동·launchd 설치 스크립트, 그라데이션 패널 이미지 생성 스크립트 |
+| `scripts/` | 사이트 구동·launchd 설치 스크립트, 그라데이션 패널 이미지 생성 스크립트, 공유 이미지(og:image) 원본 `og-image.html` |
 | `deploy/launchd/` | 사이트를 상시 구동하는 launchd 에이전트 템플릿 |
 | `demo/` | 처음 만든 정적 데모 페이지 |
 | `data/` | 날짜별 수집본·번역본·이미지 (gitignore, 저장소에 올라가지 않음) |

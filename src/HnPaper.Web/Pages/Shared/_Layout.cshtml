@@ -1,18 +1,35 @@
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersion
 @{
     // 1면이 아닌 페이지에서는 섹션 앵커가 1면으로 돌아가야 한다.
     var navBase = ViewData["NavBase"] as string ?? "";
+    var title = ViewData["Title"] as string ?? "Hacker News paper";
+    const string description = "전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지";
+    // 공유 이미지(scripts/og-image.html로 만든 wwwroot/og.png)는 절대 주소여야 한다. 내용이 바뀌면 ?v=도 바뀐다.
+    var ogImage = $"{Context.Request.Scheme}://{Context.Request.Host}"
+        + FileVersion.AddFileVersionToPath(Context.Request.PathBase, Url.Content("~/og.png"));
 }
 <!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@(ViewData["Title"] ?? "Hacker News paper")</title>
-<meta name="description" content="전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지">
+<title>@title</title>
+<meta name="description" content="@description">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hacker News paper">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:title" content="@title">
+<meta property="og:description" content="@description">
+<meta property="og:image" content="@ogImage">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Hacker News paper — 전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로">
+<meta name="twitter:card" content="summary_large_image">
 @* 글꼴: Pretendard Variable (github.com/orioncactus/pretendard, 공식 안내의 jsDelivr 동적 서브셋) *@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="icon" href="~/favicon.svg" type="image/svg+xml">
+@* 버전을 붙여 아이콘을 바꾸면 브라우저가 캐시한 옛 아이콘 대신 새 아이콘을 받게 한다. *@
+<link rel="icon" href="~/favicon.svg" type="image/svg+xml" asp-append-version="true">
 <link rel="stylesheet" href="~/css/paper.css" asp-append-version="true">
 </head>
 <body>

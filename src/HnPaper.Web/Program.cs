@@ -43,7 +43,7 @@ app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        // 버전(?v=)이 붙은 파일(CSS)은 내용이 바뀌면 주소도 바뀌므로 1년 캐시한다. 나머지(그라데이션, 파비콘)는 7일.
+        // 버전(?v=)이 붙은 파일(CSS, 파비콘, 공유 이미지)은 내용이 바뀌면 주소도 바뀌므로 1년 캐시한다. 나머지(그라데이션)는 7일.
         var versioned = ctx.Context.Request.Query.ContainsKey("v");
         ctx.Context.Response.Headers.CacheControl = versioned
             ? "public, max-age=31536000, immutable"
