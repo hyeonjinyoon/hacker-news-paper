@@ -12,7 +12,7 @@
 사이트(GradientLibrary)는 출력 폴더의 이미지를 모두 읽어 기사 id로 하나를 고르므로,
 이미지를 더 만들거나 지우면 다음 실행부터 바로 반영된다.
 
-    uv run scripts/generate-gradients.py                 # 32장, 시드 1
+    uv run scripts/generate-gradients.py                 # 64장, 시드 1
     uv run scripts/generate-gradients.py --count 40 --seed 7
 """
 
@@ -219,7 +219,7 @@ def render(rng: np.random.Generator, palette: dict, width: int) -> Image.Image:
 def main() -> None:
     root = pathlib.Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--count", type=int, default=32, help="만들 이미지 수 (기본 32)")
+    parser.add_argument("--count", type=int, default=64, help="만들 이미지 수 (기본 64)")
     parser.add_argument("--seed", type=int, default=1, help="같은 시드면 같은 이미지가 나온다 (기본 1)")
     parser.add_argument("--width", type=int, default=WIDTH, help=f"이미지 폭 (기본 {WIDTH}, 높이는 16:9)")
     parser.add_argument("--out", type=pathlib.Path, default=root / "src/HnPaper.Web/wwwroot/img/gradients")
