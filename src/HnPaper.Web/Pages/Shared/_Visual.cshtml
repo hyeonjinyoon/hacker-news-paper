@@ -10,7 +10,7 @@
 }
 else
 {
-  var panel = Gradients.UrlFor(Model.Raw.Id);
+  var panel = Gradients.UrlFor(Model);
   @* 대표 이미지가 없는 기사는 얇은 그라데이션 띠로 둔다. *@
   <figure class="thumb article-visual no-image" style="@(panel is null ? null : $"background-image:url('{panel}')")"></figure>
 }

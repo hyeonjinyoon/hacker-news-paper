@@ -26,6 +26,8 @@ public sealed class StoryView
     /// <summary>압축해 둔 파일이 있을 때만 쓰는 1면 썸네일의 srcset. 폭은 파일의 실제 폭이다.</summary>
     public string? ImageSrcset { get; init; }
     public bool HasImage => !string.IsNullOrEmpty(ImageUrl);
+    /// <summary>대표 이미지 대신(또는 그 밑에) 까는 그라데이션 패널의 번호. 호를 읽을 때 GradientLibrary.Assign이 정한다.</summary>
+    public int? Panel { get; set; }
 }
 
 public sealed record Meta(StoryView Story, bool ShowBy = false);

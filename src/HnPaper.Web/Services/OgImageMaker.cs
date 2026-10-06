@@ -80,7 +80,7 @@ public sealed class OgImageMaker(PaperOptions options, GradientLibrary gradients
     private string? ImagePath(StoryView story)
     {
         var thumb = options.ThumbPath(story.Date, story.Raw.Id);
-        return File.Exists(thumb) ? thumb : gradients.PathFor(story.Raw.Id);
+        return File.Exists(thumb) ? thumb : gradients.PathFor(story);
     }
 
     private static byte[] Render(StoryView story, string? imagePath)

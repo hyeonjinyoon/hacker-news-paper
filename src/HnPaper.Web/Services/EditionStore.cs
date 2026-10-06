@@ -5,7 +5,7 @@ using HnPaper.Web.Models;
 namespace HnPaper.Web.Services;
 
 /// <summary>data/ 폴더의 호를 읽어 화면용으로 합친다. 파일이 바뀌면 다음 요청에서 다시 읽는다.</summary>
-public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> logger)
+public sealed class EditionStore(PaperOptions options, GradientLibrary gradients, ILogger<EditionStore> logger)
 {
     private sealed record CacheEntry(DateTime RawStamp, DateTime KoStamp, (DateTime Stamp, int Count) Bodies, (DateTime Stamp, int Count) Thumbs, EditionView View);
     private sealed record ItemCacheEntry(DateTime RawStamp, DateTime KoStamp, DateTime CommentsStamp, ItemView View);
@@ -134,6 +134,7 @@ public sealed class EditionStore(PaperOptions options, ILogger<EditionStore> log
         }
 
         var view = EditionBuilder.Build(raw, ko, bodyById, thumbWidths);
+        gradients.Assign(view.All);
         _cache[date] = new CacheEntry(rawStamp, koStamp, bodies, thumbs, view);
         return view;
     }

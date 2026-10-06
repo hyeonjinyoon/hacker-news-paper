@@ -1,7 +1,7 @@
 @model StoryView
 @inject HnPaper.Web.Services.GradientLibrary Gradients
 @{
-    var panel = Gradients.UrlFor(Model.Raw.Id);
+    var panel = Gradients.UrlFor(Model);
 }
 @* 1면 톱의 대표 이미지. og 이미지가 없거나 불러오지 못하면 그라데이션 패널 이미지가 보인다. *@
 <a class="thumb hero-graphic" style="@(panel is null ? null : $"background-image:url('{panel}')")" href="@Model.Href" tabindex="-1" aria-hidden="true">
