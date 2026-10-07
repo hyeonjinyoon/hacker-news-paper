@@ -77,5 +77,22 @@ app.MapMethods("/{date}/{id:long}/og.jpg", [HttpMethods.Get, HttpMethods.Head], 
     return Results.File(og.GetOrCreate(story, key), "image/jpeg");
 });
 
+// 검색엔진용 sitemap.xml과 그 위치를 알리는 robots.txt. 주소는 Paper:SiteUrl(https://news.uvucorp.com)로 적는다.
+// 사이트가 Cloudflare 뒤에서 http로 요청을 받아 요청 주소로는 https를 알 수 없기 때문이다. 설정이 없으면 요청 주소를 쓴다.
+var configuredSiteUrl = app.Configuration["Paper:SiteUrl"]?.TrimEnd('/');
+string SiteUrl(HttpRequest request) =>
+    string.IsNullOrEmpty(configuredSiteUrl) ? $"{request.Scheme}://{request.Host}{request.PathBase}" : configuredSiteUrl;
+
+app.MapGet("/sitemap.xml", (HttpContext http, EditionStore store) =>
+{
+    http.Response.Headers.CacheControl = "public, max-age=3600";
+    return Results.Text(Sitemap.Build(SiteUrl(http.Request), store, paper), "application/xml; charset=utf-8");
+});
+app.MapGet("/robots.txt", (HttpContext http) =>
+{
+    http.Response.Headers.CacheControl = "public, max-age=86400";
+    return Results.Text($"User-agent: *\nAllow: /\n\nSitemap: {SiteUrl(http.Request)}/sitemap.xml\n", "text/plain; charset=utf-8");
+});
+
 app.Run();
 return 0;
