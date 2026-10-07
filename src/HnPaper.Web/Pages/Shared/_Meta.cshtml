@@ -2,16 +2,20 @@
 @{
     var s = Model.Story;
 }
+@* 출처 뒤의 숫자·시간은 한 묶음(.stats)이다. 칸이 좁아 한 줄에 다 들어가지 않으면 묶음째 다음 줄로 내려가
+   "출처 / ▲ · 댓글 · 시간" 두 줄이 되고, 시간만 홀로 떨어지지 않는다. *@
 <p class="meta">
   <span class="site">@s.Raw.Site</span>
-  @if (s.Raw.Points is { } points)
-  {
-    <span>▲ @points</span>
-    <a href="@(s.Href)#comments">@(s.Raw.Comments > 0 ? $"댓글 {s.Raw.Comments}" : "토론하기")</a>
-  }
-  <partial name="_Ago" model="s.Raw.Time" />
-  @if (Model.ShowBy && !string.IsNullOrEmpty(s.Raw.By))
-  {
-    <span>@s.Raw.By</span>
-  }
+  <span class="stats">
+    @if (s.Raw.Points is { } points)
+    {
+      <span>▲ @points</span>
+      <a href="@(s.Href)#comments">@(s.Raw.Comments > 0 ? $"댓글 {s.Raw.Comments}" : "토론하기")</a>
+    }
+    <partial name="_Ago" model="s.Raw.Time" />
+    @if (Model.ShowBy && !string.IsNullOrEmpty(s.Raw.By))
+    {
+      <span>@s.Raw.By</span>
+    }
+  </span>
 </p>

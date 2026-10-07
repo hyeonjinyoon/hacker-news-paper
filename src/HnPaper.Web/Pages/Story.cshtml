@@ -20,7 +20,7 @@
   <header class="article-head">
     <nav class="crumbs" aria-label="위치"><a href="/@e.Date">@e.Date 호</a><span>@(s.Raw.Rank)위</span></nav>
     <h1><a href="@s.SourceUrl" target="_blank" rel="noopener" title="@(s.IsSelfPost ? "Hacker News 원문 보기" : "원문 보기")">@s.Title</a></h1>
-    @if (s.Title != s.Raw.Title)
+    @if (e.Translated)
     {
       <p class="en"><a href="@s.HnUrl" target="_blank" rel="noopener" title="Hacker News 글 보기">@s.Raw.Title</a></p>
     }
