@@ -63,23 +63,25 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         var date = collectedAt.ToString("yyyy-MM-dd");
         var day = DayBefore(date);
         var ids = await FrontIdsAsync(day, ct);
-        var stories = await FetchStoriesAsync(ids, count, 1, ct);
+        var stories = await FetchStoriesAsync(ids, count, 1, [], ct);
         return new RawEdition(date, day, collectedAt, stories);
     }
 
     /// <summary>
-    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded)을 빼고 순위를 다시 매긴 뒤, 모자란 자리를 그 호의 HN 과거 1면에서
-    /// 이 호에 없는 글로 순위대로 채운다. 메인 1면에서 수집한 예전 호(Day 없음)는 호 날짜의 전날 목록에서 채운다.
+    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded)과 앞 순위 글과 같은 원문을 가리키는 글을 빼고 순위를 다시 매긴 뒤,
+    /// 모자란 자리를 그 호의 HN 과거 1면에서 이 호에 없는 글로 순위대로 채운다. 메인 1면에서 수집한 예전 호(Day 없음)는 호 날짜의 전날 목록에서 채운다.
     /// </summary>
     public async Task<(RawEdition Edition, IReadOnlyList<RawStory> Added)> FillAsync(RawEdition edition, int count, CancellationToken ct)
     {
-        var kept = edition.Stories.Where(s => !s.Excluded).OrderBy(s => s.Rank).Select((s, i) => s with { Rank = i + 1 }).ToList();
+        var kept = edition.Stories.Where(s => !s.Excluded).OrderBy(s => s.Rank).DistinctBy(s => UrlKey(s.Url))
+            .Select((s, i) => s with { Rank = i + 1 }).ToList();
         if (kept.Count >= count)
             return (edition with { Stories = kept }, []);
 
         var known = edition.Stories.Select(s => s.Id).ToHashSet();
         var ids = await FrontIdsAsync(edition.Day ?? DayBefore(edition.Date), ct);
-        var added = await FetchStoriesAsync(ids.Where(id => !known.Contains(id)), count - kept.Count, kept.Count + 1, ct);
+        var added = await FetchStoriesAsync(ids.Where(id => !known.Contains(id)), count - kept.Count, kept.Count + 1,
+            kept.Select(s => UrlKey(s.Url)), ct);
         return (edition with { Stories = [.. kept, .. added] }, added);
     }
 
@@ -104,10 +106,12 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         return ids;
     }
 
-    private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, CancellationToken ct)
+    /// <param name="knownUrls">이미 실은 글의 UrlKey. 이 원문을 가리키는 글은 싣지 않는다.</param>
+    private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, IEnumerable<string> knownUrls, CancellationToken ct)
     {
-        // 채용 글·구인 스레드·포인트 미달 글·Show HN 글은 싣지 않고, count개가 찰 때까지 순위대로 더 받아 온다.
-        // 순위는 남은 기사끼리 다시 매긴다.
+        // 채용 글·구인 스레드·포인트 미달 글·Show HN 글과, 순위가 더 높은 글과 같은 원문을 가리키는 글은 싣지 않고,
+        // count개가 찰 때까지 순위대로 더 받아 온다. 순위는 남은 기사끼리 다시 매긴다.
+        var seen = knownUrls.ToHashSet();
         var live = new List<HnItem>();
         foreach (var batch in ids.Chunk(count + Spare))
         {
@@ -115,7 +119,8 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
                 http.GetFromJsonAsync<HnItem>($"{Api}item/{id}.json", PaperJson.Options, ct)));
             live.AddRange(items.OfType<HnItem>().Where(i =>
                 i is { Dead: not true, Deleted: not true, Title: not null }
-                && !RawStory.IsExcluded(i.Type, i.By, i.Score, i.Title)));
+                && !RawStory.IsExcluded(i.Type, i.By, i.Score, i.Title)
+                && seen.Add(UrlKey(i.Url ?? HnUrl(i.Id)))));
             if (live.Count >= count)
                 break;
         }
@@ -126,7 +131,7 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
 
     private async Task<RawStory> BuildStoryAsync(HnItem item, int rank, SemaphoreSlim gate, CancellationToken ct)
     {
-        var hnUrl = $"https://news.ycombinator.com/item?id={item.Id}";
+        var hnUrl = HnUrl(item.Id);
         var external = Uri.TryCreate(item.Url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https";
 
         string? image = null, description = null;
@@ -384,6 +389,22 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         return string.IsNullOrEmpty(id) ? null : $"https://i.ytimg.com/vi/{Uri.EscapeDataString(id)}/hqdefault.jpg";
     }
 
+    private static string HnUrl(long id) => $"https://news.ycombinator.com/item?id={id}";
+
+    /// <summary>
+    /// 같은 원문인지 가릴 때 쓰는 주소. HN은 주소가 글자까지 같아야 중복으로 막으므로, http/https·www·끝 슬래시·조각(#)·
+    /// 추적 매개변수(utm_* 등)만 다른 주소는 따로 올라와 함께 1면에 오를 수 있다(예: …/mistral-large-4/ 와 …/mistral-large-4//).
+    /// </summary>
+    internal static string UrlKey(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))
+            return url;
+        var path = Slashes().Replace(uri.AbsolutePath, "/").TrimEnd('/');
+        var query = string.Join('&', uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => !TrackingParam().IsMatch(p)));
+        return query.Length == 0 ? BareHost(uri) + path : $"{BareHost(uri)}{path}?{query}";
+    }
+
     private static string BareHost(Uri uri) =>
         uri.Host.StartsWith("www.", StringComparison.Ordinal) ? uri.Host[4..] : uri.Host;
 
@@ -420,6 +441,12 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
 
     [GeneratedRegex(@"\s+")]
     private static partial Regex Whitespace();
+
+    [GeneratedRegex(@"/{2,}")]
+    private static partial Regex Slashes();
+
+    [GeneratedRegex(@"^(utm_[^=]*|fbclid|gclid)(=|$)", RegexOptions.IgnoreCase)]
+    private static partial Regex TrackingParam();
 
     [GeneratedRegex(@"[\p{L}\p{N}]+")]
     private static partial Regex Word();

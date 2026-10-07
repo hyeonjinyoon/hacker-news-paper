@@ -7,7 +7,7 @@ namespace HnPaper.Web.Services;
 ///   collect [--comments N] [--out path]   전날(UTC) HN 과거 1면 상위 30개와 기사별 댓글 수집
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
 ///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 WebP로 압축해 저장
-///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글을 빼고, 모자란 자리를 그 호의 HN 과거 1면 글로 채움
+///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글과 중복 글을 빼고, 모자란 자리를 그 호의 HN 과거 1면 글로 채움
 ///   reuse yyyy-MM-dd                        이미 번역한 기사의 제목·본문과 지금 수집본에 있는 댓글의 번역을 이 호로 가져옴
 ///   merge-comments yyyy-MM-dd id            새로 번역한 댓글({id}.comments.new.json)을 댓글 번역본에 합침
 ///   validate [yyyy-MM-dd] [id ...] [--part body|comments]
@@ -114,9 +114,11 @@ public static class Cli
             id => options.RawItemPath(date, id), CancellationToken.None);
         var thumbs = await new ThumbnailMaker(http, options).MakeAllAsync(addedOnly, CancellationToken.None);
 
-        foreach (var story in edition.Stories.Where(s => s.Excluded))
-            Console.WriteLine($"뺌: {story.Rank}위 {story.Id} {story.Title} ({story.Type}, {story.By}, {story.Points?.ToString() ?? "-"}포인트)");
-        Console.WriteLine($"보충 완료: {date} · {edition.Stories.Count(s => s.Excluded)}개 뺌, {added.Count}개 추가 (WebP 이미지 {thumbs.Made}, 기사별 댓글 파일 {items})");
+        var keptIds = filled.Stories.Select(s => s.Id).ToHashSet();
+        var removed = edition.Stories.Where(s => !keptIds.Contains(s.Id)).ToList();
+        foreach (var story in removed)
+            Console.WriteLine($"뺌: {story.Rank}위 {story.Id} {story.Title} ({(story.Excluded ? $"{story.Type}, {story.By}, {story.Points?.ToString() ?? "-"}포인트" : "앞 순위 글과 같은 원문")})");
+        Console.WriteLine($"보충 완료: {date} · {removed.Count}개 뺌, {added.Count}개 추가 (WebP 이미지 {thumbs.Made}, 기사별 댓글 파일 {items})");
         foreach (var story in added)
             Console.WriteLine($"{story.Rank}위 {story.Id} {story.Title}");
         return 0;
