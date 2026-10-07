@@ -9,6 +9,8 @@
     ViewData["Title"] = $"{s.Title} · Hacker Newspaper";
     ViewData["DateLabel"] = e.DateLabel;
     ViewData["NavBase"] = $"/{e.Date}";
+    // 뉴욕타임스·동아일보 기사 페이지처럼 상단을 1면보다 작게 한 줄로 둔다.
+    ViewData["CompactHeader"] = true;
     // 링크를 공유하면 사이트 공용 이미지 대신 이 기사의 제목·대표 이미지를 그린 이미지와 요약 첫 문단이 보인다.
     ViewData["OgType"] = "article";
     ViewData["OgTitle"] = s.Title;
