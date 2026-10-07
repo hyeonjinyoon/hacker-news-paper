@@ -116,7 +116,13 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
 - 제목 끝에 마침표를 찍지 않는다.
 - `Show HN:`, `Ask HN:`, `Tell HN:`, `Launch HN:` 접두어는 그대로 둔다.
 - 끝의 연도 괄호 `(2016)`는 그대로 둔다. `[video]`는 `[영상]`, `[pdf]`는 `[PDF]`, `[audio]`는 `[오디오]`로 옮긴다.
-- 고유명사는 외래어 표기법에 따라 한글로 적는다(Cloudflare → 클라우드플레어, Opus → 오퍼스). 약어나 기술명(FTL, WebP, C2PA, RSS, UWB, Git)은 그대로 둔다. 개발 도구·라이브러리·프로그래밍 언어처럼 개발자들이 영어 이름 그대로 부르는 것도 그대로 둔다(C++ Insights, Mesa, Home Assistant).
+- 고유명사는 종류에 따라 적는다.
+  - 회사·기관·인명·지명은 외래어 표기법에 따라 한글로 적는다(Cloudflare → 클라우드플레어, Anthropic → 앤트로픽, OpenAI → 오픈AI).
+  - 제품·서비스·AI 모델·소프트웨어(개발 도구, 라이브러리, 프로그래밍 언어 포함)·게임 이름은 버전 번호와 수식어까지 원문 그대로 적는다(Mistral Large 4, Claude Opus 5.5, Qwen 3.8 Flash Next, Polars 2.0, Home Assistant). 회사 이름이 붙은 제품 이름도 전체를 원문으로 둔다(Apple Intelligence, Google Maps).
+  - 회사 이름과 제품 이름이 같으면 그 자리에서 가리키는 쪽을 따른다(“미스트랄이 Mistral Large 4를 공개했습니다”).
+  - 일반 독자에게도 한글 표기가 굳은 다음 제품만 한글로 적는다: 윈도, 리눅스, 맥, 맥북, 아이폰, 아이패드, 안드로이드, 유튜브, 페이스북, 트위터, 인스타그램, 위키백과, 마인크래프트, 플레이스테이션, 블루투스, 와이파이, 이더넷, 비트코인.
+  - 약어나 기술명(FTL, WebP, C2PA, RSS, UWB, Git)은 그대로 둔다.
+  - 영문 뒤 조사는 읽는 소리에 맞춘다(Opus 5.5를, Polars 2.0은).
 - 국내에서 굳어진 용어가 있으면 그것을 쓴다(sovereign AI → 소버린 AI, open-weight → 오픈 웨이트).
 - 따옴표는 'x' → ‘x’, "x" → “x”로 바꾼다.
 
