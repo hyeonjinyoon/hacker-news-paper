@@ -16,7 +16,7 @@ https://news.uvucorp.com/
 
 ## 구성 요소
 
-![Screenshot2](src/screenshots/Screenshot_2026-10-07_205547.png)
+![Screenshot2](src/screenshots/Screenshot_2026-10-09_212212.png)
 
 ![Screenshot3](src/screenshots/Screenshot_2026-10-07_205725.png)
 
