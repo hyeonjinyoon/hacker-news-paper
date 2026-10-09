@@ -33,18 +33,29 @@
     <div class="article-body">
       <partial name="_Visual" model="s" />
       <section class="article-text">
-        <h2>@(s.IsSelfPost ? "본문" : "요약")</h2>
-        @if (!item.Translated)
+        @if (s.IsSelfPost && item.Translated && item.SplitLead() is { } split)
         {
-          <p class="notice">아직 번역 전입니다. 원문 소개를 그대로 보여 드립니다.</p>
-        }
-        @if (item.Body is null)
-        {
-          <p class="meta">원문 사이트에서 내용을 확인해 주세요.</p>
+          @* HN 본문 글은 첫 문단(굵은 한 줄 요약)을 "요약"으로, 나머지 전문 번역과 HN 반응을 "본문"으로 나눠 보여 준다. *@
+          <h2>요약</h2>
+          <div class="md">@MarkdownRenderer.Render(split.Lead)</div>
+          <h2 class="body-head">본문</h2>
+          <div class="md full">@MarkdownRenderer.Render(split.Body)</div>
         }
         else
         {
-          <div class="md">@MarkdownRenderer.Render(item.Body)</div>
+          <h2>@(s.IsSelfPost ? "본문" : "요약")</h2>
+          @if (!item.Translated)
+          {
+            <p class="notice">아직 번역 전입니다. 원문 소개를 그대로 보여 드립니다.</p>
+          }
+          @if (item.Body is null)
+          {
+            <p class="meta">원문 사이트에서 내용을 확인해 주세요.</p>
+          }
+          else
+          {
+            <div class="md">@MarkdownRenderer.Render(item.Body)</div>
+          }
         }
       </section>
 
@@ -80,7 +91,7 @@
       <ol class="comment-list">
         @foreach (var c in item.Comments)
         {
-          <li class="comment@(c.Depth == 0 ? " root" : "")" style="--depth:@c.Depth">
+          <li class="comment@(c.Depth == 0 ? " root" : "")" style="--depth:@c.Depth" data-depth="@c.Depth">
             <div class="comment-meta"><span class="by">@c.By</span><partial name="_Ago" model="c.Time" /><a href="@c.HnUrl" target="_blank" rel="noopener">HN</a></div>
             @if (c.Deleted)
             {
@@ -93,6 +104,48 @@
           </li>
         }
       </ol>
+      @if (item.Comments.Count > 0)
+      {
+        <script>
+        // HN 댓글란처럼 메타 줄 끝의 [–]를 누르면 그 댓글과 딸린 답글을 모두 접고, 접힌 댓글 수를 [N개 더]로 보여 준다.
+        // 댓글은 깊이만 가진 평평한 목록이므로, 뒤따르는 댓글 가운데 깊이가 더 깊은 것까지를 딸린 답글로 본다.
+        // 펼칠 때 안쪽에서 따로 접어 둔 댓글은 접힌 채로 둔다. 스크립트가 없으면 버튼 없이 모두 펼쳐 보인다.
+        (() => {
+          const items = [...document.querySelectorAll('.comment-list > .comment')];
+          const depth = items.map(li => Number(li.dataset.depth));
+          const end = items.map((_, i) => {
+            let j = i + 1;
+            while (j < items.length && depth[j] > depth[i]) j++;
+            return j;
+          });
+          const layout = () => {
+            let hideUntil = 0;
+            items.forEach((li, i) => {
+              li.hidden = i < hideUntil;
+              if (!li.hidden && li.classList.contains('collapsed')) hideUntil = end[i];
+            });
+          };
+          items.forEach((li, i) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'toggle';
+            const label = () => {
+              const collapsed = li.classList.contains('collapsed');
+              button.textContent = collapsed ? `[${end[i] - i}개 더]` : '[–]';
+              button.title = collapsed ? '펼치기' : '접기';
+              button.setAttribute('aria-expanded', String(!collapsed));
+            };
+            button.addEventListener('click', () => {
+              li.classList.toggle('collapsed');
+              label();
+              layout();
+            });
+            label();
+            li.querySelector('.comment-meta').append(button);
+          });
+        })();
+        </script>
+      }
       <p class="more-comments"><a href="@s.HnUrl" target="_blank" rel="noopener">Hacker News에서 보기 ↗</a></p>
     </section>
 

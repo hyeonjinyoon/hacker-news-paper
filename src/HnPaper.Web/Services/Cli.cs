@@ -54,7 +54,7 @@ public static class Cli
 
         var images = edition.Stories.Count(s => s.Image is not null);
         var descriptions = edition.Stories.Count(s => s.Description is not null);
-        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, WebP 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened}, HN 본문 링크에서 찾은 이미지 {collector.FromTextLinks})");
+        Console.WriteLine($"수집 완료: {edition.Date} · {edition.Stories.Count}개 (이미지 {images}, WebP 이미지 {thumbs.Made}, 설명 {descriptions}, 기사별 댓글 파일 {items}, 브라우저로 다시 연 원문 {browser.Opened}, HN 본문 링크에서 찾은 이미지 {collector.FromTextLinks}, [dupe]로 뺀 글 {collector.Dupes.Count})");
         Console.WriteLine(path);
         return 0;
     }
@@ -117,7 +117,7 @@ public static class Cli
         var keptIds = filled.Stories.Select(s => s.Id).ToHashSet();
         var removed = edition.Stories.Where(s => !keptIds.Contains(s.Id)).ToList();
         foreach (var story in removed)
-            Console.WriteLine($"뺌: {story.Rank}위 {story.Id} {story.Title} ({(story.Excluded ? $"{story.Type}, {story.By}, {story.Points?.ToString() ?? "-"}포인트" : "앞 순위 글과 같은 원문")})");
+            Console.WriteLine($"뺌: {story.Rank}위 {story.Id} {story.Title} ({(story.Excluded ? $"{story.Type}, {story.By}, {story.Points?.ToString() ?? "-"}포인트" : collector.Dupes.Contains(story.Id) ? "HN [dupe] 표시" : "앞 순위 글과 같은 원문")})");
         Console.WriteLine($"보충 완료: {date} · {removed.Count}개 뺌, {added.Count}개 추가 (WebP 이미지 {thumbs.Made}, 기사별 댓글 파일 {items})");
         foreach (var story in added)
             Console.WriteLine($"{story.Rank}위 {story.Id} {story.Title}");

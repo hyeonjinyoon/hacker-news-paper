@@ -23,6 +23,8 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
 
     // 원문에 og 이미지가 없을 때 HN 본문 글에서 찾아볼 링크 수
     private const int MaxTextLinks = 3;
+    // 같은 댓글에 달린 답글은 앞에서부터 이만큼만 담는다. 최상위 댓글은 전체 개수 제한만 받는다.
+    private const int MaxReplies = 3;
 
     // 사용자 이름까지 붙여야 출처가 구분되는 호스트
     private static readonly HashSet<string> UserHosts = ["github.com", "gitlab.com", "codeberg.org", "medium.com", "x.com", "twitter.com"];
@@ -35,9 +37,13 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     private static readonly HashSet<string> CommonWords = ["that", "this", "with", "from", "what", "your", "have", "into", "about", "when", "than", "they"];
 
     private int _fromTextLinks;
+    private readonly HashSet<long> _dupes = [];
 
     /// <summary>원문에 og 이미지가 없어 HN 본문 글의 링크에서 대표 이미지를 찾은 글 수</summary>
     public int FromTextLinks => _fromTextLinks;
+
+    /// <summary>읽은 과거 1면에서 HN이 [dupe]로 표시한 글. 순위가 더 높아도 싣지 않는다.</summary>
+    public IReadOnlyCollection<long> Dupes => _dupes;
 
     public static HttpClient CreateHttpClient()
     {
@@ -68,18 +74,18 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     }
 
     /// <summary>
-    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded)과 앞 순위 글과 같은 원문을 가리키는 글을 빼고 순위를 다시 매긴 뒤,
+    /// 이미 수집한 호에서 싣지 않는 글(RawStory.IsExcluded), HN이 [dupe]로 표시한 글, 앞 순위 글과 같은 원문을 가리키는 글을 빼고 순위를 다시 매긴 뒤,
     /// 모자란 자리를 그 호의 HN 과거 1면에서 이 호에 없는 글로 순위대로 채운다. 메인 1면에서 수집한 예전 호(Day 없음)는 호 날짜의 전날 목록에서 채운다.
     /// </summary>
     public async Task<(RawEdition Edition, IReadOnlyList<RawStory> Added)> FillAsync(RawEdition edition, int count, CancellationToken ct)
     {
-        var kept = edition.Stories.Where(s => !s.Excluded).OrderBy(s => s.Rank).DistinctBy(s => UrlKey(s.Url))
+        var ids = await FrontIdsAsync(edition.Day ?? DayBefore(edition.Date), ct);
+        var kept = edition.Stories.Where(s => !s.Excluded && !_dupes.Contains(s.Id)).OrderBy(s => s.Rank).DistinctBy(s => UrlKey(s.Url))
             .Select((s, i) => s with { Rank = i + 1 }).ToList();
         if (kept.Count >= count)
             return (edition with { Stories = kept }, []);
 
         var known = edition.Stories.Select(s => s.Id).ToHashSet();
-        var ids = await FrontIdsAsync(edition.Day ?? DayBefore(edition.Date), ct);
         var added = await FetchStoriesAsync(ids.Where(id => !known.Contains(id)), count - kept.Count, kept.Count + 1,
             kept.Select(s => UrlKey(s.Url)), ct);
         return (edition with { Stories = [.. kept, .. added] }, added);
@@ -88,14 +94,26 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     private static string DayBefore(string date) =>
         DateOnly.ParseExact(date, "yyyy-MM-dd").AddDays(-1).ToString("yyyy-MM-dd");
 
-    /// <summary>HN 과거 1면(front?day=)의 글 id를 순위대로 FrontPages쪽까지 읽는다.</summary>
+    /// <summary>
+    /// HN 과거 1면(front?day=)의 글 id를 순위대로 FrontPages쪽까지 읽는다. HN이 제목 앞에 [dupe]를 붙인 글은
+    /// 순위가 더 높아도 원래 글을 두고 따로 올라온 중복 글이므로 빼고 Dupes에 모은다.
+    /// </summary>
     private async Task<List<long>> FrontIdsAsync(string day, CancellationToken ct)
     {
         var ids = new List<long>();
         for (var page = 1; page <= FrontPages; page++)
         {
             var html = await http.GetStringAsync($"{Front}?day={day}&p={page}", ct);
-            ids.AddRange(FrontRow().Matches(html).Select(m => long.Parse(m.Groups[1].Value)));
+            var rows = FrontRow().Matches(html);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var id = long.Parse(rows[i].Groups[1].Value);
+                var end = i + 1 < rows.Count ? rows[i + 1].Index : html.Length;
+                if (DupeMark().IsMatch(html.AsSpan(rows[i].Index, end - rows[i].Index)))
+                    _dupes.Add(id);
+                else
+                    ids.Add(id);
+            }
             if (!html.Contains("morelink"))
                 break;
         }
@@ -109,7 +127,7 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     /// <param name="knownUrls">이미 실은 글의 UrlKey. 이 원문을 가리키는 글은 싣지 않는다.</param>
     private async Task<RawStory[]> FetchStoriesAsync(IEnumerable<long> ids, int count, int firstRank, IEnumerable<string> knownUrls, CancellationToken ct)
     {
-        // 채용 글·구인 스레드·포인트 미달 글·Show HN 글과, 순위가 더 높은 글과 같은 원문을 가리키는 글은 싣지 않고,
+        // 채용 글·구인 스레드·포인트 미달 글·Show HN 글과, 순위가 더 높은 글과 같은 원문을 가리키는 글은 싣지 않고([dupe] 글은 ids에 없다),
         // count개가 찰 때까지 순위대로 더 받아 온다. 순위는 남은 기사끼리 다시 매긴다.
         var seen = knownUrls.ToHashSet();
         var live = new List<HnItem>();
@@ -162,6 +180,7 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     /// <summary>
     /// 기사마다 HN 본문 글과 댓글을 모아 기사별 수집본을 쓴다. 댓글은 HN 댓글란과 같은 순서
     /// (kids가 표시 순서이므로 깊이 우선 전위 순회)로 앞에서부터 최대 maxComments개를 담는다.
+    /// 같은 댓글에 달린 답글은 앞에서부터 MaxReplies개까지만 담는다.
     /// </summary>
     public async Task<int> CollectItemsAsync(RawEdition edition, int maxComments, Func<long, string> pathFor, CancellationToken ct)
     {
@@ -189,9 +208,10 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
             if (kids is not { Length: > 0 } || comments.Count >= max)
                 return;
             var children = await Task.WhenAll(kids.Select(id => FetchItemAsync(id, gate, ct)));
+            var added = 0;
             foreach (var child in children)
             {
-                if (comments.Count >= max)
+                if (comments.Count >= max || (depth > 0 && added >= MaxReplies))
                     return;
                 if (child is null || child.Dead == true)
                     continue;
@@ -201,6 +221,7 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
                     continue;
                 comments.Add(new RawComment(child.Id, parent, depth, child.By ?? "", child.Time,
                     deleted ? null : HnHtmlToMarkdown(child.Text!), deleted));
+                added++;
                 await WalkAsync(child.Kids, child.Id, depth + 1);
             }
         }
@@ -429,6 +450,10 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
 
     [GeneratedRegex(@"<tr\s+class=""athing\b[^""]*""\s+id=""(\d+)""")]
     private static partial Regex FrontRow();
+
+    // 과거 1면에서 중복 글의 제목 앞에 붙는 표시: <span class="titleline"> [dupe] <a href=...
+    [GeneratedRegex(@"class=""titleline"">\s*\[dupe\]")]
+    private static partial Regex DupeMark();
 
     [GeneratedRegex(@"<meta\b[^>]*>", RegexOptions.IgnoreCase)]
     private static partial Regex MetaTag();

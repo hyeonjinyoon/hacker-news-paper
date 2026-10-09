@@ -250,7 +250,9 @@ footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)
 .article-text h2,.comments h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .article-text h2{margin-bottom:16px}
 .article-text .notice{margin:0 0 14px}
-.article-text .md>p:first-child{font-size:20px;line-height:1.6}
+/* 요약 첫 문단(굵은 한 줄 요약)만 크게 쓴다. HN 본문 글의 "본문"(.full)은 첫 문단도 본문 크기로 둔다. */
+.article-text .md:not(.full)>p:first-child{font-size:20px;line-height:1.6}
+.article-text .body-head{margin-top:36px}
 .md{font-size:18px;line-height:1.8;letter-spacing:-.3px;overflow-wrap:anywhere}
 .md>*+*{margin-top:18px}
 .md h1,.md h2,.md h3,.md h4{font-size:19px;font-weight:700;letter-spacing:-.02em;margin-top:30px}
@@ -277,6 +279,11 @@ footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)
 .comment-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
 .comment-meta .by{font-weight:700;color:var(--sub)}
 .comment-meta a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+/* HN처럼 [–]를 누르면 댓글을 접는다. 접힌 댓글은 메타 줄만 남기고, 딸린 답글은 스크립트가 hidden으로 숨긴다. */
+.comment-meta .toggle{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;transition:opacity .2s}
+.comment-meta .toggle:hover{opacity:.7}
+.comment.collapsed>:not(.comment-meta){display:none}
+.comment.collapsed .comment-meta{margin-bottom:0}
 .comment .md{font-size:16px;line-height:1.75}
 .comment .md>*+*{margin-top:12px}
 .deleted{font-size:14px;color:var(--muted);font-style:italic}
@@ -292,7 +299,7 @@ footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)
   .story-page{padding-top:20px}
   .crumbs{font-size:14px}
   .article-head h1{font-size:26px}
-  .article-text .md>p:first-child{font-size:18px}
+  .article-text .md:not(.full)>p:first-child{font-size:18px}
   .md{font-size:16px;line-height:1.75;letter-spacing:-.2px}
   .md>*+*{margin-top:16px}
   .md h1,.md h2,.md h3,.md h4{font-size:17px;margin-top:28px}

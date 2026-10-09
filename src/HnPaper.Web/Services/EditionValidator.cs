@@ -74,7 +74,7 @@ public static partial class EditionValidator
         if (part is null or "body")
             ValidateBody(label, story, raw, ko, errors, warnings);
         if (part is null or "comments")
-            ValidateComments(label, story, raw, koComments, errors);
+            ValidateComments(label, story, raw, koComments, errors, warnings);
     }
 
     private static void ValidateBody(string label, RawStory story, RawItem? raw, KoItem? ko, List<string> errors, List<string> warnings)
@@ -103,7 +103,7 @@ public static partial class EditionValidator
         }
     }
 
-    private static void ValidateComments(string label, RawStory story, RawItem? raw, KoComments? ko, List<string> errors)
+    private static void ValidateComments(string label, RawStory story, RawItem? raw, KoComments? ko, List<string> errors, List<string> warnings)
     {
         if (raw is null)
             return;
@@ -117,7 +117,10 @@ public static partial class EditionValidator
         if (ko.Id != story.Id)
             errors.Add($"{label}: 댓글 번역본 id가 다릅니다: {ko.Id}");
 
+        var sources = raw.Comments.Where(c => !c.Deleted).ToDictionary(c => c.Id, c => c.Text ?? "");
         var translated = new HashSet<long>();
+        var english = new List<long>();
+        var paragraphs = new List<string>();
         foreach (var comment in ko.Comments ?? [])
         {
             if (!expected.Contains(comment.Id))
@@ -126,14 +129,98 @@ public static partial class EditionValidator
                 errors.Add($"{label}: 댓글 {comment.Id}가 두 번 나옵니다.");
             if (string.IsNullOrWhiteSpace(comment.Text))
                 errors.Add($"{label}: 댓글 {comment.Id} 번역이 비었습니다.");
+            else
+            {
+                if (HasEnglishParagraph(comment.Text))
+                    english.Add(comment.Id);
+                if (sources.TryGetValue(comment.Id, out var source)
+                    && Paragraphs(source).Count is var want && TranslatedParagraphCount(comment.Text) is var got && want != got)
+                    paragraphs.Add($"{comment.Id} {want}→{got}");
+            }
         }
         var missing = expected.Where(id => !translated.Contains(id)).ToList();
         if (missing.Count > 0)
             errors.Add($"{label}: 댓글 {missing.Count}개가 번역되지 않았습니다(예: {string.Join(", ", missing.Take(3))}).");
+        if (english.Count > 0)
+            warnings.Add($"{label}: 댓글 {english.Count}개에 영어 그대로 남은 문단이 있습니다. 인용(>)과 따옴표 안의 글도 번역합니다({string.Join(", ", english)}).");
+        if (paragraphs.Count > 0)
+            warnings.Add($"{label}: 댓글 {paragraphs.Count}개의 문단 수가 원문과 다릅니다. 원문처럼 문단을 나눕니다(원문→번역: {string.Join(", ", paragraphs)}).");
+    }
+
+    /// <summary>
+    /// 한글 없이 영문자가 20자 이상인 문단이 있으면 번역하지 않은 글이 남은 것으로 본다. URL과 인라인 코드는 빼고 센다.
+    /// 영어 표현 자체를 다루는 인용은 원문을 남겨도 되므로, 같은 문단이나 바로 다음 문단에 괄호로 번역을 붙였으면 통과한다.
+    /// </summary>
+    private static bool HasEnglishParagraph(string text)
+    {
+        var paragraphs = Paragraphs(text);
+        for (var i = 0; i < paragraphs.Count; i++)
+        {
+            var plain = QuoteNoise().Replace(paragraphs[i], "");
+            if (Hangul().IsMatch(plain) || LatinLetter().Count(plain) < 20)
+                continue;
+            if (i + 1 < paragraphs.Count && IsParenthesizedTranslation(paragraphs[i], paragraphs[i + 1]))
+                continue;
+            return true;
+        }
+        return false;
+    }
+
+    // 번역의 문단 수. 영어 원문을 남기고 바로 다음 문단에 붙인 괄호 번역은 원문 문단에 딸린 것으로 보고 세지 않는다.
+    private static int TranslatedParagraphCount(string text)
+    {
+        var paragraphs = Paragraphs(text);
+        return paragraphs.Where((p, i) => i == 0 || !IsParenthesizedTranslation(paragraphs[i - 1], p)).Count();
+    }
+
+    // 앞 문단이 영어 원문(URL·인라인 코드를 빼고 한글 없이 영문자 20자 이상)이고 이 문단이 괄호로 시작하는 한국어면 그 원문의 번역이다.
+    // URL만 있는 문단 뒤의 괄호 문단은 원문에도 따로 있는 문단이므로 번역으로 보지 않는다.
+    private static bool IsParenthesizedTranslation(string previous, string paragraph)
+    {
+        var plain = QuoteNoise().Replace(previous, "");
+        return paragraph.StartsWith('(') && Hangul().IsMatch(paragraph)
+            && !Hangul().IsMatch(plain) && LatinLetter().Count(plain) >= 20;
+    }
+
+    // 빈 줄로 나눈 문단. 줄 앞의 인용 표시(>)는 떼고, 코드 블록은 뺀다.
+    private static List<string> Paragraphs(string text)
+    {
+        var paragraphs = new List<string>();
+        var lines = new List<string>();
+        var inFence = false;
+        foreach (var line in text.Split('\n').Append(""))
+        {
+            var content = QuoteMarks().Replace(line, "").Trim();
+            var fence = content.StartsWith("```", StringComparison.Ordinal);
+            if (fence)
+                inFence = !inFence;
+            if (content.Length > 0 && !fence && !inFence)
+            {
+                lines.Add(content);
+                continue;
+            }
+            if (lines.Count > 0)
+                paragraphs.Add(string.Join(' ', lines));
+            lines.Clear();
+        }
+        return paragraphs;
     }
 
     [GeneratedRegex(@"\((?:19|20)\d{2}\)")]
     private static partial Regex TrailingYear();
+
+    [GeneratedRegex(@"https?://\S+|`[^`]*`")]
+    private static partial Regex QuoteNoise();
+
+    // 줄 앞의 인용 표시(> 여러 겹 포함)
+    [GeneratedRegex(@"^\s*(?:>\s?)+")]
+    private static partial Regex QuoteMarks();
+
+    [GeneratedRegex(@"[가-힣]")]
+    private static partial Regex Hangul();
+
+    [GeneratedRegex(@"[A-Za-z]")]
+    private static partial Regex LatinLetter();
 
     // 제목 끝에 덧붙은 (2016), [영상] 같은 괄호
     [GeneratedRegex(@"(?:\s*(?:\([^)]*\)|\[[^\]]*\]))+$")]

@@ -34,6 +34,17 @@ public sealed class ItemView
     public string? Body { get; init; }
     public required int TotalComments { get; init; }
     public required IReadOnlyList<CommentView> Comments { get; init; }
+
+    /// <summary>
+    /// 본문을 첫 문단(굵은 한 줄 요약)과 나머지로 나눈다. HN 본문 글은 나머지가 전문 번역과 HN 반응이라,
+    /// 기사 페이지가 둘을 "요약"과 "본문"으로 따로 보여 준다. 문단이 하나뿐이면 null.
+    /// </summary>
+    public (string Lead, string Body)? SplitLead()
+    {
+        var text = Body?.Trim();
+        var at = text?.IndexOf("\n\n", StringComparison.Ordinal) ?? -1;
+        return at < 0 ? null : (text![..at], text[(at + 2)..].TrimStart());
+    }
 }
 
 public sealed class CommentView
