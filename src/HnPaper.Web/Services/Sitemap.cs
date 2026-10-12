@@ -4,7 +4,7 @@ using System.Xml.Linq;
 namespace HnPaper.Web.Services;
 
 /// <summary>
-/// 검색엔진(구글 서치 콘솔 등)에 알려 줄 sitemap.xml. 1면, 지난 호, 번역까지 끝난 호의 1면과 기사 페이지를 싣는다.
+/// 검색엔진(구글 서치 콘솔 등)에 알려 줄 sitemap.xml. 1면, 지난 호, 번역까지 끝난 호의 1면과 기사 페이지를 대표 주소(canonical)로 싣는다.
 /// 번역 전인 호는 영어 제목만 있어 뺀다. lastmod는 그 페이지가 쓰는 번역본 파일을 마지막으로 고친 시각이다.
 /// </summary>
 public static class Sitemap
@@ -15,6 +15,7 @@ public static class Sitemap
     {
         var editionUrls = new List<XElement>();
         var stamps = new List<DateTime>();
+        string? newer = null;
         foreach (var info in store.List().Where(e => e.Translated))
         {
             if (store.Load(info.Date) is not { } edition)
@@ -29,9 +30,13 @@ public static class Sitemap
                 editionStamp = Max(editionStamp, storyStamp);
                 storyUrls.Add(Url(siteUrl + story.Href, storyStamp == DateTime.MinValue ? editionStamp : storyStamp));
             }
-            editionUrls.Add(Url($"{siteUrl}/{info.Date}", editionStamp));
+            // 가장 최근 호의 /{date}는 1면(/)과 같은 페이지라 대표 주소인 1면만 싣는다. 다음 호가 나오면 1면과 달라지고
+            // 대표 주소도 자기 주소로 바뀌므로, 다음 호 번역본을 고친 시각을 lastmod에 넣어 검색엔진이 다시 가져가게 한다.
+            if (newer is not null)
+                editionUrls.Add(Url($"{siteUrl}/{info.Date}", Max(editionStamp, Stamp(options.KoPath(newer)))));
             editionUrls.AddRange(storyUrls);
             stamps.Add(editionStamp);
+            newer = info.Date;
         }
 
         // 1면(/)은 가장 최근 호를, 지난 호(/editions)는 모든 호의 머리기사를 보여 준다.

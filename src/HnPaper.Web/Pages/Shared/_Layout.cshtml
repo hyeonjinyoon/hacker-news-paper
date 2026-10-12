@@ -1,4 +1,5 @@
 @inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider FileVersion
+@inject HnPaper.Web.Services.SiteUrl Site
 @{
     // 1면이 아닌 페이지에서는 섹션 앵커가 1면으로 돌아가야 한다.
     var navBase = ViewData["NavBase"] as string ?? "";
@@ -6,11 +7,17 @@
     const string description = "전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로 옮기는 신문형 페이지";
     // 공유 이미지는 절대 주소여야 한다. 기사 페이지는 기사마다 그린 이미지(OgImageMaker)를,
     // 나머지는 scripts/og-image.html로 만든 wwwroot/og.png를 쓴다. 둘 다 내용이 바뀌면 ?v=도 바뀐다.
-    var ogImage = $"{Context.Request.Scheme}://{Context.Request.Host}"
+    var siteUrl = Site.For(Context.Request);
+    var ogImage = siteUrl
         + (ViewData["OgImage"] is string storyImage
             ? Url.Content(storyImage)
             : FileVersion.AddFileVersionToPath(Context.Request.PathBase, Url.Content("~/og.png")));
     var ogTitle = ViewData["OgTitle"] as string ?? title;
+    // 기사 페이지는 요약 첫 문단을 검색 결과 설명과 공유 설명으로 함께 쓴다. 없으면 사이트 소개를 쓴다.
+    var pageDescription = ViewData["OgDescription"] as string ?? description;
+    // 검색엔진에 알리는 대표 주소. 가장 최근 호의 /{date}는 1면(/)과, /{date}/ 같은 변형은 원래 주소와 내용이 같아
+    // 지정하지 않으면 구글 서치 콘솔에 "사용자가 선택한 표준이 없는 중복 페이지"로 잡힌다.
+    var canonical = ViewData["Canonical"] is string canonicalPath ? siteUrl + canonicalPath : null;
 }
 <!doctype html>
 <html lang="ko">
@@ -18,20 +25,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@title</title>
-<meta name="description" content="@description">
+<meta name="description" content="@pageDescription">
+@if (canonical is not null)
+{
+<link rel="canonical" href="@canonical">
+}
 <meta property="og:type" content="@(ViewData["OgType"] ?? "website")">
 <meta property="og:site_name" content="Hacker Newspaper">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:title" content="@ogTitle">
-<meta property="og:description" content="@(ViewData["OgDescription"] as string ?? description)">
+<meta property="og:description" content="@pageDescription">
 <meta property="og:image" content="@ogImage">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="@(ViewData["OgImage"] is null ? "Hacker Newspaper — 전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로" : ogTitle)">
 <meta name="twitter:card" content="summary_large_image">
-@* 글꼴: Pretendard Variable (github.com/orioncactus/pretendard, 공식 안내의 jsDelivr 동적 서브셋) *@
+@* 1면 톱 그라데이션처럼 인라인 style에만 있어 브라우저가 늦게 찾는 큰 이미지를 먼저 받게 한다(LCP). *@
+@if (ViewData["Preload"] is string preload)
+{
+<link rel="preload" as="image" href="@preload" fetchpriority="high">
+}
+@* 글꼴: Pretendard Variable (github.com/orioncactus/pretendard, 공식 안내의 jsDelivr 동적 서브셋)
+   한글 페이지는 서브셋 파일을 열몇 개(수백 KB) 받는다. 글꼴 CSS가 화면 그리기를 막지 않게 media="print"로 받았다가
+   다 받으면 적용한다. 글꼴은 font-display:swap이라 받기 전에는 시스템 글꼴로 보인다. *@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"></noscript>
 @* 버전을 붙여 아이콘을 바꾸면 브라우저가 캐시한 옛 아이콘 대신 새 아이콘을 받게 한다. *@
 <link rel="icon" href="~/favicon.svg" type="image/svg+xml" asp-append-version="true">
 @* 아이폰 홈 화면에 추가할 때 쓰는 큰 아이콘(scripts/app-icon.html로 만든다)과 아이콘 아래 이름 *@

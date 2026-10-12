@@ -18,6 +18,7 @@ builder.Services.AddSingleton(PaperOptions.Resolve(builder.Configuration["Paper:
 builder.Services.AddSingleton<EditionStore>();
 builder.Services.AddSingleton<GradientLibrary>();
 builder.Services.AddSingleton<OgImageMaker>();
+builder.Services.AddSingleton<SiteUrl>();
 
 // 한글을 &#xAC70; 같은 엔티티로 바꾸지 않고 그대로 출력한다(HTML이 크게 줄어든다). HTML 특수문자는 그대로 인코딩된다.
 builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
@@ -77,21 +78,16 @@ app.MapMethods("/{date}/{id:long}/og.jpg", [HttpMethods.Get, HttpMethods.Head], 
     return Results.File(og.GetOrCreate(story, key), "image/jpeg");
 });
 
-// 검색엔진용 sitemap.xml과 그 위치를 알리는 robots.txt. 주소는 Paper:SiteUrl(https://news.uvucorp.com)로 적는다.
-// 사이트가 Cloudflare 뒤에서 http로 요청을 받아 요청 주소로는 https를 알 수 없기 때문이다. 설정이 없으면 요청 주소를 쓴다.
-var configuredSiteUrl = app.Configuration["Paper:SiteUrl"]?.TrimEnd('/');
-string SiteUrl(HttpRequest request) =>
-    string.IsNullOrEmpty(configuredSiteUrl) ? $"{request.Scheme}://{request.Host}{request.PathBase}" : configuredSiteUrl;
-
-app.MapGet("/sitemap.xml", (HttpContext http, EditionStore store) =>
+// 검색엔진용 sitemap.xml과 그 위치를 알리는 robots.txt. 주소는 SiteUrl(Paper:SiteUrl)로 적는다.
+app.MapGet("/sitemap.xml", (HttpContext http, EditionStore store, SiteUrl site) =>
 {
     http.Response.Headers.CacheControl = "public, max-age=3600";
-    return Results.Text(Sitemap.Build(SiteUrl(http.Request), store, paper), "application/xml; charset=utf-8");
+    return Results.Text(Sitemap.Build(site.For(http.Request), store, paper), "application/xml; charset=utf-8");
 });
-app.MapGet("/robots.txt", (HttpContext http) =>
+app.MapGet("/robots.txt", (HttpContext http, SiteUrl site) =>
 {
     http.Response.Headers.CacheControl = "public, max-age=86400";
-    return Results.Text($"User-agent: *\nAllow: /\n\nSitemap: {SiteUrl(http.Request)}/sitemap.xml\n", "text/plain; charset=utf-8");
+    return Results.Text($"User-agent: *\nAllow: /\n\nSitemap: {site.For(http.Request)}/sitemap.xml\n", "text/plain; charset=utf-8");
 });
 
 app.Run();
