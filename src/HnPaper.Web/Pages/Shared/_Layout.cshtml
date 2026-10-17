@@ -40,6 +40,10 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="@(ViewData["OgImage"] is null ? "Hacker Newspaper — 전날 Hacker News 1면 상위 30개 글을 매일 아침 한국어로" : ogTitle)">
 <meta name="twitter:card" content="summary_large_image">
+@if (Context.Request.Path == "/")
+{
+<!script type="application/ld+json">{"@@context":"https://schema.org","@@type":"WebSite","name":"Hacker Newspaper","url":"@(siteUrl)/"}</!script>
+}
 @* 1면 톱 그라데이션처럼 인라인 style에만 있어 브라우저가 늦게 찾는 큰 이미지를 먼저 받게 한다(LCP). *@
 @if (ViewData["Preload"] is string preload)
 {
