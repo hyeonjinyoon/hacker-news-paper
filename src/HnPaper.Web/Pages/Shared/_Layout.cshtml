@@ -117,5 +117,25 @@
   setInterval(update, 60000);
 })();
 </script>
+@* Firebase 애널리틱스(GA4). 이 사이트는 npm·번들러 없이 Razor 페이지만 쓰므로 SDK를 Firebase 공식 CDN(gstatic)의 ES 모듈로 받는다.
+   웹 앱 설정 값(apiKey 등)은 브라우저에 공개되는 식별자라 비밀이 아니다. 개발 중(dotnet run, Development) 방문은 통계에 넣지 않는다. *@
+<environment exclude="Development">
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDJfas7EEDcasG81SyVL4o4GI2BObJcYMM",
+  authDomain: "hacker-newspaper-5ee41.firebaseapp.com",
+  projectId: "hacker-newspaper-5ee41",
+  storageBucket: "hacker-newspaper-5ee41.firebasestorage.app",
+  messagingSenderId: "592772772226",
+  appId: "1:592772772226:web:985ff216f45d2bc36fdf9b",
+  measurementId: "G-H78N6628VK",
+});
+// 쿠키·IndexedDB를 막은 브라우저에서는 애널리틱스가 동작하지 않으므로 지원될 때만 켠다. page_view는 페이지마다 자동으로 기록된다.
+isSupported().then(ok => ok && getAnalytics(app));
+</script>
+</environment>
 </body>
 </html>
