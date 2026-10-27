@@ -1,6 +1,6 @@
 ---
 name: hn-paper-update
-description: 해커뉴스 페이퍼의 오늘자 호를 만든다. 전날(UTC) HN 1면(front?day=) 상위 30개와 기사별 댓글(최대 30개)을 수집하고, 제목을 자연스러운 한국어로 옮기고, 기사마다 서브에이전트를 띄워 중간 페이지(원문 요약 + Sonnet으로 번역한 댓글)를 data/ko/에 저장한 뒤 검증한다. 1면의 요약과 리드는 따로 쓰지 않고 중간 페이지 요약의 첫 문단을 쓴다. Claude 데스크톱 앱 루틴에서 매일 아침 실행하며, "기사 업데이트", "오늘 호 만들어줘", "해커뉴스 페이퍼 갱신" 같은 요청에도 쓴다.
+description: 해커뉴스 페이퍼의 오늘자 호를 만든다. 이틀 전(UTC) HN 1면(front?day=) 상위 30개와 기사별 댓글(최대 30개)을 수집하고, 제목을 자연스러운 한국어로 옮기고, 기사마다 서브에이전트를 띄워 중간 페이지(원문 요약 + Sonnet으로 번역한 댓글)를 data/ko/에 저장한 뒤 검증한다. 1면의 요약과 리드는 따로 쓰지 않고 중간 페이지 요약의 첫 문단을 쓴다. Claude 데스크톱 앱 루틴에서 매일 오전 6시에 실행하며, "기사 업데이트", "오늘 호 만들어줘", "해커뉴스 페이퍼 갱신" 같은 요청에도 쓴다.
 argument-hint: "[yyyy-MM-dd] [기사 id ...]: 날짜만 주면 그 호의 빠진 번역만 채움(수집하지 않음), id까지 주면 그 기사들의 중간 페이지만"
 allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dotnet run --project src/HnPaper.Web -- collect-items:*), Bash(dotnet run --project src/HnPaper.Web -- collect-thumbs:*), Bash(dotnet run --project src/HnPaper.Web -- reuse:*), Bash(dotnet run --project src/HnPaper.Web -- merge-comments:*), Bash(dotnet run --project src/HnPaper.Web -- validate:*), Read, Glob, Edit(data/ko/**), WebFetch, Agent, mcp__hn-browser__browser_navigate, mcp__hn-browser__browser_wait_for, mcp__hn-browser__browser_evaluate, mcp__hn-browser__browser_close
 ---
@@ -41,7 +41,7 @@ allowed-tools: Bash(dotnet run --project src/HnPaper.Web -- collect:*), Bash(dot
    dotnet run --project src/HnPaper.Web -- collect
    ```
    마지막 줄에 수집본 경로(`data/raw/yyyy-MM-dd.json`)가 나온다. 그 파일 이름의 날짜가 이번 호의 날짜다.
-   수집기는 호 날짜(한국 시간 오늘)의 전날 HN 과거 1면(`front?day=`)을 읽는다. 그날(UTC) 1면에 오른 글을 HN이 매긴 순서대로 담은 목록이다. HN의 하루는 UTC라서 전날 목록은 한국 시간 오전 9시에 닫히고, 그 전에 수집하면 마지막 몇 시간 동안 1면에 오른 글이 빠질 수 있다.
+   수집기는 호 날짜(한국 시간 오늘)의 이틀 전 HN 과거 1면(`front?day=`)을 읽는다. 그날(UTC) 1면에 오른 글을 HN이 매긴 순서대로 담은 목록이다. HN의 하루는 UTC라서 이 목록은 어제 한국 시간 오전 9시에 이미 닫혔다. 마감 직후에는 그날 늦게 오른 글의 점수가 계속 올라 순위가 크게 바뀌므로, 하루쯤 지나 순위가 굳은 목록을 읽는다(오전 6시에 수집하면 마감 21시간 뒤).
    원문이 봇 차단에 막히면 수집기가 Chrome 창을 잠깐 띄워 대표 이미지·설명을 다시 읽는다. 출력의 `브라우저로 다시 연 원문`이 그 수다. 그래도 og 이미지가 없으면 HN 본문 글에 붙은 같은 기사의 다른 주소(다른 언론사 기사 등)에서 찾는다. 출력의 `HN 본문 링크에서 찾은 이미지`가 그 수다.
    날짜가 인자로 왔는데 `data/raw/{날짜}/` 폴더가 없으면 댓글만 수집한다: `dotnet run --project src/HnPaper.Web -- collect-items {날짜}`
    `data/img/{날짜}/` 폴더가 없으면 대표 이미지만 만든다: `dotnet run --project src/HnPaper.Web -- collect-thumbs {날짜}` (실패한 이미지는 사이트가 원본 주소를 쓰므로 다시 시도하지 않아도 된다)

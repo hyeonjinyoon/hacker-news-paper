@@ -4,7 +4,7 @@ namespace HnPaper.Web.Models;
 
 /// <summary>수집기 출력(data/raw/{date}.json). HN 1면의 사실 정보만 담고, 번역은 담지 않는다.</summary>
 /// <param name="Date">호 날짜. 수집한 날(한국 시간)이다.</param>
-/// <param name="Day">기사를 가져온 HN 과거 1면(front?day=)의 날짜(UTC). 호 날짜의 전날이다. 메인 1면에서 수집한 예전 호는 null.</param>
+/// <param name="Day">기사를 가져온 HN 과거 1면(front?day=)의 날짜(UTC). 호 날짜의 이틀 전이다(2026-10-27호까지는 전날). 메인 1면에서 수집한 예전 호는 null.</param>
 public sealed record RawEdition(string Date, string? Day, DateTimeOffset CollectedAt, IReadOnlyList<RawStory> Stories);
 
 /// <param name="Type">HN 아이템 종류: story, job 등.</param>

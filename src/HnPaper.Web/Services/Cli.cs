@@ -4,7 +4,7 @@ namespace HnPaper.Web.Services;
 
 /// <summary>
 /// hn-paper-update 스킬이 부르는 명령.
-///   collect [--comments N] [--out path]   전날(UTC) HN 과거 1면 상위 30개와 기사별 댓글 수집
+///   collect [--comments N] [--out path]   이틀 전(UTC) HN 과거 1면 상위 30개와 기사별 댓글 수집
 ///   collect-items yyyy-MM-dd [--comments N]  이미 수집한 호의 기사별 댓글만 다시 수집
 ///   collect-thumbs yyyy-MM-dd               이미 수집한 호의 대표 이미지만 WebP로 압축해 저장
 ///   collect-fill yyyy-MM-dd [--comments N]   이미 수집한 호에서 싣지 않는 글과 중복 글을 빼고, 모자란 자리를 그 호의 HN 과거 1면 글로 채움

@@ -13,6 +13,9 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     private const string Api = "https://hacker-news.firebaseio.com/v0/";
     // 그날(UTC) 1면에 오른 글을 모은 목록. API에는 없어서 HTML에서 글 id만 읽고, 나머지는 API로 받는다.
     private const string Front = "https://news.ycombinator.com/front";
+    // 호 날짜(한국 시간)보다 이만큼 앞선 날(UTC)의 과거 1면을 읽는다. 과거 1면은 마감 뒤에도 그날 늦게 오른 글의 점수가
+    // 올라 순위가 바뀌므로(data/drift-test), 마감(한국 시간 어제 오전 9시) 뒤 하루쯤 지나 굳은 목록을 읽는다.
+    private const int DayLag = 2;
     // 싣지 않는 글을 빼고도 count개를 채우려고 읽는 쪽 수(한 쪽에 30개)
     private const int FrontPages = 2;
     private const int MaxHtmlBytes = 512 * 1024;
@@ -60,14 +63,14 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     }
 
     /// <summary>
-    /// 호 날짜(한국 시간 오늘)의 전날 HN 과거 1면에서 상위 count개를 모은다. HN의 하루는 UTC라서 전날 목록은
-    /// 한국 시간 오전 9시에 닫힌다. 그 전에 수집하면 그날 마지막 몇 시간 동안 1면에 오른 글이 빠질 수 있다.
+    /// 호 날짜(한국 시간 오늘)의 이틀 전 HN 과거 1면에서 상위 count개를 모은다. HN의 하루는 UTC라서 이틀 전 목록은
+    /// 어제 한국 시간 오전 9시에 이미 닫혔다. 그래서 하루 중 언제 수집해도 빠지는 글이 없다.
     /// </summary>
     public async Task<RawEdition> CollectAsync(int count, CancellationToken ct)
     {
         var collectedAt = Kst.Now;
         var date = collectedAt.ToString("yyyy-MM-dd");
-        var day = DayBefore(date);
+        var day = DaysBefore(date, DayLag);
         var ids = await FrontIdsAsync(day, ct);
         var stories = await FetchStoriesAsync(ids, count, 1, [], ct);
         return new RawEdition(date, day, collectedAt, stories);
@@ -79,7 +82,7 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
     /// </summary>
     public async Task<(RawEdition Edition, IReadOnlyList<RawStory> Added)> FillAsync(RawEdition edition, int count, CancellationToken ct)
     {
-        var ids = await FrontIdsAsync(edition.Day ?? DayBefore(edition.Date), ct);
+        var ids = await FrontIdsAsync(edition.Day ?? DaysBefore(edition.Date, 1), ct);
         var kept = edition.Stories.Where(s => !s.Excluded && !_dupes.Contains(s.Id)).OrderBy(s => s.Rank).DistinctBy(s => UrlKey(s.Url))
             .Select((s, i) => s with { Rank = i + 1 }).ToList();
         if (kept.Count >= count)
@@ -91,8 +94,8 @@ public sealed partial class HnCollector(HttpClient http, BrowserFetcher? browser
         return (edition with { Stories = [.. kept, .. added] }, added);
     }
 
-    private static string DayBefore(string date) =>
-        DateOnly.ParseExact(date, "yyyy-MM-dd").AddDays(-1).ToString("yyyy-MM-dd");
+    private static string DaysBefore(string date, int days) =>
+        DateOnly.ParseExact(date, "yyyy-MM-dd").AddDays(-days).ToString("yyyy-MM-dd");
 
     /// <summary>
     /// HN 과거 1면(front?day=)의 글 id를 순위대로 FrontPages쪽까지 읽는다. HN이 제목 앞에 [dupe]를 붙인 글은
