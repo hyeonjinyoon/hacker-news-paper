@@ -1,6 +1,6 @@
 # Hacker News(paper)
 
-![Screenshot1](src/screenshots/Screenshot_2026-10-07_205458.png)
+![Screenshot1](src/screenshots/Screenshot_2026-10-28_125356.png)
 
 전날 Hacker News의 상위 30개 글을 매일 아침 한국어로 번역해, 신문 1면처럼 보여 주는 사이트입니다.<br>
 ASP.NET으로 개발되었습니다.
