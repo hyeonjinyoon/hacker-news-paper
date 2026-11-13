@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Numerics.Tensors;
 using HnPaper.Web.Models;
 
 namespace HnPaper.Web.Services;
@@ -12,6 +14,10 @@ namespace HnPaper.Web.Services;
 ///   merge-comments yyyy-MM-dd id            새로 번역한 댓글({id}.comments.new.json)을 댓글 번역본에 합침
 ///   validate [yyyy-MM-dd] [id ...] [--part body|comments]
 ///                                         번역본 검사. id를 주면 그 기사의 중간 페이지만, --part를 주면 본문이나 댓글만 검사
+///   semantic-check [--model 이름]           .NET의 토큰·벡터가 export-embedding-model.py가 남긴 check.json과 같은지 확인
+///   semantic-index [--model 이름]           빠진 의미 검색 벡터를 미리 만듦
+///   semantic-search 검색어 ... [--model 이름] [--top N]
+///                                         기준선과 상관없이 의미 검색 점수 상위 N개를 보여 줌. embedding.json의 minScore를 맞출 때 쓴다
 /// </summary>
 public static class Cli
 {
@@ -29,6 +35,9 @@ public static class Cli
             "collect-fill" => await CollectFillAsync(options, args),
             "reuse" => Reuse(options, args),
             "merge-comments" => MergeComments(options, args),
+            "semantic-check" => SemanticCheck(options, args),
+            "semantic-index" => await SemanticIndexAsync(options, args),
+            "semantic-search" => await SemanticSearchAsync(options, args),
             _ => Validate(options, args),
         };
     }
@@ -243,6 +252,160 @@ public static class Cli
             ? $"검사 통과: {date} · 기사 {ko.Stories?.Count ?? 0}개, 중간 페이지 {items.Count}개, 경고 {warnings.Count}개"
             : $"검사 실패: 오류 {errors.Count}개, 경고 {warnings.Count}개");
         return errors.Count == 0 ? 0 : 1;
+    }
+
+    // ── 의미 검색 ──────────────────────────────────────────────
+
+    private sealed record CheckSample(string Text, int[] Ids, float[] Embedding);
+
+    private static string EmbeddingModel(string[] args) =>
+        Option(args, "--model")
+        ?? (Environment.GetEnvironmentVariable("Paper__EmbeddingModel") is { Length: > 0 } env ? env : SemanticIndex.DefaultModel);
+
+    private static int SemanticCheck(PaperOptions options, string[] args)
+    {
+        var dir = options.ModelDirectory(EmbeddingModel(args));
+        using var embedder = TextEmbedder.Load(dir);
+        if (embedder is null)
+        {
+            Console.Error.WriteLine($"모델이 없습니다: {dir}");
+            Console.Error.WriteLine("scripts/export-embedding-model.py로 만드세요.");
+            return 2;
+        }
+        var checkPath = Path.Combine(dir, "check.json");
+        var samples = File.Exists(checkPath) ? PaperJson.Read<List<CheckSample>>(checkPath) ?? [] : [];
+        if (samples.Count == 0)
+        {
+            Console.Error.WriteLine($"시험 문장 파일이 없습니다: {checkPath}");
+            return 2;
+        }
+
+        // check.json의 벡터는 Python이 같은 model.onnx로 만든 것이라 거의 같아야 한다.
+        var errors = 0;
+        var minCosine = 1f;
+        foreach (var sample in samples)
+        {
+            var ids = embedder.Tokenize(sample.Text);
+            if (!ids.SequenceEqual(sample.Ids))
+            {
+                errors++;
+                var at = ids.Zip(sample.Ids).TakeWhile(p => p.First == p.Second).Count();
+                Console.WriteLine($"오류: 토큰이 다릅니다({at}번째부터): {Shorten(sample.Text)}");
+                Console.WriteLine($"  Python: {string.Join(' ', sample.Ids.Skip(Math.Max(0, at - 2)).Take(8))}");
+                Console.WriteLine($"  .NET:   {string.Join(' ', ids.Skip(Math.Max(0, at - 2)).Take(8))}");
+                continue;
+            }
+            var vector = embedder.EmbedTokens([ids])[0];
+            var cosine = TensorPrimitives.CosineSimilarity(vector, sample.Embedding);
+            minCosine = Math.Min(minCosine, cosine);
+            if (cosine < 0.999f)
+            {
+                errors++;
+                Console.WriteLine($"오류: 벡터가 다릅니다(코사인 {cosine:0.0000}): {Shorten(sample.Text)}");
+            }
+        }
+
+        embedder.EmbedQuery("워밍업");
+        var watch = Stopwatch.StartNew();
+        const int queryRuns = 20;
+        for (var i = 0; i < queryRuns; i++)
+            embedder.EmbedQuery("쿠버네티스 비용 줄이기 " + i);
+        var queryMs = watch.Elapsed.TotalMilliseconds / queryRuns;
+        var chunk = string.Join('\n', samples.Select(s => s.Text).Where(t => t.Length is > 30 and < 1000).Take(6));
+        var chunkTokens = embedder.Tokenize(chunk).Length;
+        watch.Restart();
+        embedder.EmbedDocuments(Enumerable.Repeat(chunk, 8).ToList());
+        var chunkMs = watch.Elapsed.TotalMilliseconds / 8;
+
+        Console.WriteLine($"모델: {dir} ({embedder.Config.Source}, {embedder.Dimensions}차원, 기준선 {embedder.Config.MinScore:0.00})");
+        Console.WriteLine($"속도: 검색어 {queryMs:0}ms, 기사 조각({chunkTokens}토큰) {chunkMs:0}ms");
+        Console.WriteLine(errors == 0
+            ? $"확인 통과: 시험 문장 {samples.Count}개의 토큰이 같고, 벡터 코사인 유사도는 최소 {minCosine:0.0000}입니다."
+            : $"확인 실패: 오류 {errors}개");
+        return errors == 0 ? 0 : 1;
+    }
+
+    private static (EditionStore Store, SemanticIndex Index, ILoggerFactory Logs) OpenSemantic(PaperOptions options, string[] args)
+    {
+        var logs = LoggerFactory.Create(b => b.AddSimpleConsole(o =>
+        {
+            o.SingleLine = true;
+            o.TimestampFormat = "HH:mm:ss ";
+        }));
+        var gradients = new GradientLibrary(Path.Combine(AppContext.BaseDirectory, "wwwroot"));
+        var store = new EditionStore(options, gradients, logs.CreateLogger<EditionStore>());
+        var index = new SemanticIndex(options, store, logs.CreateLogger<SemanticIndex>(), EmbeddingModel(args));
+        return (store, index, logs);
+    }
+
+    private static async Task<int> SemanticIndexAsync(PaperOptions options, string[] args)
+    {
+        var (_, index, logs) = OpenSemantic(options, args);
+        using (logs)
+        using (index)
+        {
+            if (index.Embedder is null)
+                return 2;
+            var made = await index.SyncAsync(CancellationToken.None);
+            Console.WriteLine($"의미 검색 벡터 준비 완료: 새로 만든 조각 {made}개");
+            return 0;
+        }
+    }
+
+    private static async Task<int> SemanticSearchAsync(PaperOptions options, string[] args)
+    {
+        var queries = new List<string>();
+        for (var i = 1; i < args.Length; i++)
+        {
+            if (args[i].StartsWith("--", StringComparison.Ordinal))
+                i++;
+            else if (SearchIndex.Clean(args[i]) is { Length: > 0 } query)
+                queries.Add(query);
+        }
+        if (queries.Count == 0)
+        {
+            Console.Error.WriteLine("검색어를 주세요. 예: semantic-search \"AI 코딩 도구\" \"메모리 안전\" --top 15");
+            return 2;
+        }
+        var top = int.TryParse(Option(args, "--top"), out var n) && n > 0 ? n : 20;
+
+        var (store, index, logs) = OpenSemantic(options, args);
+        using (logs)
+        using (index)
+        {
+            if (index.Embedder is not { } embedder)
+                return 2;
+            await index.SyncAsync(CancellationToken.None);
+
+            var search = new SearchIndex(store, index);
+            var stories = search.Stories();
+            var minScore = embedder.Config.MinScore;
+            Console.WriteLine($"모델: {index.Model} · 기사 {stories.Count}개 · 기준선 {minScore:0.00}");
+            foreach (var query in queries)
+            {
+                var results = search.Search(query, recent: false, page: 1, pageSize: 100_000);
+                var keyword = results.Hits.Where(h => !h.Related).Select(h => h.Story.Raw.Id).ToHashSet();
+                var watch = Stopwatch.StartNew();
+                var scores = index.Score(query, stories);
+                var elapsed = watch.ElapsedMilliseconds;
+                var mean = scores.Average(m => m.Score);
+                var sd = MathF.Sqrt(scores.Average(m => (m.Score - mean) * (m.Score - mean)));
+                Console.WriteLine();
+                Console.WriteLine($"‘{query}’ 키워드 결과 {results.Total}건 · 비슷한 기사 {results.Related}건 · 점수 계산 {elapsed}ms · 평균 {mean:0.000} 표준편차 {sd:0.000}");
+                foreach (var match in scores.OrderByDescending(m => m.Score).Take(top))
+                {
+                    var kind = keyword.Contains(match.Story.Raw.Id) ? "키워드" : match.Score >= minScore ? "비슷함" : "  ·  ";
+                    Console.WriteLine($"  {match.Score:0.000} z{(match.Score - mean) / sd:0.0} {kind}  {match.Story.Date} {Shorten(match.Story.Title, 70)}");
+                }
+            }
+            return 0;
+        }
+    }
+
+    private static string Shorten(string text, int max = 40)
+    {
+        var line = text.ReplaceLineEndings(" ");
+        return line.Length <= max ? line : line[..max] + "…";
     }
 
     private static int CommentLimit(string[] args) =>

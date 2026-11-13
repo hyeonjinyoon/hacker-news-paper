@@ -80,15 +80,51 @@ public static class MarkdownRenderer
 
         foreach (var block in Markdown.Parse(markdown, Pipeline).Descendants<LeafBlock>())
         {
-            var text = block switch
-            {
-                ParagraphBlock { Inline: { } inline } => PlainText(inline),
-                CodeBlock code => code.Lines.ToString(),
-                _ => null,
-            };
-            if (!string.IsNullOrWhiteSpace(text))
-                yield return text.Trim();
+            if (LeafText(block) is { } text)
+                yield return text;
         }
+    }
+
+    public static IReadOnlyList<(string? Heading, IReadOnlyList<string> Blocks)> Sections(string? markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            return [];
+
+        var sections = new List<(string? Heading, List<string> Blocks)> { (null, []) };
+        foreach (var block in Markdown.Parse(markdown, Pipeline))
+        {
+            if (block is HeadingBlock heading)
+            {
+                sections.Add((heading.Inline is { } inline ? PlainText(inline).Trim() : null, []));
+                continue;
+            }
+            IEnumerable<LeafBlock> leaves = block switch
+            {
+                LeafBlock leaf => [leaf],
+                ContainerBlock container => container.Descendants<LeafBlock>(),
+                _ => [],
+            };
+            foreach (var leaf in leaves)
+            {
+                if (LeafText(leaf) is { } text)
+                    sections[^1].Blocks.Add(text);
+            }
+        }
+        return sections
+            .Where(s => s.Blocks.Count > 0)
+            .Select(s => (s.Heading, (IReadOnlyList<string>)s.Blocks))
+            .ToList();
+    }
+
+    private static string? LeafText(LeafBlock block)
+    {
+        var text = block switch
+        {
+            ParagraphBlock { Inline: { } inline } => PlainText(inline),
+            CodeBlock code => code.Lines.ToString(),
+            _ => null,
+        };
+        return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
     }
 
     private static string PlainText(ContainerInline container)

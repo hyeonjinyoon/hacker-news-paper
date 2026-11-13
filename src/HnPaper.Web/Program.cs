@@ -7,8 +7,10 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.WebEncoders;
 
 // CLI: `dotnet run -- collect`, `collect-items <yyyy-MM-dd>`, `collect-thumbs <yyyy-MM-dd>`, `collect-fill <yyyy-MM-dd>`,
-// `reuse <yyyy-MM-dd>`, `merge-comments <yyyy-MM-dd> <id>`, `validate [yyyy-MM-dd] [id ...]`
-if (args.Length > 0 && args[0] is "collect" or "collect-items" or "collect-thumbs" or "collect-fill" or "reuse" or "merge-comments" or "validate")
+// `reuse <yyyy-MM-dd>`, `merge-comments <yyyy-MM-dd> <id>`, `validate [yyyy-MM-dd] [id ...]`,
+// `semantic-check`, `semantic-index`, `semantic-search <검색어 ...>`
+if (args.Length > 0 && args[0] is "collect" or "collect-items" or "collect-thumbs" or "collect-fill" or "reuse" or "merge-comments" or "validate"
+    or "semantic-check" or "semantic-index" or "semantic-search")
     return await Cli.RunAsync(args);
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +22,12 @@ builder.Services.AddSingleton<GradientLibrary>();
 builder.Services.AddSingleton<OgImageMaker>();
 builder.Services.AddSingleton<SiteUrl>();
 builder.Services.AddSingleton<SearchIndex>();
+builder.Services.AddSingleton(sp => new SemanticIndex(
+    sp.GetRequiredService<PaperOptions>(),
+    sp.GetRequiredService<EditionStore>(),
+    sp.GetRequiredService<ILogger<SemanticIndex>>(),
+    builder.Configuration["Paper:EmbeddingModel"]));
+builder.Services.AddHostedService(sp => sp.GetRequiredService<SemanticIndex>());
 
 // 한글을 &#xAC70; 같은 엔티티로 바꾸지 않고 그대로 출력한다(HTML이 크게 줄어든다). HTML 특수문자는 그대로 인코딩된다.
 builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));

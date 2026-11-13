@@ -33,6 +33,10 @@ public sealed record PaperOptions(string DataDirectory)
     // 기사 공유 이미지: data/img/{date}/{id}-og-{key}.jpg. 요청이 오면 OgImageMaker가 그려 둔다.
     public string OgPath(string date, long id, string key) => Path.Combine(ThumbDirectory, date, $"{id}-og-{key}.jpg");
 
+    // scripts/export-embedding-model.py가 만든다.
+    public string ModelDirectory(string model) => Path.Combine(DataDirectory, "models", model);
+    public string VectorDirectory(string model) => Path.Combine(DataDirectory, "vec", model);
+
     public static PaperOptions Resolve(string? configured)
     {
         if (!string.IsNullOrWhiteSpace(configured))

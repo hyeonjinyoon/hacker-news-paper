@@ -182,6 +182,9 @@ header.compact .tools svg{width:20px;height:20px}
 .results .snippet{margin-top:8px;font-size:14.5px;line-height:1.65;color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 mark{background:var(--hl);color:var(--fg);font-weight:700;padding:0 1px;border-radius:2px}
 .search-empty{padding:48px 0;text-align:center;color:var(--muted)}
+.related-head{padding:14px 0;border-bottom:1px solid var(--line);font-size:19px;font-weight:800;letter-spacing:-.03em}
+.results + .related-head{margin-top:36px}
+.related-head .count{margin-left:6px;font-size:15px;font-weight:600;color:var(--muted)}
 .pager{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;margin-top:28px;font-size:14.5px}
 .pager a,.pager strong{min-width:36px;padding:6px 8px;text-align:center}
 .pager strong{background:var(--fg);color:var(--bg)}
@@ -259,6 +262,7 @@ footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)
   .results h3{font-size:16.5px}
   .results .snippet{font-size:14px}
   .search .sec-head h2{font-size:20px}
+  .related-head{font-size:17px}
 }
 
 /* 중간 페이지: 요약(또는 HN 본문 번역)과 번역 댓글.

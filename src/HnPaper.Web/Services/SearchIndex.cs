@@ -14,7 +14,7 @@ namespace HnPaper.Web.Services;
 ///   ("쿠버네테스" → "쿠버네티스", "깃헙" → "깃허브", "kubernets" → "kubernetes"). 맞는 기사가 있는 낱말은 고치지 않는다.
 /// 같은 기사가 며칠 동안 1면에 남아 여러 호에 실리면 하나만 보여 준다(본문 번역본이 있는 가장 최근 호의 것).
 /// </summary>
-public sealed class SearchIndex(EditionStore store)
+public sealed class SearchIndex(EditionStore store, SemanticIndex semantic)
 {
     public const int MaxQueryLength = 100;
     private const int MaxTerms = 8;
@@ -23,6 +23,7 @@ public sealed class SearchIndex(EditionStore store)
     private const int MaxBodyHits = 5;
     /// <summary>오타를 고칠 때 낱말 하나 대신 찾는 비슷한 낱말의 최대 수.</summary>
     private const int MaxSimilar = 3;
+    private const int MaxRelated = 10;
 
     private sealed record Doc(StoryView Story, string Title, string Original, string Text)
     {
@@ -71,21 +72,7 @@ public sealed class SearchIndex(EditionStore store)
         if (words.Count == 0)
             return SearchResults.Empty;
 
-        // List()는 최근 호부터 준다. 같은 기사는 먼저 나온(최근) 것을 두되, 그 호에 아직 본문 번역본이 없으면
-        // 본문이 있는 지난 호의 것으로 바꾼다(아침 업데이트 중 번역이 덜 된 호).
-        var editions = new List<EditionView>();
-        var docs = new Dictionary<long, Doc>();
-        foreach (var info in store.List())
-        {
-            if (store.Load(info.Date) is not { } edition)
-                continue;
-            editions.Add(edition);
-            foreach (var doc in _docs.GetValue(edition, Build))
-            {
-                if (!docs.TryGetValue(doc.Story.Raw.Id, out var kept) || kept.Story.Body is null && doc.Story.Body is not null)
-                    docs[doc.Story.Raw.Id] = doc;
-            }
-        }
+        var (editions, docs) = Collect();
 
         // 어느 기사에도 없는 낱말은 오타로 보고 비슷한 낱말로 바꿔 찾는다.
         var terms = words
@@ -105,14 +92,41 @@ public sealed class SearchIndex(EditionStore store)
             ? hits.OrderByDescending(h => h.Doc.Story.Date, StringComparer.Ordinal).ThenBy(h => h.Doc.Story.Raw.Rank)
             : hits.OrderByDescending(h => h.Score).ThenByDescending(h => h.Doc.Story.Date, StringComparer.Ordinal).ThenBy(h => h.Doc.Story.Raw.Rank);
 
-        var pageCount = (hits.Count + pageSize - 1) / pageSize;
+        var found = hits.Select(h => h.Doc.Story.Raw.Id).ToHashSet();
+        var related = semantic.Similar(query, docs.Values.Where(d => !found.Contains(d.Story.Raw.Id)).Select(d => d.Story), MaxRelated);
+
+        var pageCount = (hits.Count + related.Count + pageSize - 1) / pageSize;
         page = Math.Clamp(page, 1, Math.Max(1, pageCount));
         var shown = ordered
+            .Select(h => (h.Doc, Content: h.Doc.Text, Related: false))
+            .Concat(related.Select(m => (Doc: docs[m.Story.Raw.Id], m.Content, Related: true)))
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(h => new SearchHit(h.Doc.Story, h.Doc.Title, h.Doc.Original, Snippet(h.Doc.Text, terms)))
+            .Select(x => new SearchHit(x.Doc.Story, x.Doc.Title, x.Doc.Original, Snippet(x.Content, terms), x.Related))
             .ToList();
-        return new SearchResults(terms, hits.Count, page, pageCount, shown);
+        return new SearchResults(terms, hits.Count, related.Count, page, pageCount, shown);
+    }
+
+    public IReadOnlyList<StoryView> Stories() => Collect().Docs.Values.Select(d => d.Story).ToList();
+
+    private (List<EditionView> Editions, Dictionary<long, Doc> Docs) Collect()
+    {
+        // List()는 최근 호부터 준다. 같은 기사는 먼저 나온(최근) 것을 두되, 그 호에 아직 본문 번역본이 없으면
+        // 본문이 있는 지난 호의 것으로 바꾼다(아침 업데이트 중 번역이 덜 된 호).
+        var editions = new List<EditionView>();
+        var docs = new Dictionary<long, Doc>();
+        foreach (var info in store.List())
+        {
+            if (store.Load(info.Date) is not { } edition)
+                continue;
+            editions.Add(edition);
+            foreach (var doc in _docs.GetValue(edition, Build))
+            {
+                if (!docs.TryGetValue(doc.Story.Raw.Id, out var kept) || kept.Story.Body is null && doc.Story.Body is not null)
+                    docs[doc.Story.Raw.Id] = doc;
+            }
+        }
+        return (editions, docs);
     }
 
     /// <summary>모든 낱말이 제목이나 콘텐츠에 있으면 점수, 하나라도 없으면 null. 낱말마다 가장 잘 맞은 꼴의 점수를 더한다.</summary>
@@ -472,12 +486,12 @@ public sealed record SearchTerm(string Text, IReadOnlyList<string>? Similar = nu
 /// <param name="Title">찾은 한국어 제목(NFC). 번역 전이면 원제.</param>
 /// <param name="Original">원제(NFC).</param>
 /// <param name="Snippet">콘텐츠에서 검색어 앞뒤를 잘라 낸 한 줄.</param>
-public sealed record SearchHit(StoryView Story, string Title, string Original, string Snippet);
+public sealed record SearchHit(StoryView Story, string Title, string Original, string Snippet, bool Related = false);
 
 /// <param name="Terms">검색어를 띄어쓰기로 나눈 낱말(대소문자만 다른 것은 하나로)과, 오타를 고쳐 대신 찾은 낱말.</param>
-/// <param name="Total">찾은 기사 수.</param>
+/// <param name="Total">키워드로 찾은 기사 수. Related는 들어 있지 않다.</param>
 /// <param name="Page">보여 주는 쪽(1부터).</param>
-public sealed record SearchResults(IReadOnlyList<SearchTerm> Terms, int Total, int Page, int PageCount, IReadOnlyList<SearchHit> Hits)
+public sealed record SearchResults(IReadOnlyList<SearchTerm> Terms, int Total, int Related, int Page, int PageCount, IReadOnlyList<SearchHit> Hits)
 {
-    public static readonly SearchResults Empty = new([], 0, 1, 0, []);
+    public static readonly SearchResults Empty = new([], 0, 0, 1, 0, []);
 }

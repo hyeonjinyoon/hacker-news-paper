@@ -19,8 +19,12 @@ public sealed class GradientLibrary
     private readonly string[] _versions;
 
     public GradientLibrary(IWebHostEnvironment env)
+        : this(env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"))
     {
-        var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+    }
+
+    public GradientLibrary(string webRoot)
+    {
         var dir = Path.Combine(webRoot, Folder);
         _files = Directory.Exists(dir)
             ? Directory.EnumerateFiles(dir)

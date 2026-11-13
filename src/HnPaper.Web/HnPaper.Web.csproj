@@ -9,8 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig" Version="1.4.0" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.32.0" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="3.0.0" />
     <PackageReference Include="Microsoft.Playwright" Version="1.63.0" />
     <PackageReference Include="SkiaSharp" Version="4.153.1" />
+    <PackageReference Include="System.Numerics.Tensors" Version="10.0.15" />
   </ItemGroup>
 
   <ItemGroup>

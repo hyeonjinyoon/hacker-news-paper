@@ -26,7 +26,7 @@
 
   @if (q.Length == 0)
   {
-    <p class="search-hint">지난 호까지 모든 기사의 제목(한국어 제목과 원제)과 본문 요약에서 찾습니다. 여러 낱말을 띄어 쓰면 모두 들어 있는 기사만 보여 드립니다. 띄어쓰기가 달라도 찾고, 맞는 기사가 없는 낱말은 비슷한 낱말로 고쳐 찾습니다.</p>
+    <p class="search-hint">지난 호까지 모든 기사의 제목(한국어 제목과 원제)과 본문 요약에서 찾습니다. 여러 낱말을 띄어 쓰면 모두 들어 있는 기사만 보여 드립니다. 띄어쓰기가 달라도 찾고, 맞는 기사가 없는 낱말은 비슷한 낱말로 고쳐 찾습니다. 검색어가 그대로 들어 있지 않아도 내용이 가까운 기사는 결과 아래에 ‘비슷한 기사’로 보여 드립니다.</p>
   }
   else
   {
@@ -53,34 +53,46 @@
       </p>
     }
 
-    @if (r.Total == 0)
+    @if (r.Total == 0 && r.Related == 0)
     {
       <p class="search-empty">‘@q’에 맞는 기사가 없습니다. 다른 낱말이나 영어 원제로 찾아보세요.</p>
     }
     else
     {
-      <ol class="results">
-        @foreach (var hit in r.Hits)
+      @if (r.Total == 0)
+      {
+        <p class="search-note">‘@q’에 맞는 기사는 없지만, 내용이 비슷한 기사가 있습니다.</p>
+      }
+      @* SearchIndex가 비슷한 기사를 늘 키워드 결과 뒤에 둔다. *@
+      @foreach (var group in r.Hits.GroupBy(h => h.Related))
+      {
+        if (group.Key)
         {
-          var s = hit.Story;
-          <li class="linkbox">
-            <partial name="_Thumb" model="s" />
-            <div>
-              <p class="edition">@s.Date 호 · @(s.Raw.Rank)위</p>
-              <h3><a href="@s.Href">@SearchIndex.Mark(hit.Title, r.Terms)</a></h3>
-              @if (hit.Original != hit.Title)
-              {
-                <p class="en">@SearchIndex.Mark(hit.Original, r.Terms)</p>
-              }
-              @if (hit.Snippet.Length > 0)
-              {
-                <p class="snippet">@SearchIndex.Mark(hit.Snippet, r.Terms)</p>
-              }
-              <partial name="_Meta" model="new Meta(s)" />
-            </div>
-          </li>
+          <h2 class="related-head">비슷한 기사 <span class="count">@(r.Related)건</span></h2>
         }
-      </ol>
+        <ol class="results">
+          @foreach (var hit in group)
+          {
+            var s = hit.Story;
+            <li class="linkbox">
+              <partial name="_Thumb" model="s" />
+              <div>
+                <p class="edition">@s.Date 호 · @(s.Raw.Rank)위</p>
+                <h3><a href="@s.Href">@SearchIndex.Mark(hit.Title, r.Terms)</a></h3>
+                @if (hit.Original != hit.Title)
+                {
+                  <p class="en">@SearchIndex.Mark(hit.Original, r.Terms)</p>
+                }
+                @if (hit.Snippet.Length > 0)
+                {
+                  <p class="snippet">@SearchIndex.Mark(hit.Snippet, r.Terms)</p>
+                }
+                <partial name="_Meta" model="new Meta(s)" />
+              </div>
+            </li>
+          }
+        </ol>
+      }
 
       @if (r.PageCount > 1)
       {
