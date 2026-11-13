@@ -17,18 +17,16 @@ namespace HnPaper.Web.Services;
 public sealed class OgImageMaker(PaperOptions options, GradientLibrary gradients)
 {
     /// <summary>그리는 규칙을 바꾸면 올린다. key에 들어가므로 저장해 둔 옛 이미지 대신 새로 그린다.</summary>
-    private const string Version = "v2";
+    private const string Version = "v3";
     public const int Width = 1200;
     public const int Height = 630;
     private const int Quality = 90;
 
-    // 색은 사이트(paper.css)와 같다.
     private static readonly SKColor Fg = SKColor.Parse("#111111");
     private static readonly SKColor Sub = SKColor.Parse("#5a5a5a");
     private static readonly SKColor Muted = SKColor.Parse("#767676");
     private static readonly SKColor Line = SKColor.Parse("#e5e5e5");
-    private static readonly SKColor Accent = SKColor.Parse("#008689");
-    private static readonly SKColor Placeholder = SKColor.Parse("#f2f9f9");
+    private static readonly SKColor Placeholder = SKColor.Parse("#f4f4f4");
 
     // 지면 글꼴 Pretendard(SIL OFL, Fonts/LICENSE.txt)를 함께 배포한다. 파일이 없으면 시스템 글꼴로 그린다.
     private static readonly SKTypeface ExtraBold = LoadFont("Pretendard-ExtraBold.otf", SKFontStyleWeight.ExtraBold);
@@ -93,7 +91,7 @@ public sealed class OgImageMaker(PaperOptions options, GradientLibrary gradients
 
         // 마스트헤드: 왼쪽에 로고, 오른쪽에 호 날짜와 순위. 아래에 굵은 괘선.
         Draw(canvas, "Hacker Newspaper", left, masthead, new TextStyle(ExtraBold, 46, Fg, -0.045f));
-        var rankStyle = new TextStyle(Bold, 24, Accent);
+        var rankStyle = new TextStyle(Bold, 24, Fg);
         var rank = $"{story.Raw.Rank}위";
         var rankWidth = Measure(rank, rankStyle);
         Draw(canvas, rank, right - rankWidth, masthead, rankStyle);

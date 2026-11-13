@@ -1,18 +1,18 @@
-/* 키 색상은 동아일보 색 체계를 따른다: 본문 #111, 보조 #5a5a5a, 선 #e5e5e5.
-   글자에는 청록을 쓰지 않고 중요도로만 나눈다: 제목·본문 --fg, 설명·인용 --sub, 메타·날짜·안내 --muted */
+/* 색은 흑백(회색 단계)만 쓴다. 강조색(유채색)은 두지 않고, 색이 있는 것은 기사 사진과 그라데이션 패널 이미지뿐이다.
+   글자는 중요도로만 나눈다: 제목·본문 --fg, 설명·인용 --sub, 메타·날짜·안내 --muted. */
 :root{
   --bg:#fff;--fg:#111;--sub:#5a5a5a;--muted:#767676;--line:#e5e5e5;--rule:#111;
-  --accent:#008689;--ph:#f2f9f9;--hl:#cdeeee;
+  --ph:#f4f4f4;--hl:#e6e6e6;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-    --accent:#2bb5b8;--ph:#1a2424;--hl:#1f5456;
+    --ph:#1e1e1e;--hl:#3a3a3a;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-  --accent:#2bb5b8;--ph:#1a2424;--hl:#1f5456;
+  --ph:#1e1e1e;--hl:#3a3a3a;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -158,10 +158,11 @@ header.compact .tools svg{width:20px;height:20px}
 .archive .headline{flex:1;min-width:0;font-size:15.5px;color:var(--sub)}
 .archive .badge{flex:none;font-size:12px;color:var(--muted);border:1px solid var(--line);padding:2px 8px}
 
-/* 검색: 지난 호처럼 위 굵은 선 없이 가운데 한 칸(880px)에 둔다. 검색어가 든 곳은 청록 바탕(--hl)으로 칠한다. */
+/* 검색: 지난 호처럼 위 굵은 선 없이 가운데 한 칸(880px)에 둔다. 검색어가 든 곳은 회색 바탕(--hl)에 굵게 쓴다.
+   검색창에 입력 중이면 아래 괘선을 3px에서 5px로 두껍게 한다(그림자라 자리는 그대로). */
 .search{border-top:0;max-width:880px;margin:0 auto;padding-top:34px}
-.search-form{display:flex;align-items:center;margin-bottom:30px;border-bottom:3px solid var(--rule);transition:border-color .2s}
-.search-form:focus-within{border-bottom-color:var(--accent)}
+.search-form{display:flex;align-items:center;margin-bottom:30px;border-bottom:3px solid var(--rule);transition:box-shadow .2s}
+.search-form:focus-within{box-shadow:0 2px 0 var(--rule)}
 .search-form input{flex:1;min-width:0;padding:10px 0;border:0;border-radius:0;background:none;color:var(--fg);font:inherit;font-size:26px;font-weight:700;letter-spacing:-.03em;outline:none;-webkit-appearance:none;appearance:none}
 .search-form input::placeholder{color:var(--muted);font-weight:500}
 .search-form button{flex:none;display:grid;place-items:center;width:44px;height:44px;margin-right:-10px;padding:0;border:0;background:none;color:var(--fg);cursor:pointer;transition:opacity .2s}
@@ -179,7 +180,7 @@ header.compact .tools svg{width:20px;height:20px}
 .results h3{margin-top:4px;font-size:18px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
 .results .en{margin-top:3px;font-size:13px;line-height:1.45;color:var(--muted)}
 .results .snippet{margin-top:8px;font-size:14.5px;line-height:1.65;color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-mark{background:var(--hl);color:var(--fg);padding:0 1px;border-radius:2px}
+mark{background:var(--hl);color:var(--fg);font-weight:700;padding:0 1px;border-radius:2px}
 .search-empty{padding:48px 0;text-align:center;color:var(--muted)}
 .pager{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;margin-top:28px;font-size:14.5px}
 .pager a,.pager strong{min-width:36px;padding:6px 8px;text-align:center}
@@ -278,8 +279,6 @@ footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)
 .article-head h1{font-size:34px;font-weight:700;line-height:1.4;margin:10px 0 10px}
 .article-head .en{font-size:16px;color:var(--muted);line-height:1.5}
 .article-head .meta{margin-top:16px;font-size:13px}
-.btn{display:inline-flex;align-items:center;padding:10px 16px;border:1px solid var(--line);font-size:14px;font-weight:600}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .article-body{padding-top:26px;border-top:1px solid var(--line)}
 .thumb.article-visual.no-image{aspect-ratio:5/1;margin:0 0 32px}
 .article-visual.natural{margin:0 0 32px;text-align:center}
