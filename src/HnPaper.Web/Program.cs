@@ -19,6 +19,7 @@ builder.Services.AddSingleton<EditionStore>();
 builder.Services.AddSingleton<GradientLibrary>();
 builder.Services.AddSingleton<OgImageMaker>();
 builder.Services.AddSingleton<SiteUrl>();
+builder.Services.AddSingleton<SearchIndex>();
 
 // 한글을 &#xAC70; 같은 엔티티로 바꾸지 않고 그대로 출력한다(HTML이 크게 줄어든다). HTML 특수문자는 그대로 인코딩된다.
 builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));

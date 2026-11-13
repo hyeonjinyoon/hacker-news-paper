@@ -2,17 +2,17 @@
    글자에는 청록을 쓰지 않고 중요도로만 나눈다: 제목·본문 --fg, 설명·인용 --sub, 메타·날짜·안내 --muted */
 :root{
   --bg:#fff;--fg:#111;--sub:#5a5a5a;--muted:#767676;--line:#e5e5e5;--rule:#111;
-  --accent:#008689;--ph:#f2f9f9;
+  --accent:#008689;--ph:#f2f9f9;--hl:#cdeeee;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-    --accent:#2bb5b8;--ph:#1a2424;
+    --accent:#2bb5b8;--ph:#1a2424;--hl:#1f5456;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121212;--fg:#ececec;--sub:#c9c9c9;--muted:#9b9b9b;--line:#2c2c2c;--rule:#e6e6e6;
-  --accent:#2bb5b8;--ph:#1a2424;
+  --accent:#2bb5b8;--ph:#1a2424;--hl:#1f5456;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -158,6 +158,36 @@ header.compact .tools svg{width:20px;height:20px}
 .archive .headline{flex:1;min-width:0;font-size:15.5px;color:var(--sub)}
 .archive .badge{flex:none;font-size:12px;color:var(--muted);border:1px solid var(--line);padding:2px 8px}
 
+/* 검색: 지난 호처럼 위 굵은 선 없이 가운데 한 칸(880px)에 둔다. 검색어가 든 곳은 청록 바탕(--hl)으로 칠한다. */
+.search{border-top:0;max-width:880px;margin:0 auto;padding-top:34px}
+.search-form{display:flex;align-items:center;margin-bottom:30px;border-bottom:3px solid var(--rule);transition:border-color .2s}
+.search-form:focus-within{border-bottom-color:var(--accent)}
+.search-form input{flex:1;min-width:0;padding:10px 0;border:0;border-radius:0;background:none;color:var(--fg);font:inherit;font-size:26px;font-weight:700;letter-spacing:-.03em;outline:none;-webkit-appearance:none;appearance:none}
+.search-form input::placeholder{color:var(--muted);font-weight:500}
+.search-form button{flex:none;display:grid;place-items:center;width:44px;height:44px;margin-right:-10px;padding:0;border:0;background:none;color:var(--fg);cursor:pointer;transition:opacity .2s}
+.search-form button:hover{opacity:.7}
+.search-form button svg{width:26px;height:26px}
+.search-hint{font-size:15px;line-height:1.7;color:var(--sub)}
+.search .sec-head{margin-bottom:0;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.search .sec-head .count{margin-left:6px;font-size:16px;font-weight:600;color:var(--muted)}
+.search-note{padding:14px 0;border-bottom:1px solid var(--line);font-size:14.5px;line-height:1.6;color:var(--sub)}
+.search-note strong{color:var(--fg)}
+.sort{display:flex;gap:14px;font-size:14px;color:var(--muted)}
+.sort a[aria-current]{color:var(--fg);font-weight:700}
+.results li{display:grid;grid-template-columns:168px minmax(0,1fr);gap:20px;padding:20px 0;border-bottom:1px solid var(--line)}
+.results .edition{font-size:12.5px;font-weight:600;color:var(--muted)}
+.results h3{margin-top:4px;font-size:18px;font-weight:700;line-height:1.45;letter-spacing:-.025em}
+.results .en{margin-top:3px;font-size:13px;line-height:1.45;color:var(--muted)}
+.results .snippet{margin-top:8px;font-size:14.5px;line-height:1.65;color:var(--sub);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+mark{background:var(--hl);color:var(--fg);padding:0 1px;border-radius:2px}
+.search-empty{padding:48px 0;text-align:center;color:var(--muted)}
+.pager{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;margin-top:28px;font-size:14.5px}
+.pager a,.pager strong{min-width:36px;padding:6px 8px;text-align:center}
+.pager strong{background:var(--fg);color:var(--bg)}
+.pager .step{font-weight:600}
+.search-elsewhere{margin-top:28px;font-size:14px;font-weight:600;text-align:center}
+.search-elsewhere a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+
 footer{border-top:3px solid var(--rule);padding:26px 0 48px;font-size:13px;line-height:1.7;color:var(--muted)}
 footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)}
 .edition-date{margin-bottom:8px;font-size:13px;color:var(--sub)}
@@ -221,6 +251,13 @@ footer .logo{width:fit-content;font-size:24px;margin-bottom:10px;color:var(--fg)
   .grid4 .meta time{display:none}
   .archive li{flex-wrap:wrap;gap:4px 12px}
   .archive .headline{flex-basis:100%;order:3}
+  .search{padding-top:20px}
+  .search-form{margin-bottom:22px}
+  .search-form input{font-size:21px}
+  .results li{grid-template-columns:112px minmax(0,1fr);gap:14px;padding:16px 0}
+  .results h3{font-size:16.5px}
+  .results .snippet{font-size:14px}
+  .search .sec-head h2{font-size:20px}
 }
 
 /* 중간 페이지: 요약(또는 HN 본문 번역)과 번역 댓글.

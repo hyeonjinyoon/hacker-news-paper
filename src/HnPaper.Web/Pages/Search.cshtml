@@ -1,0 +1,113 @@
+@page "/search"
+@model SearchModel
+@using HnPaper.Web.Services
+@{
+    var q = Model.Query;
+    var r = Model.Results;
+    ViewData["Title"] = q.Length == 0 ? "검색 · Hacker Newspaper" : $"{q} - 검색 · Hacker Newspaper";
+    ViewData["NavBase"] = "/";
+    // 검색 결과 페이지는 검색엔진 색인에 넣지 않는다. 기사 페이지는 sitemap.xml로 따로 알린다.
+    ViewData["Robots"] = "noindex";
+    // 쪽 번호는 지금 쪽 앞뒤로 최대 10개만 보인다.
+    var last = Math.Min(r.PageCount, Math.Max(r.Page + 5, 10));
+    var first = Math.Max(1, last - 9);
+}
+@* 모든 호의 기사 제목(한국어·원제)과 본문 요약에서 찾는다(SearchIndex). *@
+<main class="band search">
+  <form class="search-form" action="/search" method="get" role="search">
+    <input type="search" name="q" value="@q" placeholder="기사 제목이나 내용으로 검색" aria-label="검색어"
+           maxlength="@SearchIndex.MaxQueryLength" autocomplete="off" enterkeyhint="search" autofocus="@(q.Length == 0)">
+    @if (Model.Recent)
+    {
+      <input type="hidden" name="sort" value="recent">
+    }
+    <button type="submit" aria-label="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg></button>
+  </form>
+
+  @if (q.Length == 0)
+  {
+    <p class="search-hint">지난 호까지 모든 기사의 제목(한국어 제목과 원제)과 본문 요약에서 찾습니다. 여러 낱말을 띄어 쓰면 모두 들어 있는 기사만 보여 드립니다. 띄어쓰기가 달라도 찾고, 맞는 기사가 없는 낱말은 비슷한 낱말로 고쳐 찾습니다.</p>
+  }
+  else
+  {
+    <div class="sec-head">
+      <h2>검색 결과 <span class="count">@(r.Total)건</span></h2>
+      @if (r.Total > 1)
+      {
+        <nav class="sort" aria-label="정렬">
+          <a href="@Model.Link(1, false)" aria-current="@(Model.Recent ? null : "true")">정확도순</a>
+          <a href="@Model.Link(1, true)" aria-current="@(Model.Recent ? "true" : null)">최신순</a>
+        </nav>
+      }
+    </div>
+
+    @* 오타로 보고 고친 낱말: ‘쿠버네테스’ 대신 ‘쿠버네티스’ *@
+    @if (r.Terms.Where(t => t.Similar is { Count: > 0 }).ToList() is { Count: > 0 } corrected)
+    {
+      <p class="search-note">
+        @for (var i = 0; i < corrected.Count; i++)
+        {
+          <text>@(i > 0 ? ", " : "")‘@(corrected[i].Text)’ 대신 <strong>@string.Join(", ", corrected[i].Similar!.Select(s => $"‘{s}’"))</strong></text>
+        }
+        검색 결과입니다.
+      </p>
+    }
+
+    @if (r.Total == 0)
+    {
+      <p class="search-empty">‘@q’에 맞는 기사가 없습니다. 다른 낱말이나 영어 원제로 찾아보세요.</p>
+    }
+    else
+    {
+      <ol class="results">
+        @foreach (var hit in r.Hits)
+        {
+          var s = hit.Story;
+          <li class="linkbox">
+            <partial name="_Thumb" model="s" />
+            <div>
+              <p class="edition">@s.Date 호 · @(s.Raw.Rank)위</p>
+              <h3><a href="@s.Href">@SearchIndex.Mark(hit.Title, r.Terms)</a></h3>
+              @if (hit.Original != hit.Title)
+              {
+                <p class="en">@SearchIndex.Mark(hit.Original, r.Terms)</p>
+              }
+              @if (hit.Snippet.Length > 0)
+              {
+                <p class="snippet">@SearchIndex.Mark(hit.Snippet, r.Terms)</p>
+              }
+              <partial name="_Meta" model="new Meta(s)" />
+            </div>
+          </li>
+        }
+      </ol>
+
+      @if (r.PageCount > 1)
+      {
+        <nav class="pager" aria-label="검색 결과 쪽">
+          @if (r.Page > 1)
+          {
+            <a class="step" href="@Model.Link(r.Page - 1)">← 이전</a>
+          }
+          @for (var n = first; n <= last; n++)
+          {
+            if (n == r.Page)
+            {
+              <strong aria-current="page">@n</strong>
+            }
+            else
+            {
+              <a href="@Model.Link(n)">@n</a>
+            }
+          }
+          @if (r.Page < r.PageCount)
+          {
+            <a class="step" href="@Model.Link(r.Page + 1)">다음 →</a>
+          }
+        </nav>
+      }
+    }
+
+    <p class="search-elsewhere"><a href="https://hn.algolia.com/?q=@(Uri.EscapeDataString(q))" target="_blank" rel="noopener">Hacker News 전체에서 ‘@q’ 찾기 ↗</a></p>
+  }
+</main>

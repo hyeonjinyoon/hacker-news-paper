@@ -69,6 +69,28 @@ public static class MarkdownRenderer
         return paragraphs;
     }
 
+    /// <summary>
+    /// 본문 마크다운의 문단·목록 항목·코드 블록을 차례대로 평문으로 꺼낸다. 검색이 찾을 콘텐츠다.
+    /// 소제목(왜 중요한가, 핵심 내용, HN 반응 등)은 모든 기사에 같은 말이라 뺀다.
+    /// </summary>
+    public static IEnumerable<string> TextBlocks(string? markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            yield break;
+
+        foreach (var block in Markdown.Parse(markdown, Pipeline).Descendants<LeafBlock>())
+        {
+            var text = block switch
+            {
+                ParagraphBlock { Inline: { } inline } => PlainText(inline),
+                CodeBlock code => code.Lines.ToString(),
+                _ => null,
+            };
+            if (!string.IsNullOrWhiteSpace(text))
+                yield return text.Trim();
+        }
+    }
+
     private static string PlainText(ContainerInline container)
     {
         var builder = new System.Text.StringBuilder();

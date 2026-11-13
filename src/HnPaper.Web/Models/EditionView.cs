@@ -13,6 +13,8 @@ public sealed class StoryView
     public IReadOnlyList<string> Intro { get; init; } = [];
     /// <summary>1면에 쓰는 한 문단 요약. 본문 요약의 첫 문단이다.</summary>
     public string? Summary { get; init; }
+    /// <summary>중간 페이지 본문 번역본(마크다운). 번역 전이면 null. 검색(SearchIndex)이 콘텐츠로 쓴다.</summary>
+    public string? Body { get; init; }
 
     /// <summary>기사를 누르면 가는 중간 페이지. 원문 링크는 그 페이지에 있다.</summary>
     public string Href => $"/{Date}/{Raw.Id}";

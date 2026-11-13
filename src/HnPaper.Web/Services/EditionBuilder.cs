@@ -21,9 +21,9 @@ public static class EditionBuilder
             .Select(r =>
             {
                 koById.TryGetValue(r.Id, out var k);
-                var intro = bodies is not null && bodies.TryGetValue(r.Id, out var body)
-                    ? MarkdownRenderer.IntroParagraphs(body, 2)
-                    : [];
+                string? body = null;
+                bodies?.TryGetValue(r.Id, out body);
+                var intro = MarkdownRenderer.IntroParagraphs(body, 2);
                 (int Small, int Full)? widths = thumbs is not null && thumbs.TryGetValue(r.Id, out var w) ? w : null;
                 return new StoryView
                 {
@@ -34,6 +34,7 @@ public static class EditionBuilder
                     ImageSrcset = widths is { } wd ? Srcset(raw.Date, r.Id, wd) : null,
                     Title = Nonblank(k?.Title) ?? r.Title,
                     Intro = intro,
+                    Body = body,
                     // 본문 요약의 첫 문단 → 예전 호의 1면 요약 → (번역 전 호면) 원문 설명
                     Summary = intro.FirstOrDefault() ?? Nonblank(k?.Summary) ?? (ko is null ? Nonblank(r.Description) : null),
                 };

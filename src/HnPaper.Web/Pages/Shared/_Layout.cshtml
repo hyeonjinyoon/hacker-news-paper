@@ -26,6 +26,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@title</title>
 <meta name="description" content="@pageDescription">
+@if (ViewData["Robots"] is string robots)
+{
+<meta name="robots" content="@robots">
+}
 @if (canonical is not null)
 {
 <link rel="canonical" href="@canonical">
@@ -82,7 +86,7 @@
       <a href="/editions">지난 호</a>
     </nav>
     <div class="tools">
-      <a href="https://hn.algolia.com/" target="_blank" rel="noopener" aria-label="Hacker News 검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg></a>
+      <a href="/search" aria-label="기사 검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/></svg></a>
       <a href="https://news.ycombinator.com/" target="_blank" rel="noopener" aria-label="Hacker News 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
     </div>
   </div>
